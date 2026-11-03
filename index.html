@@ -106,6 +106,30 @@
   .ebaybar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:14px}
   .ebaybar .eb-t{font-weight:800;font-size:14px}
   .ebaybar .eb-s{font-size:13px;color:var(--muted);flex:1 1 180px}
+  /* Live eBay listings in detail */
+  .ebay-live{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .ebay-live-head{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}
+  .ebay-live-head h3{margin:0;font-size:18px;letter-spacing:-.01em}
+  .ebay-live-head .count{font-size:13px;color:var(--muted);font-weight:700}
+  .ebay-filters{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+  .filter-group{display:flex;flex-direction:column;gap:6px}
+  .filter-group label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:800}
+  .fseg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px;flex-wrap:wrap}
+  .fseg button{border:0;background:transparent;border-radius:999px;padding:7px 11px;font-weight:800;font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .fseg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+  .ebay-list{display:grid;gap:10px}
+  .listing{display:flex;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;text-decoration:none;color:inherit}
+  .listing:hover{border-color:var(--accent)}
+  .listing img{width:84px;height:84px;object-fit:cover;border-radius:10px;background:var(--surface2);flex:none}
+  .listing .lmain{flex:1;min-width:0}
+  .listing .ltitle{font-weight:800;font-size:13.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .listing .lmeta{font-size:12.5px;color:var(--muted);line-height:1.45;margin-top:3px}
+  .listing .lprice{font-weight:900;font-size:16px;margin-top:4px}
+  .listing .lprice small{font-weight:600;font-size:12px;color:var(--muted)}
+  .listing .lbadge{display:inline-flex;font-size:11px;font-weight:800;letter-spacing:.02em;padding:3px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-right:5px;vertical-align:1px}
+  .listing .lbadge.auction{background:var(--amber-soft);color:var(--amber)}
+  .ebay-note{font-size:13.5px;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:12px 14px;line-height:1.5}
+  @media(max-width:520px){.listing img{width:68px;height:68px}.ebay-filters{flex-direction:column}}
   .spinner{width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin .8s linear infinite;display:inline-block;vertical-align:-5px;margin-right:8px}
   @keyframes spin{to{transform:rotate(360deg)}}
   /* Collection lists */
@@ -231,7 +255,7 @@
   <!-- SEARCH -->
   <section class="panel" id="panel-search" role="tabpanel">
     <h2>Search the catalogue</h2>
-    <p class="sub">Search pulls the card catalogue and TCGplayer market prices live (via TCGdex — the same TCGplayer data <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors daily), and every search also surfaces what's actually for sale on eBay right now. Tap any card for the full price breakdown and live listings.</p>
+    <p class="sub">Search pulls the card catalogue and TCGplayer market prices live (via TCGdex — the same TCGplayer data <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors daily). Tap any card to see its full price breakdown <b>and live eBay listings in-app</b> — filter by Auction / Buy It Now and sort by price or ending soonest, then tap a listing to buy.</p>
     <div class="searchbar" role="search">
       <div class="grow">
         <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -277,13 +301,13 @@
     <div class="aboutgrid">
       <div class="cardbox"><h3>What it is</h3><p>A trading card companion: photograph or search any Pokémon or Magic card, see what it's worth right now, track a collection's total value, and keep a wishlist with target prices — all in one place, on phone or desktop.</p></div>
       <div class="cardbox"><h3>Data sources</h3><p>Pokémon card images, sets and TCGplayer market prices come live from <a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex</a>, with the <a href="https://pokemontcg.io" target="_blank" rel="noopener">Pokémon TCG API</a> as backup. That TCGplayer pricing is the same catalogue <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors as daily price files, which this demo uses as its pricing reference while direct TCGplayer access is pending. Magic data and prices come from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Prices are fetched fresh each time you search.</p></div>
-      <div class="cardbox"><h3>Buying</h3><p>Every search and every card page surfaces live eBay listings for that exact card — Buy It Now sorted lowest-first and auctions ending soonest — alongside the <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> link, so a card you find here is one tap from the real items for sale. Listings open on eBay itself, where prices and photos are always current; purchases happen on the marketplace — this demo never handles payment.</p></div>
+      <div class="cardbox"><h3>Buying</h3><p>Every card page now shows <b>live eBay listings in-app</b> for that exact printing — thumbnail, price + shipping and all-in total, bids and end time on auctions, seller and condition — fetched live via the eBay search proxy, with filters for Auction / Buy It Now and sorting by best match, price, or ending soonest. The <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> market price and buy link sit right alongside. Tap any listing to open it on eBay and buy; purchases happen on the marketplace — this demo never handles payment.</p></div>
       <div class="cardbox"><h3>For partners</h3><p>Built by Muse Enterprise Solutions as a working product exhibit for marketplace and data partnership conversations — including TCGplayer affiliate (Impact) and partner data access. The full version adds photo identification, graded-card pricing boards, population data and daily price alerts.</p></div>
     </div>
   </section>
 
   <footer>
-    Demo build — collection and wishlist live for this visit only and reset when the page closes. Card data © their respective publishers; Pokémon prices via TCGdex (TCGplayer data, mirrored daily by TCGCSV) with Pokémon TCG API backup; Magic prices via Scryfall. Buy links go to live TCGplayer and eBay listings for the exact card shown.
+    Demo build — collection and wishlist live for this visit only and reset when the page closes. Card data © their respective publishers; Pokémon prices via TCGdex (TCGplayer data, mirrored daily by TCGCSV) with Pokémon TCG API backup; Magic prices via Scryfall. Card pages show live eBay listings in-app (via the eBay search proxy) plus a TCGplayer buy link for the exact card shown.
   </footer>
 </div>
 
@@ -302,7 +326,7 @@
 "use strict";
 var $=function(id){return document.getElementById(id)};
 var money=function(n){ if(n==null||isNaN(n)) return "—"; return "$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); };
-var state={ game:"pokemon", collection:[], wishlist:[], current:null, stream:null, facing:"environment", captured:false };
+var state={ game:"pokemon", collection:[], wishlist:[], current:null, stream:null, facing:"environment", captured:false, ebayType:"all", ebaySort:"best", ebayReq:0 };
 var toastTimer=null;
 function toast(msg){ var t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(function(){t.classList.remove("show")},2600); }
 
@@ -668,13 +692,122 @@ $("btnIdentify").addEventListener("click",function(){
 });
 $("identifyInput").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); $("btnIdentify").click(); } });
 
+/* ---------- Live eBay listings (via proxy) ---------- */
+var EBAY_PROXY="https://ebay-search-proxy.369samclarkisfine.workers.dev/search";
+function ebayQueryFor(item){
+  var parts=[item.name];
+  if(item.number) parts.push(item.number);
+  if(item.set) parts.push(item.set);
+  if(item.game==="Pokémon" && !/pokemon/i.test(item.name)) parts.push("pokemon");
+  return parts.join(" ").replace(/\s+/g," ").trim();
+}
+function fmtEndTime(iso){
+  if(!iso) return "";
+  try{
+    var d=new Date(iso); if(isNaN(d.getTime())) return "";
+    var diff=d.getTime()-Date.now();
+    var opts={month:"short",day:"numeric",hour:"numeric",minute:"2-digit"};
+    var when=d.toLocaleString("en-US",opts);
+    if(diff>0 && diff<1000*60*60*24){ var h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000); return "Ends in "+h+"h "+m+"m · "+when; }
+    if(diff>0 && diff<1000*60*60*24*7){ var dd=Math.floor(diff/86400000); return "Ends in "+dd+"d · "+when; }
+    return "Ends "+when;
+  }catch(e){ return ""; }
+}
+function isAuctionListing(it){
+  var o=it.buyingOptions||[];
+  if(Array.isArray(o)) return o.some(function(x){return /AUCTION/i.test(String(x));});
+  return /AUCTION/i.test(String(o||""));
+}
+function renderEbayListings(data, query){
+  var box=$("ebayListings"); var countEl=$("ebayCount");
+  if(!box) return;
+  var items=(data&&data.items)||[];
+  var total=(data&&typeof data.total==="number")?data.total:items.length;
+  if(countEl) countEl.textContent= total? (total.toLocaleString()+" found") : "";
+  if(!items.length){
+    box.innerHTML='<div class="ebay-note">No live eBay listings matched this filter for this printing right now. Try <b>All</b> types or <b>Best match</b>, or use the eBay links below to browse the full results.</div>';
+    return;
+  }
+  box.innerHTML="";
+  items.forEach(function(it){
+    var a=document.createElement("a");
+    a.className="listing"; a.href=it.url||"#"; a.target="_blank"; a.rel="noopener";
+    var auction=isAuctionListing(it);
+    var priceTxt=money(it.price);
+    var shipTxt= it.shipping==null ? "" : (Number(it.shipping)===0 ? "Free shipping" : "+ "+money(it.shipping)+" shipping");
+    var allInTxt= (it.allIn!=null && it.shipping!=null && Number(it.shipping)>0) ? money(it.allIn)+" all-in" : "";
+    var badge= auction ? '<span class="lbadge auction">Auction</span>' : '<span class="lbadge">Buy It Now</span>';
+    var bidTxt="";
+    if(auction){
+      var bc=(it.bidCount!=null?it.bidCount:0);
+      bidTxt=bc+" bid"+(bc===1?"":"s");
+      var et=fmtEndTime(it.endTime); if(et) bidTxt+=" · "+et;
+    } else if(it.endTime){
+      var et2=fmtEndTime(it.endTime); if(et2) bidTxt=et2;
+    }
+    var sellerTxt="";
+    if(it.seller) sellerTxt=it.seller+(it.sellerFeedbackPct!=null?" · "+it.sellerFeedbackPct+"% positive":"");
+    var condTxt=it.condition?String(it.condition):"";
+    var metaParts=[];
+    if(bidTxt) metaParts.push(bidTxt);
+    if(condTxt) metaParts.push(condTxt);
+    if(sellerTxt) metaParts.push(sellerTxt);
+    a.innerHTML='<img loading="lazy" alt=""><div class="lmain"><div class="ltitle"></div><div class="lmeta"></div><div class="lprice"></div></div>';
+    var img=a.querySelector("img");
+    if(it.image){ img.src=it.image; } else { img.style.display="none"; }
+    img.onerror=function(){ img.style.display="none"; };
+    a.querySelector(".ltitle").textContent=it.title||"eBay listing";
+    var metaEl=a.querySelector(".lmeta");
+    metaEl.innerHTML=badge;
+    var metaText=document.createElement("span"); metaText.textContent=metaParts.join(" · ");
+    metaEl.appendChild(metaText);
+    var priceEl=a.querySelector(".lprice");
+    priceEl.textContent=priceTxt+" ";
+    var small=document.createElement("small");
+    small.textContent=[shipTxt,allInTxt].filter(Boolean).join(" · ");
+    priceEl.appendChild(small);
+    var cta=document.createElement("div");
+    cta.style.cssText="font-size:12.5px;font-weight:800;color:var(--accent);margin-top:2px";
+    cta.textContent= auction ? "View & bid on eBay ↗" : "Buy on eBay ↗";
+    a.querySelector(".lmain").appendChild(cta);
+    box.appendChild(a);
+  });
+}
+function loadEbayListings(item){
+  var box=$("ebayListings"); if(!box) return;
+  var req=++state.ebayReq;
+  var q=ebayQueryFor(item);
+  box.innerHTML='<p class="sub" style="margin:4px 0"><span class="spinner"></span>Loading live eBay listings…</p>';
+  var countEl=$("ebayCount"); if(countEl) countEl.textContent="";
+  var url=EBAY_PROXY+"?q="+encodeURIComponent(q)+"&type="+encodeURIComponent(state.ebayType)+"&sort="+encodeURIComponent(state.ebaySort)+"&limit=20";
+  fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(data){
+    if(req!==state.ebayReq) return;
+    renderEbayListings(data,q);
+  }).catch(function(){
+    if(req!==state.ebayReq) return;
+    if(countEl) countEl.textContent="";
+    box.innerHTML='<div class="ebay-note">Live listings couldn\'t load just now — that\'s usually a brief connection hiccup. The TCGplayer price above is still current, and the eBay buttons below open the same listings directly on eBay.</div>';
+  });
+}
+function ebayFiltersHTML(){
+  function btn(group,val,label,cur){ return '<button data-fgroup="'+group+'" data-fval="'+val+'" aria-pressed="'+(cur===val?"true":"false")+'">'+label+'</button>'; }
+  return '<div class="ebay-filters">'+
+    '<div class="filter-group"><label>Type</label><div class="fseg" role="group" aria-label="Listing type">'+btn("type","all","All",state.ebayType)+btn("type","auction","Auction",state.ebayType)+btn("type","bin","Buy It Now",state.ebayType)+'</div></div>'+
+    '<div class="filter-group"><label>Sort</label><div class="fseg" role="group" aria-label="Sort listings">'+btn("sort","best","Best match",state.ebaySort)+btn("sort","price","Price · low first",state.ebaySort)+btn("sort","ending","Ending soonest",state.ebaySort)+'</div></div>'+
+  '</div>';
+}
+
 /* ---------- Detail modal ---------- */
-function openDetail(item){
+function openDetail(item, keepEbayFilters){
+  if(!keepEbayFilters){ state.ebayType="all"; state.ebaySort="best"; }
   state.current=item;
   var urls=searchURLs(item);
   var inCol=state.collection.some(function(c){return c.id===item.id});
   var inWish=state.wishlist.some(function(c){return c.id===item.id});
-  var priceRows=item.prices && item.prices.length ? item.prices.map(function(r){ return '<div class="prow"><span>'+r.label+'</span><b>'+(r.cur==="€" ? "€"+Number(r.value).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : money(r.value))+'</b></div>'; }).join("") : '<div class="prow"><span>Market price</span><b>Not listed — check buy links</b></div>';
+  var priceRows=item.prices && item.prices.length ? item.prices.map(function(r){ return '<div class="prow"><span>'+r.label+'</span><b>'+(r.cur==="€" ? "€"+Number(r.value).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : money(r.value))+'</b></div>'; }).join("") : '<div class="prow"><span>Market price</span><b>Not listed — check listings below</b></div>';
   $("modalBody").innerHTML=
     '<div class="sheetgrid"><div><img class="big" id="modalImg" alt=""></div><div>'+
     '<h2 style="margin-top:2px" id="modalName"></h2>'+
@@ -683,17 +816,31 @@ function openDetail(item){
     '<div class="pricegrid">'+priceRows+'</div>'+
     '<div class="btnrow"><button class="btn primary" id="mAddCol">'+(inCol?"✓ In your collection":"Add to collection")+'</button><button class="btn" id="mAddWish">'+(inWish?"✓ On wishlist":"Add to wishlist")+'</button></div>'+
     '<div class="btnrow"><a class="btn dark" target="_blank" rel="noopener" href="'+urls.tcg+'">Buy on TCGplayer ↗</a></div>'+
-    '<p class="note" style="margin:14px 0 0"><b style="color:var(--ink)">For sale on eBay — live listings for this exact printing:</b></p>'+
-    '<div class="btnrow" style="margin-top:8px"><a class="btn primary" target="_blank" rel="noopener" href="'+urls.ebayBin+'">eBay Buy It Now · lowest first ↗</a><a class="btn" target="_blank" rel="noopener" href="'+urls.ebayAuction+'">eBay auctions · ending soonest ↗</a><a class="btn" target="_blank" rel="noopener" href="'+urls.ebay+'">All eBay listings ↗</a></div>'+
-    '<p class="note" style="margin-top:12px">Prices above are the catalogue market figures fetched just now. The eBay buttons open eBay\'s live results for this card — real items for sale, with their current prices and photos, straight from eBay.</p>'+
+    '<div class="ebay-live"><div class="ebay-live-head"><h3>Live on eBay</h3><span class="count" id="ebayCount"></span></div>'+
+    '<p class="note" style="margin:6px 0 0">Real items for sale for this exact printing, fetched live. Tap any listing to open it on eBay and buy.</p>'+
+    ebayFiltersHTML()+
+    '<div class="ebay-list" id="ebayListings" aria-live="polite"></div>'+
+    '<div class="btnrow" style="margin-top:12px"><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayBin+'">All Buy It Now on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayAuction+'">All auctions on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebay+'">Browse all eBay results ↗</a></div>'+
+    '</div>'+
+    '<p class="note" style="margin-top:12px">Catalogue prices above are market figures; eBay prices are the live asks/bids on each listing, plus shipping where shown.</p>'+
     '</div></div>';
   $("modalImg").src=item.image;
   $("modalName").textContent=item.name;
-  $("modalSub").textContent=item.game+" · tap the buttons below to track or buy this printing";
+  $("modalSub").textContent=item.game+" · TCGplayer market price + live eBay listings for this printing";
   $("kvSet").textContent=item.set||"—"; $("kvNum").textContent=item.number?("#"+item.number):"—"; $("kvRar").textContent=item.rarity||"—"; $("kvPrice").textContent=money(item.price);
   $("modal").classList.add("open"); document.body.style.overflow="hidden";
-  $("mAddCol").addEventListener("click",function(){ toggleCollection(item); openDetail(item); });
-  $("mAddWish").addEventListener("click",function(){ toggleWishlist(item); openDetail(item); });
+  $("mAddCol").addEventListener("click",function(){ toggleCollection(item); openDetail(item, true); });
+  $("mAddWish").addEventListener("click",function(){ toggleWishlist(item); openDetail(item, true); });
+  document.querySelectorAll("#modalBody [data-fgroup]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var g=b.getAttribute("data-fgroup"), v=b.getAttribute("data-fval");
+      if(g==="type") state.ebayType=v; if(g==="sort") state.ebaySort=v;
+      // update pressed states in place, then reload
+      document.querySelectorAll('#modalBody [data-fgroup="'+g+'"]').forEach(function(x){ x.setAttribute("aria-pressed", x.getAttribute("data-fval")===v?"true":"false"); });
+      loadEbayListings(item);
+    });
+  });
+  loadEbayListings(item);
 }
 function closeModal(){ $("modal").classList.remove("open"); document.body.style.overflow=""; }
 $("modalClose").addEventListener("click",closeModal);
