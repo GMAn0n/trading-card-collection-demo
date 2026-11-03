@@ -188,6 +188,12 @@
   .more-prices{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px}
   .more-prices .mp-title{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:800}
   .more-prices .prow small{display:block;font-weight:600;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.45}
+  /* Extra sources under More prices — Recent sales / Mandarake / COMC */
+  .more-prices .prow.has-thumb{align-items:center}
+  .src-thumb{width:46px;height:46px;object-fit:cover;border-radius:8px;background:var(--surface2);flex:none}
+  .src-main{flex:1;min-width:0}
+  .src-price{text-align:right;white-space:nowrap}
+  .src-unconf{color:var(--muted);font-weight:700;font-size:13px;white-space:nowrap}
   .cm-sub{font-size:12.5px;font-weight:800;color:var(--ink);margin:6px 0 0}
   .cond-row{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}
   .cond-row .cond-label{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:800;display:block;margin-bottom:6px}
@@ -1407,6 +1413,105 @@ function renderMorePrices(item){
   if(item.rawValue!=null) pcRow='<a class="prow" href="'+escAttr(item.rawUrl||"#")+'" target="_blank" rel="noopener"><span>PriceCharting — Ungraded (the headline value)<small>USD · raw, ungraded, for this exact printing</small></span><b>'+money(item.rawValue)+' ↗</b></a>';
   else if(headlineOf(item).pending) pcRow='<div class="prow"><span>PriceCharting — Ungraded (the headline value)</span><b>Fetching…</b></div>';
   box.innerHTML='<div class="more-prices"><div class="mp-title">More prices — compare by source</div><p class="note" style="margin:0">The headline stays PriceCharting. Each source below keeps its own label and currency — figures are never blended or substituted across printings or languages.</p>'+pcRow+tcHtml+cmHtml+buyeeHtml+'</div>';
+}
+/* ---------- Extra sources under More prices ----------
+   Three more source-labelled sections, fetched lazily from the same
+   proxy each time a card page opens: Recent sales (The Card API),
+   Mandarake (Japan) listings and COMC listings. Each section renders
+   only when its fetch returns rows — an error, a timeout, or an
+   empty result omits that section silently. Figures are shown
+   exactly as each source returns them and never blended. */
+var XS_PROXY="https://ebay-search-proxy.369samclarkisfine.workers.dev";
+function xsFetch(url){
+  var ctrl=(typeof AbortController!=="undefined") ? new AbortController() : null;
+  var to=ctrl ? setTimeout(function(){ try{ ctrl.abort(); }catch(e){} }, 12000) : null;
+  return fetch(url,{headers:{"Accept":"application/json"}, signal:ctrl?ctrl.signal:undefined}).then(function(r){
+    if(to) clearTimeout(to);
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  });
+}
+function xsStillOpen(item){ return !!(state.current && state.current.id===item.id); }
+/* 1) Recent sales — The Card API. Titles name their exact printing,
+   so each sale's own title is shown verbatim. A sale whose price is
+   missing or unconfirmed shows "price unconfirmed" — never a number
+   borrowed from anywhere else. */
+function loadSoldSales(item){
+  var box=$("xsSold"); if(!box) return;
+  var url=XS_PROXY+"/sold?name="+encodeURIComponent(item.name||"")+"&set="+encodeURIComponent(item.set||"")+"&number="+encodeURIComponent(item.number||"")+"&limit=6";
+  xsFetch(url).then(function(d){
+    if(!xsStillOpen(item)) return;
+    var el=$("xsSold"); if(!el) return;
+    if(!d || !d.found || !Array.isArray(d.sales) || !d.sales.length){ el.innerHTML=""; return; }
+    var rows=d.sales.slice(0,5).map(function(s){
+      var bits=[];
+      if(s.platform) bits.push(String(s.platform));
+      if(s.date) bits.push(String(s.date));
+      if(s.grade!=null && s.grade!=="") bits.push((s.grader?String(s.grader)+" ":"")+String(s.grade));
+      else if(s.condition) bits.push(String(s.condition));
+      var priceHtml;
+      var amt=(s.price==null?NaN:Number(s.price));
+      if(s.price==null || s.priceConfirmed===false || isNaN(amt)){
+        priceHtml='<b class="src-unconf">price unconfirmed</b>';
+      } else {
+        var cur=String(s.currency||"USD").toUpperCase();
+        priceHtml="<b>"+(cur==="USD" ? money(amt) : escHtml(cur)+" "+amt.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}))+"</b>";
+      }
+      return '<a class="prow" href="'+escAttr(s.url||"#")+'" target="_blank" rel="noopener"><span class="src-main">'+escHtml(s.title||"")+(bits.length?'<small>'+escHtml(bits.join(" · "))+'</small>':"")+'</span>'+priceHtml+'</a>';
+    }).join("");
+    el.innerHTML='<div class="more-prices"><div class="mp-title">Recent sales — The Card API</div>'+rows+'</div>';
+  }).catch(function(){ var el=$("xsSold"); if(el && xsStillOpen(item)) el.innerHTML=""; });
+}
+/* 2) Mandarake (Japan) — searched by the printing's Japanese name
+   when it has one (Japanese catalogue cards, the supplemental
+   Japanese promos, or the name printed on a scanned card), else the
+   English name. Sold-out items are skipped. Prices are Mandarake's
+   own, before international shipping. */
+function loadMandarake(item){
+  var box=$("xsMandarake"); if(!box) return;
+  var printed=item.namePrinted || (item._photoFields && item._photoFields.namePrinted) || null;
+  var q=printed || item.name || "";
+  if(!q) return;
+  var url=XS_PROXY+"/mandarake?q="+encodeURIComponent(q)+"&limit=6";
+  xsFetch(url).then(function(d){
+    if(!xsStillOpen(item)) return;
+    var el=$("xsMandarake"); if(!el) return;
+    var items=(d && Array.isArray(d.items)) ? d.items.filter(function(it){ return it && !it.soldOut; }).slice(0,5) : [];
+    if(!items.length){ el.innerHTML=""; return; }
+    var rows=items.map(function(it){
+      var priceHtml='<span class="src-price"><b>'+money(it.priceUSD)+'</b>'+(it.priceJPY!=null?'<small>¥'+Number(it.priceJPY).toLocaleString("en-US")+'</small>':"")+'</span>';
+      return '<a class="prow has-thumb" href="'+escAttr(it.url||"#")+'" target="_blank" rel="noopener">'+(it.image?'<img class="src-thumb" loading="lazy" alt="" src="'+escAttr(it.image)+'">':"")+'<span class="src-main">'+escHtml(it.title||"")+(it.shop?'<small>'+escHtml(it.shop)+'</small>':"")+'</span>'+priceHtml+'</a>';
+    }).join("");
+    el.innerHTML='<div class="more-prices"><div class="mp-title">Mandarake (Japan)</div><p class="note" style="margin:0">Listings from Mandarake in Japan — prices are before international shipping.</p>'+rows+'</div>';
+  }).catch(function(){ var el=$("xsMandarake"); if(el && xsStillOpen(item)) el.innerHTML=""; });
+}
+/* 3) COMC listings — the condition string is shown exactly as COMC
+   returns it (their stock is often graded slabs, so the string may
+   name a grader and grade rather than a raw condition). */
+function loadComc(item){
+  var box=$("xsComc"); if(!box) return;
+  var q=((item.name||"")+" "+(item.set||"")).trim();
+  if(!q) return;
+  var url=XS_PROXY+"/comc?q="+encodeURIComponent(q)+"&limit=6";
+  xsFetch(url).then(function(d){
+    if(!xsStillOpen(item)) return;
+    var el=$("xsComc"); if(!el) return;
+    var items=(d && Array.isArray(d.items)) ? d.items.slice(0,5) : [];
+    if(!items.length){ el.innerHTML=""; return; }
+    var rows=items.map(function(it){
+      var bits=[];
+      if(it.set) bits.push(String(it.set));
+      if(it.condition) bits.push(String(it.condition));
+      return '<a class="prow has-thumb" href="'+escAttr(it.url||"#")+'" target="_blank" rel="noopener">'+(it.image?'<img class="src-thumb" loading="lazy" alt="" src="'+escAttr(it.image)+'">':"")+'<span class="src-main">'+escHtml(it.title||"")+(bits.length?'<small>'+escHtml(bits.join(" · "))+'</small>':"")+'</span><b>'+money(it.price)+'</b></a>';
+    }).join("");
+    el.innerHTML='<div class="more-prices"><div class="mp-title">COMC</div>'+rows+'</div>';
+  }).catch(function(){ var el=$("xsComc"); if(el && xsStillOpen(item)) el.innerHTML=""; });
+}
+function loadExtraSources(item){
+  if(!item) return;
+  loadSoldSales(item);
+  loadMandarake(item);
+  loadComc(item);
 }
 function renderResults(list, query, sourceNote){
   var status=$("searchStatus"), results=$("results");
@@ -2988,7 +3093,7 @@ function suppPlaceholder(title, sub){
   return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
 }
 function suppItem(e){
-  return { id:e.id, game:"Pokémon", name:e.name, set:e.set, promoLabel:e.promoLabel, number:e.number, rarity:e.rarity, setTotal:null, image:suppPlaceholder(e.name, e.promoShort), price:null, priceLabel:"", lowPrice:null, prices:[], tcgUrl:null, tcgFinishes:[], language:"ja", supplemental:true, dexNo:e.dexNo, power:e.power||null, priceName:e.priceName||null, priceSet:e.priceSet||null, priceNumber:e.priceNumber||null, rawState:(e.priceName?undefined:"none"), raw:{ hp:e.hp, attacks:e.attacks, power:e.power||null, illustrator:e.illustrator||null, variants:e.variants } };
+  return { id:e.id, game:"Pokémon", name:e.name, namePrinted:e.namePrinted||null, set:e.set, promoLabel:e.promoLabel, number:e.number, rarity:e.rarity, setTotal:null, image:suppPlaceholder(e.name, e.promoShort), price:null, priceLabel:"", lowPrice:null, prices:[], tcgUrl:null, tcgFinishes:[], language:"ja", supplemental:true, dexNo:e.dexNo, power:e.power||null, priceName:e.priceName||null, priceSet:e.priceSet||null, priceNumber:e.priceNumber||null, rawState:(e.priceName?undefined:"none"), raw:{ hp:e.hp, attacks:e.attacks, power:e.power||null, illustrator:e.illustrator||null, variants:e.variants } };
 }
 /* The supplemental catalogue covers the Mew promos (Sam's
    collecting targets) and the GB-promo Dragonite, so it is
@@ -3303,6 +3408,7 @@ function openDetail(item, keepEbayFilters){
     '<div class="kv"><div><span>Set</span><b id="kvSet"></b></div><div><span>Number</span><b id="kvNum"></b></div><div><span>Rarity</span><b id="kvRar"></b></div><div><span id="kvPriceLabel">Market price</span><b id="kvPrice"></b></div></div>'+
     '<div class="pricegrid" id="priceGrid">'+priceRowsHTML(item)+'</div>'+
     '<div id="morePrices" aria-live="polite"></div>'+
+    '<div id="extraSources"><div id="xsSold"></div><div id="xsMandarake"></div><div id="xsComc"></div></div>'+
     photoAddSlotHTML(item)+
     gradedSectionHTML(item)+
     '<div class="btnrow"><button class="btn primary" id="mAddCol">'+(inCol?"Add another copy — choose condition":"Add to collection — choose condition")+'</button><button class="btn" id="mAddWish">'+(inWish?"✓ On wishlist":"Add to wishlist")+'</button>'+(inCol?'<button class="btn" id="mRemoveCol">Remove a copy</button>':'')+'</div>'+
@@ -3362,6 +3468,7 @@ function openDetail(item, keepEbayFilters){
   renderTcgProducts(item);
   loadEbayListings(item);
   loadMorePrices(item);
+  loadExtraSources(item);
   loadGradedComparison(item);
   if(item.game==="Pokémon") ensureValue(item, function(){ updateDetailValue(item); updateTilePrice(item); var ga=$("gradedAnchors"); if(ga) ga.innerHTML=gradedAnchorsHTML(item); });
 }
