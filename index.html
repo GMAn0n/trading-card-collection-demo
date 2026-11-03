@@ -118,7 +118,12 @@
   .fseg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px;flex-wrap:wrap}
   .fseg button{border:0;background:transparent;border-radius:999px;padding:7px 11px;font-weight:800;font-size:12.5px;color:var(--muted);white-space:nowrap}
   .fseg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
-  .ebay-list{display:grid;gap:10px}
+  .ebay-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .ebay-list .listing{flex-direction:column;gap:8px;min-width:0}
+  .ebay-list .listing img{width:100%;height:118px;object-fit:cover}
+  .ebay-list .listing .lmeta{font-size:12px}
+  .ebay-list .ebay-note{grid-column:1/-1}
+  .ebay-list>p{grid-column:1/-1;margin:4px 0}
   .listing{display:flex;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;text-decoration:none;color:inherit}
   .listing:hover{border-color:var(--accent)}
   .listing img{width:84px;height:84px;object-fit:cover;border-radius:10px;background:var(--surface2);flex:none}
@@ -148,7 +153,7 @@
   .tcg-prod .p-meta b{color:var(--ink)}
   .tcg-prod .p-cta{font-size:12.5px;font-weight:800;color:var(--accent);margin-top:4px}
   .tcg-prod .lbadge{display:inline-flex;font-size:11px;font-weight:800;letter-spacing:.02em;padding:3px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-left:6px;vertical-align:1px}
-  @media(max-width:520px){.listing img{width:68px;height:68px}.ebay-filters,.tcg-filters{flex-direction:column}.tcg-prod img{width:62px;height:87px}}
+  @media(max-width:520px){.ebay-list .listing img{height:102px}.ebay-filters,.tcg-filters{flex-direction:column}.tcg-prod img{width:62px;height:87px}}
   .spinner{width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin .8s linear infinite;display:inline-block;vertical-align:-5px;margin-right:8px}
   @keyframes spin{to{transform:rotate(360deg)}}
   /* Collection lists */
@@ -344,7 +349,7 @@
         <ol class="steps">
           <li><span class="n">1</span><span><b>Turn on the camera</b> and allow access when your browser asks — on a phone it uses the rear camera automatically. Rather not use the live view? <b>Upload a photo</b> instead: on a phone the picker offers your camera or your library.</span></li>
           <li><span class="n">2</span><span><b>Fill the card-shaped guide</b> with the card, edge to edge — including its <b>bottom edge</b>, where the collector number sits — in good light, and tap <b>Take photo</b>. The preview shows the camera's full field (nothing is cropped away) and the photo is kept at full resolution. A graded card can stay in its case — photograph the whole slab and the label is read too.</span></li>
-          <li><span class="n">3</span><span><b>Let it identify the card.</b> First, AI reads the photo (sent to our card-data proxy) and returns the card's name, HP, attacks, Pokémon Power / Ability name, collector number, illustrator, finish (holo, reverse holo or non-holo), 1st Edition stamp, set symbol and © year line — and, when the card sits in a grading slab, the label's company, grade and cert number. The read also reports the card's language and its name exactly as printed: printings in other languages are different cards with their own values, so a non-English read is matched only within that language's printings — a Japanese card is never swapped for the English printing. If that can't read it, the on-device fallback takes over: it finds the card's edges in the photo, squares it up, and reads the <b>name in the top band</b> (HP beside it as a cross-check) and the <b>collector number in the bottom-right</b>. Either way, <b>every printing of that name is then scored on the combination</b> — number, HP, the name exactly as printed on the card, each attack (name first, damage only as a bonus), the Pokémon Power name, the illustrator, the finish, the edition stamp, the set symbol and the © years — which is what separates look-alike reprints like Base Set from Base Set 2, since they share name, HP and attacks, and near-twins like the GB-promo Dragonite from the Fossil one, which share species, HP and an attack but differ in power and illustrator. The Pokédex number on a Japanese card's data strip counts only as weak supporting evidence — it's the species number, not a unique card id, so it never decides a match on its own. Illustrator and finish reads are noisy, so they only ever add points when they agree — a mismatch never counts against a printing. One exception: the Ancient Mew promo is printed entirely in glyph script, with no readable attacks, illustrator credit, set symbol or collector number, so a read that does carry readable card text rules that one printing out — a card with readable text cannot be it. A read number that no printing of that name carries is treated as a misread and ignored, never shown as fact. A printing opens automatically only on a clear win — a strong score with a clear margin, or at least three independent signal types agreeing; name and HP alone never auto-pick. Anything close goes to a picker where each printing lists the signals that matched it, so your tap is an informed one. If nothing reads clearly, it says so and asks for a retake instead of guessing. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings. Identity is cross-checked across multiple card databases and prices come from a separate pricing source, which is why a printing missing from one catalogue can still be identified and valued.</span></li>
+          <li><span class="n">3</span><span><b>Let it identify the card.</b> First, AI reads the photo (sent to our card-data proxy) and returns the card's name, HP, attacks, Pokémon Power / Ability name, collector number, illustrator, finish (holo, reverse holo or non-holo), 1st Edition stamp, set symbol and © year line — and, when the card sits in a grading slab, the label's company, grade and cert number. The read also reports the card's language and its name exactly as printed: printings in other languages are different cards with their own values, so a non-English read is matched only within that language's printings — a Japanese card is never swapped for the English printing. Reader output wobbles from run to run, so one weak read is never the last word: if a read resolves to no match — or only to a shortlist, with no clear winner — the photo is read a second time and both reads are combined — first read's values kept, its gaps filled, attacks unioned — before anything is declared unmatched or a shortlist is shown. A clear winner is never re-read. If that can't read it, the on-device fallback takes over: it finds the card's edges in the photo, squares it up, and reads the <b>name in the top band</b> (HP beside it as a cross-check) and the <b>collector number in the bottom-right</b>. Either way, <b>every printing of that name is then scored on the combination</b> — number, HP, the name exactly as printed on the card, each attack (name first, damage only as a bonus), the Pokémon Power name, the illustrator, the finish, the edition stamp, the set symbol and the © years — which is what separates look-alike reprints like Base Set from Base Set 2, since they share name, HP and attacks, and near-twins like the GB-promo Dragonite from the Fossil one, which share species, HP and an attack but differ in power and illustrator. The Pokédex number on a Japanese card's data strip counts only as weak supporting evidence — it's the species number, not a unique card id, so it never decides a match on its own. Illustrator and finish reads are noisy, so they only ever add points when they agree — a mismatch never counts against a printing. One exception: the Ancient Mew promo is printed entirely in glyph script, with no readable attacks, illustrator credit, set symbol or collector number, so a read that does carry readable card text rules that one printing out — a card with readable text cannot be it. A read number that no printing of that name carries is treated as a misread and ignored, never shown as fact. A printing opens automatically only on a clear win — a strong score with a clear margin, or at least three independent signal types agreeing; name and HP alone never auto-pick. Anything close goes to a picker where each printing lists the signals that matched it, so your tap is an informed one. If nothing reads clearly, it says so and asks for a retake instead of guessing. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings. Identity is cross-checked across multiple card databases and prices come from a separate pricing source, which is why a printing missing from one catalogue can still be identified and valued.</span></li>
           <li><span class="n">4</span><span><b>Add it in one tap.</b> From a photo, the card page leads with a one-tap <b>Add to collection</b> — Raw by default, with Damaged and Graded (PSA / CGC / BGS / SGC / TAG) right there on the same sheet. If the photo showed a grading slab, that sheet opens with <b>Graded</b> already selected — company and grade filled in from the label, cert number included — and the copy is valued from that grader's ladder row. A photo can't prove a 1st Edition stamp, so photo adds default to Unlimited unless you switch.</span></li>
         </ol>
         <p class="note" style="margin-top:16px">Live camera not prompting? Use <b>Upload a photo</b> instead — or open this page directly in Safari or Chrome (not inside another app's preview) and set Camera to <b>Allow</b> in site settings, then reload and tap “Turn on camera” again.</p>
@@ -981,22 +986,41 @@ function dexBriefsToItems(list, preferNameLc, lang){
     });
   }
   return Promise.all(list.slice(0,24).map(function(b){
-    return fetch("https://api.tcgdex.net/v2/"+(lang||"en")+"/cards/"+encodeURIComponent(b.id),{headers:{"Accept":"application/json"}}).then(function(r){
-      if(!r.ok) throw new Error("HTTP "+r.status);
-      return r.json();
-    }).then(function(d){ return normalizeDex(d,b,lang); }).catch(function(){
+    function briefItem(){
       return { id:"dex-"+b.id, game:"Pokémon", name:b.name, set:"", number:b.localId||"", rarity:"", image:b.image+"/high.webp", price:null, priceLabel:"TCGdex", prices:[], tcgUrl:null, tcgFinishes:[], language:(lang||"en"), raw:b };
-    });
+    }
+    function getDetail(){
+      return fetch("https://api.tcgdex.net/v2/"+(lang||"en")+"/cards/"+encodeURIComponent(b.id),{headers:{"Accept":"application/json"}}).then(function(r){
+        if(!r.ok) throw new Error("HTTP "+r.status);
+        return r.json();
+      }).then(function(d){ return normalizeDex(d,b,lang); });
+    }
+    // A failed detail fetch used to degrade the printing to its
+    // bare brief — no set, no HP, no attacks — which silently
+    // tanked the TRUE printing's score that run and floated
+    // wrong namesakes over it. Retry (up to 3 attempts) before
+    // degrading: the catalogue connection wobbles, and a printing
+    // that matters must not vanish from contention over it.
+    function attempt(n){
+      return getDetail().catch(function(){ return n<2 ? attempt(n+1) : briefItem(); });
+    }
+    return attempt(0);
   }));
 }
 function fetchDex(query, lang){
   var pq=parseQuery(query);
   var url="https://api.tcgdex.net/v2/"+(lang||"en")+"/cards?name="+encodeURIComponent(pq.name);
   if(pq.number) url+="&localId="+encodeURIComponent(pq.number);
-  return fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    return r.json();
-  }).then(function(list){
+  function getList(){
+    return fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.json();
+    });
+  }
+  // One retry on the list request itself: a single flaked call
+  // used to burn the whole TCGdex path and fall through to the
+  // backup catalogue (or an empty pool) for that scan.
+  return getList().catch(function(){ return getList(); }).then(function(list){
     return dexBriefsToItems(list, pq.name.toLowerCase(), lang);
   });
 }
@@ -2611,6 +2635,8 @@ function identifyFromPhoto(){
     return;
   }
   state.ocrBusy=true;
+  resolveOutcomeHook=null; // an OCR-driven resolution never triggers the AI second read
+  holdPicker=false; heldPicker=null; // nor may it inherit a parked AI picker hold
   var btn=$("btnOcr"); if(btn){ btn.disabled=true; btn.textContent="Reading card…"; }
   setOcrStatus('<p class="note"><span class="spinner"></span>Reading card…</p>');
   $("idFields").innerHTML="";
@@ -2701,6 +2727,18 @@ function aiIdentifyFields(src, cb){
         .then(function(r){ if(to) clearTimeout(to); return r.ok ? r.json() : null; })
         .then(function(j){
           if(!j || !j.found || !j.name){ fail(n); return; }
+          // Degenerate-read guard: a flaked run sometimes fills
+          // the fields with PROSE instead of values ("The name of
+          // the card is not visible in the image." as the name,
+          // the same sentence as the symbol / © line / power /
+          // illustrator, language "th"). Prose is not a read: a
+          // prose NAME rejects the whole response (the retry /
+          // second-read machinery takes over, exactly as for a
+          // transport failure), and prose in any other field is
+          // nulled so it can never be displayed or scored as fact.
+          function isProse(v){ return typeof v==="string" && /not visible|not readable|not clear|can'?t be|cannot be|unable to|isn'?t visible|no card|not present in/i.test(v); }
+          function cleanStr(v, maxWords){ if(v==null) return null; var s=String(v); return (isProse(s) || s.trim().split(/\s+/).length>=(maxWords||6)) ? null : s; }
+          function unquote(s){ return String(s==null?"":s).replace(/^["'“”]+|["'“”]+$/g,"").trim(); }
           var num=null, den=null;
           if(j.number){
             var m=String(j.number).match(/(\d{1,3})\s*\/\s*(\d{2,3})/);
@@ -2708,17 +2746,18 @@ function aiIdentifyFields(src, cb){
             else { var m2=String(j.number).match(/(\d{1,3})/); if(m2) num=String(parseInt(m2[1],10)); }
           }
           var nm=String(j.name).trim();
+          if(isProse(nm) || nm.split(/\s+/).length>=6){ fail(n); return; }
           // Attacks: accept the documented {name,damage} objects, but
           // also plain strings and alternate keys — an earlier build
           // silently dropped any attack that wasn't an object with a
           // .name, which is how a returned attack produced no
           // evidence at all in the resolver.
           var atks=Array.isArray(j.attacks)?j.attacks.map(function(a){
-            if(typeof a==="string"){ var s0=a.trim(); return s0?{name:s0, damage:""}:null; }
-            if(a && a.name) return {name:String(a.name), damage:(a.damage==null?"":String(a.damage))};
-            if(a && (a.attack||a.text)) return {name:String(a.attack||a.text), damage:""};
+            if(typeof a==="string"){ var s0=unquote(a); return s0?{name:s0, damage:""}:null; }
+            if(a && a.name) return {name:unquote(a.name), damage:(a.damage==null?"":String(a.damage))};
+            if(a && (a.attack||a.text)) return {name:unquote(a.attack||a.text), damage:""};
             return null;
-          }).filter(Boolean):[];
+          }).filter(function(t){ return t && !isProse(t.name); }):[];
           var slab=null;
           if(j.slab && typeof j.slab==="object"){
             slab={ company:(j.slab.company==null?"":String(j.slab.company)), grade:(j.slab.grade==null?null:String(j.slab.grade)), cert:(j.slab.cert==null?null:String(j.slab.cert)), labelName:(j.slab.labelName==null?null:String(j.slab.labelName)), labelNumber:(j.slab.labelNumber==null?null:String(j.slab.labelNumber)) };
@@ -2746,6 +2785,7 @@ function aiIdentifyFields(src, cb){
           var power=null;
           if(typeof j.power==="string" && j.power.trim() && !/^(none|null)$/i.test(j.power.trim())) power=j.power.trim();
           else if(j.power && typeof j.power==="object" && j.power.name && !/^(none|null)$/i.test(String(j.power.name).trim())) power=String(j.power.name);
+          if(power && isProse(power)) power=null;
           var fin=(j.finish==="holo"||j.finish==="reverse-holo"||j.finish==="non-holo") ? j.finish : null;
           // Language partition inputs. Effective language: the
           // proxy's read, or — when it came back null but the
@@ -2753,9 +2793,10 @@ function aiIdentifyFields(src, cb){
           // strip is a Japanese-template card whatever the model
           // said about the rest).
           var printed=(j.namePrinted==null?null:String(j.namePrinted));
+          if(printed && (isProse(printed) || printed.trim().split(/\s+/).length>=6)) printed=null;
           var lang=(j.language==null?null:String(j.language).toLowerCase());
           if(!lang && printed && /[^\u0000-\u024F]/.test(printed)) lang="ja";
-          done({ name:nm, candidates:[nm], rejectedName:"", num:num, den:den, hp:j.hp?String(j.hp):null, attacks:atks, power:power, firstEdition:(typeof j.firstEdition==="boolean"?j.firstEdition:null), setSymbol:(j.setSymbol==null?null:String(j.setSymbol)), yearLine:(j.yearLine==null?null:String(j.yearLine)), illustrator:(j.illustrator?String(j.illustrator):null), finish:fin, slab:slab, numFromLabel:numFromLabel, language:lang, namePrinted:printed, dexNo:(j.dexNo==null?null:String(j.dexNo)), ai:true });
+          done({ name:nm, candidates:[nm], rejectedName:"", num:num, den:den, hp:j.hp?String(j.hp):null, attacks:atks, power:power, firstEdition:(typeof j.firstEdition==="boolean"?j.firstEdition:null), setSymbol:cleanStr(j.setSymbol), yearLine:cleanStr(j.yearLine, 99), illustrator:cleanStr(j.illustrator), finish:fin, slab:slab, numFromLabel:numFromLabel, language:lang, namePrinted:printed, dexNo:(j.dexNo==null?null:String(j.dexNo)), ai:true });
         })
         .catch(function(){ if(to) clearTimeout(to); fail(n); });
       }
@@ -2765,8 +2806,87 @@ function aiIdentifyFields(src, cb){
   img.onerror=function(){ done(null); };
   img.src=src;
 }
+function identifySnag(){
+  setOcrStatus('<p class="note"><b>Identification hit a snag</b> matching that read against the catalogue — nothing was guessed from it. Tap <b>Identify this card from the photo</b> to try again, or type the name &amp; number below.</p>');
+}
+/* Merge two AI reads of the SAME photo: the first read's values
+   win where present; the second fills its gaps, and attack lists
+   are unioned by name. Reader output wobbles run to run — one
+   run drops the attacks, the next hallucinates a number or flips
+   the finish — so the merged read carries every signal either
+   run managed to see, and scoring weighs them as usual. */
+function mergeReadFields(a, b){
+  if(!a) return b;
+  if(!b) return a;
+  function pick(x, y){ return (x!=null && x!=="") ? x : y; }
+  var attacks=(a.attacks||[]).slice(), seenA={};
+  attacks.forEach(function(t){ seenA[normKeyText(t.name)]=true; });
+  (b.attacks||[]).forEach(function(t){ if(!seenA[normKeyText(t.name)]){ seenA[normKeyText(t.name)]=true; attacks.push(t); } });
+  var cands=[];
+  [a.name].concat(a.candidates||[], [b.name], b.candidates||[]).forEach(function(n){ if(n && cands.indexOf(n)<0) cands.push(n); });
+  var num=a.num, den=a.den, nfl=!!a.numFromLabel;
+  if(!num && b.num){ num=b.num; den=b.den; nfl=!!b.numFromLabel; }
+  else if(num && b.numFromLabel && numEq(num, b.num)){ nfl=true; if(!den) den=b.den; }
+  return {
+    name: a.name || b.name, candidates: cands, rejectedName: "",
+    num: num, den: den, hp: pick(a.hp, b.hp), attacks: attacks,
+    power: pick(a.power, b.power),
+    firstEdition: (a.firstEdition===true || b.firstEdition===true) ? true : (a.firstEdition!=null ? a.firstEdition : b.firstEdition),
+    setSymbol: pick(a.setSymbol, b.setSymbol), yearLine: pick(a.yearLine, b.yearLine),
+    illustrator: pick(a.illustrator, b.illustrator), finish: pick(a.finish, b.finish),
+    slab: a.slab || b.slab, numFromLabel: nfl,
+    language: pick(a.language, b.language), namePrinted: pick(a.namePrinted, b.namePrinted),
+    dexNo: pick(a.dexNo, b.dexNo), ai: true
+  };
+}
+/* Resolve a first AI read with the second-read safety net: if
+   resolution ends in no-match / unreadable — OR in a picker,
+   where the read resolved but possibly to the WRONG printings
+   (the Promo #9 and English Southern Islands Mew failures: the
+   scan "worked", it just shortlisted the wrong Mews) — the
+   photo is read ONCE more and the merged evidence is resolved
+   before the first outcome is allowed to stand. One weak or
+   flaked read used to be terminal — the GB Dragonite that said
+   "not in catalog" on the first input and worked on the second
+   is exactly that shape — and a wrong-picker read had no second
+   chance at all. A confident auto-select stands as-is and never
+   spends the extra read, and the net fires at most once per
+   scan: the hook is consumed before it runs, so the merged
+   re-resolution reports to nobody. */
+function resolveWithSecondRead(fields, src){
+  resolveOutcomeHook=function(kind){
+    if(kind==="nomatch" || kind==="unreadable" || kind==="picker"){
+      if(kind==="picker"){
+        // finishScoredResolve announces the picker outcome and
+        // then renders the shortlist unconditionally; holdPicker
+        // parks that first render (see showScoredPicker) while
+        // the second read runs, so the user only ever sees the
+        // merged outcome — never the first read's wrong shortlist
+        // flashing up, and never two pickers stacked.
+        holdPicker=true;
+        setOcrStatus('<p class="note"><span class="spinner"></span>That read left more than one candidate — reading the photo once more and combining both reads before showing the shortlist…</p>');
+      } else {
+        setOcrStatus('<p class="note"><span class="spinner"></span>That read didn\'t settle it — reading the photo once more and combining both reads…</p>');
+      }
+      aiIdentifyFields(src, function(f2){
+        holdPicker=false;
+        state.ocrBusy=false; ocrBtnReset();
+        // A throw inside resolution surfaces as itself — it is
+        // never mistaken for "the AI couldn't read it", which
+        // would silently substitute the OCR fallback's read.
+        try{ resolvePhotoFields(mergeReadFields(fields, f2)); }
+        catch(e){ identifySnag(); }
+      });
+      return;
+    }
+    state.ocrBusy=false; ocrBtnReset();
+  };
+  try{ resolvePhotoFields(fields); }
+  catch(e){ resolveOutcomeHook=null; holdPicker=false; state.ocrBusy=false; ocrBtnReset(); identifySnag(); }
+}
 function identifyFromCapture(){
   if(state.ocrBusy) return;
+  holdPicker=false; heldPicker=null; // a fresh scan never inherits a parked picker hold
   var prev=$("capturePreview");
   if(!prev || prev.hidden || !prev.src){ toast("Take or upload a photo first"); return; }
   state.ocrBusy=true;
@@ -2774,18 +2894,26 @@ function identifyFromCapture(){
   setOcrStatus('<p class="note"><span class="spinner"></span>Identifying with AI…</p>');
   $("idFields").innerHTML="";
   aiIdentifyFields(prev.src, function(fields){
-    state.ocrBusy=false; ocrBtnReset();
     if(fields && (fields.name || fields.num)){
-      // A throw inside resolution surfaces as itself — it is
-      // never mistaken for "the AI couldn't read it", which would
-      // silently substitute the OCR fallback's Latin-only read.
-      try{ resolvePhotoFields(fields); }
-      catch(e){ setOcrStatus('<p class="note"><b>Identification hit a snag</b> matching that read against the catalogue — nothing was guessed from it. Tap <b>Identify this card from the photo</b> to try again, or type the name &amp; number below.</p>'); }
+      resolveWithSecondRead(fields, prev.src);
       return;
     }
-    // AI couldn't read it — fall back to the on-device reader.
-    if(window.Tesseract){ identifyFromPhoto(); }
-    else { setOcrStatus('<p class="note">AI identification couldn\'t read that photo, and the on-device reader is still loading — tap <b>Identify this card from the photo</b> in a moment, or type the name below.</p>'); }
+    // The AI read itself returned nothing usable (a dropped
+    // connection, a timed-out call, an unreadable response —
+    // transport and content both wobble). One more full read
+    // before the on-device fallback takes over.
+    setOcrStatus('<p class="note"><span class="spinner"></span>That read didn\'t come through — reading the photo once more…</p>');
+    aiIdentifyFields(prev.src, function(fields2){
+      state.ocrBusy=false; ocrBtnReset();
+      if(fields2 && (fields2.name || fields2.num)){
+        try{ resolvePhotoFields(fields2); }
+        catch(e){ identifySnag(); }
+        return;
+      }
+      // AI couldn't read it — fall back to the on-device reader.
+      if(window.Tesseract){ identifyFromPhoto(); }
+      else { setOcrStatus('<p class="note">AI identification couldn\'t read that photo, and the on-device reader is still loading — tap <b>Identify this card from the photo</b> in a moment, or type the name below.</p>'); }
+    });
   });
 }
 function maybeAutoIdentify(){
@@ -2852,12 +2980,35 @@ function fieldsChipsHTML(f){
   var chipsHtml=chips.length ? '<div class="cam-status" style="margin:0">'+chips.join("")+'</div>' : "";
   return slabBannerHTML(f)+chipsHtml;
 }
+/* One-shot resolution outcome hook: identifyFromCapture arms it
+   so a first AI read that ends in no-match / unreadable — or in
+   a picker, the wrong-Mews failure mode — triggers a second
+   read on merged evidence instead of ending the scan.
+   Kinds: "auto" | "picker" | "nomatch" | "unreadable". Every
+   terminal path of resolvePhotoFields / finishScoredResolve /
+   the language resolver reports through here exactly once. */
+var resolveOutcomeHook=null;
+/* Picker hold for the second-read net: while a picker outcome
+   is being re-read, holdPicker is true and showScoredPicker
+   parks its arguments in heldPicker instead of rendering — the
+   merged re-resolution that follows renders the real outcome.
+   The parked copy is only a fallback: if the merged resolution
+   somehow never renders a picker of its own, the parked one is
+   what a retry would show, never a second stacked overlay. */
+var holdPicker=false;
+var heldPicker=null;
+function noteResolveOutcome(kind){
+  var h=resolveOutcomeHook; if(!h) return;
+  resolveOutcomeHook=null;
+  try{ h(kind); }catch(e){}
+}
 function photoUnreadable(fields){
   // Nothing plausible was read: say so honestly, ask for a retake,
   // and leave the manual box EMPTY — never pre-fill it with the
   // unclear fragments the reader rejected.
   $("identifyInput").value="";
   setOcrStatus('<p class="note"><b>Couldn\'t read that card clearly.</b> The name strip and the collector number in the bottom-right didn\'t come through — unclear fragments are not looked up or filled in. Retake straight-on, filling the card-shaped guide edge to edge (including the bottom edge), in brighter light with less glare — or type the name &amp; number below.</p>');
+  noteResolveOutcome("unreadable");
 }
 function photoNoMatch(fields){
   // Only ever called with a plausible name (see resolvePhotoFields):
@@ -2865,6 +3016,7 @@ function photoNoMatch(fields){
   // manual fallback working as intended.
   setOcrStatus('<p class="note">Read “'+escHtml(fields.name||"")+'” but the catalogue has no match for it — the box below is pre-filled with what was read; check the spelling and look it up.</p>');
   $("identifyInput").value=(fields.name||"")+(fields.num?" "+fields.num:"");
+  noteResolveOutcome("nomatch");
 }
 /* ---------- Scored printing resolution ----------
    One resolver for both read paths (AI vision and on-device OCR).
@@ -2942,7 +3094,7 @@ function attackNameEq(a,b){
   // Ancient Mew on the finish signal alone. When either side is
   // non-Latin, compare the raw strings, ignoring spaces and the
   // katakana middle dot, with trailing damage digits stripped.
-  var ra=String(a||"").replace(/[\s・]/g,""), rb=String(b||"").replace(/[\s・]/g,"");
+  var ra=String(a||"").replace(/[\s・]/g,"").replace(/["'“”「」『』]/g,""), rb=String(b||"").replace(/[\s・]/g,"").replace(/["'“”「」『』]/g,"");
   if(ra && rb && (/[^\x00-\x7F]/.test(ra) || /[^\x00-\x7F]/.test(rb))){
     if(ra===rb) return true;
     var ras=ra.replace(/\d+$/,""), rbs=rb.replace(/\d+$/,"");
@@ -3039,7 +3191,13 @@ function scoreCandidate(it, f){
   if(typeof fPower==="string" && /^(none|null)$/i.test(fPower.trim())) fPower=null;
   // Collector number — the strongest single signal, when it's real
   // (the caller has already discarded numbers no printing carries).
-  if(f.num){
+  // Built-in supplemental promos are UNNUMBERED: the number stored
+  // on them is the species' Pokédex №, kept for pricing lookups —
+  // a collector-number match must never score for them (the dex №
+  // signal below credits a dex-strip read, at weak weight). Before
+  // this, a hallucinated "151/151" (read off the flavour line)
+  // handed every supplemental Mew +60 of phantom number evidence.
+  if(f.num && !it.supplemental){
     if(numEq(it.number, f.num)){
       var tot=candSetTotal(it);
       if(f.den && tot && numEq(tot, f.den)){ score+=100; ev.push("number "+f.num+"/"+f.den+" ✓"+(f.numFromLabel?" · from slab label":"")); }
@@ -3068,7 +3226,21 @@ function scoreCandidate(it, f){
   // catalogue) can score it; catalogue items without one simply
   // score nothing here.
   if(f.namePrinted && it.namePrinted){
-    if(String(f.namePrinted).trim()===String(it.namePrinted).trim()){ score+=25; ev.push("printed name ✓"); types.push("printedName"); }
+    var rpS=String(f.namePrinted).trim(), cpS=String(it.namePrinted).trim();
+    var printedHit=(rpS===cpS);
+    if(!printedHit && /[^\u0000-\u024F]/.test(rpS) && /[^\u0000-\u024F]/.test(cpS)){
+      // Kana near-match: a one-character garble of the name strip
+      // (ミュレ read for ミュウ on a small photo) is still the
+      // printed name — same length, at most one kana different.
+      // Latin names get no such tolerance: their near-misses are
+      // different cards (the evolution-line reads), not garbles.
+      var rs=rpS.replace(/\s+/g,""), cs=cpS.replace(/\s+/g,"");
+      if(rs.length>=3 && rs.length===cs.length){
+        var ndiff=0; for(var ci2=0;ci2<rs.length;ci2++){ if(rs.charAt(ci2)!==cs.charAt(ci2)) ndiff++; }
+        if(ndiff<=1) printedHit=true;
+      }
+    }
+    if(printedHit){ score+=25; ev.push("printed name ✓"); types.push("printedName"); }
   }
   // Pokédex number — WEAK, POSITIVE-ONLY evidence (+10). dexNo is
   // the SPECIES number, not a unique card id: every Mew printing
@@ -3143,7 +3315,27 @@ function scoreCandidate(it, f){
     var wantFinish={ "holo":"holo", "reverse-holo":"reverse", "non-holo":"normal" }[f.finish]||null;
     if(wantFinish){
       var kinds=candFinishKinds(it);
-      if(kinds.length && kinds.indexOf(wantFinish)>=0){ score+=15; ev.push(finishReadLabel(f.finish)+" ✓"); types.push("finish"); }
+      // A NON-HOLO read scores nothing even when it agrees: it is
+      // the ABSENCE of a foil sighting, not an observation — the
+      // same doctrine as the 1st Edition stamp below (not seeing
+      // it is weak; a small or glary photo of a full-foil card
+      // reads "non-holo" while foil is plainly there). Crediting
+      // it handed non-holo siblings +15 of phantom evidence over
+      // the true foil printing. Foil sightings (holo / reverse)
+      // keep their points; the foil-family rule handles flips
+      // between the two patterns.
+      if(kinds.length && wantFinish!=="normal" && kinds.indexOf(wantFinish)>=0){ score+=15; ev.push(finishReadLabel(f.finish)+" ✓"); types.push("finish"); }
+      else if(kinds.length && (wantFinish==="holo"||wantFinish==="reverse") && (kinds.indexOf("holo")>=0||kinds.indexOf("reverse")>=0)){
+        // Foil-FAMILY agreement (+7): foil reads flip between
+        // "holo" and "reverse holo" run to run — the pattern name
+        // is unreliable, but the photo DID show foil. A printing
+        // that exists only as non-holo earns nothing from a foil
+        // read, which is what separates the holo Wizards promo
+        // #9 from its non-holo twin #8 when the pattern read
+        // flips (the PROMO star is never read, so the pair +
+        // illustrator + © evidence otherwise ties them).
+        score+=7; ev.push("foil ✓"); types.push("finish");
+      }
     }
   }
   // 1st Edition stamp: seeing it is strong evidence for the 1st
@@ -3227,7 +3419,15 @@ function sortScored(scored){
     if(b.score!==a.score) return b.score-a.score;
     var r=eraRank(a.era)-eraRank(b.era); // original printing wins ties
     if(r) return r;
-    return String(a.item.set||"").localeCompare(String(b.item.set||""));
+    // A glyph-flagged printing (the Ancient Mew promo) wins an
+    // exact tie: it can never earn attack / illustrator / symbol
+    // evidence, so a tie against it means the readable-text
+    // signals were absent — the only ground it can be judged on.
+    // (An alphabetical set-name break used to produce this
+    // outcome by accident; this states the reason directly.)
+    var g=(b.item.glyph?1:0)-(a.item.glyph?1:0);
+    if(g) return g;
+    return 0; // stable — remaining ties keep pool / catalogue order
   });
   return scored;
 }
@@ -3457,11 +3657,23 @@ function suppSpeciesOf(enName){
   if(en==="venusaur") return "venusaur";
   return null;
 }
-function supplementalJaPool(fields){
+function supplementalJaPool(fields, nameGateOk){
   if(!fields) return [];
   var nm=normKeyText(fields.name||"");
   var printed=String(fields.namePrinted||"").trim();
-  var species=suppSpeciesOf(nm);
+  // The English-name gate is the weakest opener (the name is the
+  // signal that wobbles most), so callers resolving an ENGLISH-
+  // claimed read pass nameGateOk===false: there, only the strong
+  // Japanese indicators — a non-Latin printed name, a power match,
+  // kana in the printed name — may pull these Japanese printings
+  // into the pool (the dex № + HP opener is disabled there too;
+  // see its own comment). Without that, every English Mew /
+  // Dragonite / Venusaur read silently pooled the Japanese
+  // promos as match candidates, and their stored fields
+  // (HP, dex №, illustrator) could outscore — and auto-select
+  // over — the English printing the photo actually showed, which
+  // breaks the language partition this catalogue exists under.
+  var species=(nameGateOk===false)?null:suppSpeciesOf(nm);
   if(!species && printed){
     // Printed-name match against an entry's Japanese name opens
     // that entry's species pool — even when the English name
@@ -3490,7 +3702,7 @@ function supplementalJaPool(fields){
       if(e2.power && (attackNameEq(e2.power, fields.power) || (e2.powerJa && attackNameEq(e2.powerJa, fields.power)))){ species=suppSpeciesOf(e2.name); break; }
     }
   }
-  if(!species && fields.dexNo && fields.hp){
+  if(!species && fields.dexNo && fields.hp && nameGateOk!==false){
     // Pokédex № + HP, agreeing TOGETHER with one entry, open
     // that entry's species pool. Neither signal opens it alone
     // (dex reads flip between species; HP100 spans half the
@@ -3498,6 +3710,16 @@ function supplementalJaPool(fields){
     // the "Torterra" run specified: printed name, № 003, HP100
     // and Solar Power together must outrank a wrong English
     // name, and a wrong English name must not empty the pool.
+    // JAPANESE PATH ONLY: on an English-claimed read this opener
+    // is disabled (nameGateOk===false), because dex № + HP are
+    // SPECIES facts the English printing shares with its
+    // Japanese twin by design — every English Southern Islands
+    // Mew read (№ 151, HP30) tripped it and pooled the Japanese
+    // Mew, which then outscored the English printing on the dex
+    // № points only it could earn. The power opener above stays
+    // available on the English path: a power name is a printing
+    // fact, not a species fact, so it can still rescue a card
+    // whose name and printed name were both misread.
     var dN=parseInt(fields.dexNo,10), dH=parseInt(fields.hp,10);
     if(!isNaN(dN) && !isNaN(dH)){
       for(var k=0;k<JP_PROMO_CATALOGUE.length;k++){
@@ -3549,8 +3771,11 @@ function fetchLangPool(fields){
     lists.forEach(function(l){ (l||[]).forEach(function(it){ if(it && !seen[it.id]){ seen[it.id]=true; out.push(it); } }); });
     // Built-in Japanese promo catalogue: consulted BEFORE a Japanese
     // printing may be declared uncovered (TCGdex carries no vintage
-    // Japanese promos). Supplemental entries join the same scored pool.
-    supplementalJaPool(fields).forEach(function(it){ if(!seen[it.id]){ seen[it.id]=true; out.push(it); } });
+    // Japanese promos). Supplemental entries join the same scored
+    // pool — on the JAPANESE path only: they are Japanese printings,
+    // so pooling them into another language's resolution would break
+    // the same hard partition the English path guards.
+    if(lang==="ja") supplementalJaPool(fields).forEach(function(it){ if(!seen[it.id]){ seen[it.id]=true; out.push(it); } });
     return out;
   });
 }
@@ -3584,7 +3809,7 @@ function resolvePhotoFields(fields){
     // catalogue covers, and if the walk above found nothing at
     // all, these candidates are the pool.
     var seen={}; pool.forEach(function(it){ if(it && it.id) seen[it.id]=true; });
-    supplementalJaPool(fields).forEach(function(it){ if(!seen[it.id]){ seen[it.id]=true; pool.push(it); } });
+    supplementalJaPool(fields, false).forEach(function(it){ if(!seen[it.id]){ seen[it.id]=true; pool.push(it); } });
     enrichEnSupplements(pool);
     if(pool.length){ finishScoredResolve(fields, pool); return; }
     if(fields.num){
@@ -3595,10 +3820,12 @@ function resolvePhotoFields(fields){
         $("idFields").innerHTML=fieldsChipsHTML(fields);
         setOcrStatus('<p class="note">A collector number was read ('+fields.num+(fields.den?"/"+fields.den:"")+') but it didn\'t resolve to any printing — type the name below and include that number to pin the printing.</p>');
         $("identifyInput").value=fields.num;
+        noteResolveOutcome("nomatch");
       }).catch(function(){
         $("idFields").innerHTML=fieldsChipsHTML(fields);
         setOcrStatus('<p class="note">A collector number was read ('+fields.num+(fields.den?"/"+fields.den:"")+') but it couldn\'t be checked just now — type the name below and include that number to pin the printing.</p>');
         $("identifyInput").value=fields.num;
+        noteResolveOutcome("nomatch");
       });
       return;
     }
@@ -3621,6 +3848,7 @@ function langNoCatalogue(fields){
   $("idFields").innerHTML=fieldsChipsHTML(fields);
   setOcrStatus('<p class="note"><b>This looks like a '+escHtml(langNameOf(fields.language))+' printing, which isn\'t in the Japanese catalogue or the built-in Japanese promo catalogue — nothing was auto-picked.</b> The English printing is a different card with a different value, so it is never substituted for it. The name is in the box below — search by name to browse the catalogue yourself.</p>');
   $("identifyInput").value=fields.name||"";
+  noteResolveOutcome("nomatch");
 }
 function resolvePhotoFieldsLang(fields){
   var langName=langNameOf(fields.language);
@@ -3681,7 +3909,20 @@ function finishScoredResolve(fields, pool){
   // trusted (labels are machine-printed, not read off the card
   // face through a case) and is never discarded.
   if(fields.num && pool.length && !fields.numFromLabel){
-    var anyNum=pool.some(function(it){ return numEq(it.number, fields.num); });
+    // The number must be carried by a printing OF THE READ NAME:
+    // pool neighbours pulled in by a contains search (a "Mewtwo
+    // ex" numbered 151 in a "Mew" pool) must not validate it, and
+    // built-in supplemental promos never can — they are unnumbered
+    // and their stored number is the Pokédex №. A catalogue name
+    // in a non-Latin script normalises to nothing and cannot
+    // disprove the match, so it still counts (Japanese pools keep
+    // their previous behaviour).
+    var anyNum=pool.some(function(it){
+      if(it.supplemental) return false;
+      var cn=normKeyText(it.name), fn=normKeyText(fields.name||"");
+      if(fn && cn && cn!==fn) return false;
+      return numEq(it.number, fields.num);
+    });
     if(!anyNum){ fields.numDiscarded=fields.num+(fields.den?"/"+fields.den:""); fields.num=null; fields.den=null; }
   }
   $("idFields").innerHTML=fieldsChipsHTML(fields);
@@ -3702,6 +3943,7 @@ function finishScoredResolve(fields, pool){
   //     The English name is not a signal type and HP is only one,
   //     so name + HP alone can never trigger rule B.
   if((top.score>=50 && margin>=25) || (top.types.length>=3 && margin>=15)){
+    noteResolveOutcome("auto");
     setOcrStatus(discardNote+'<p class="note"><b>Matched:</b> '+escHtml(top.item.name)+' · '+escHtml(top.item.set||"")+' · #'+escHtml(top.item.number||"")+(top.ev.length?(' — '+escHtml(top.ev.join(" · "))):'')+'. Opening it — add it to your collection in one tap.</p>');
     top.item._fromPhoto=true; top.item._photoFields=fields;
     openDetail(top.item);
@@ -3712,15 +3954,28 @@ function finishScoredResolve(fields, pool){
     fetchNamePool(fields.name||"").then(function(altPool){
       enrichEnSupplements(altPool||[]);
       var altScored=pickerShortlist(sortScored((altPool||[]).map(function(it){ return scoreCandidate(it, fields); })), fields);
+      noteResolveOutcome("picker");
       showScoredPicker(pickerShortlist(scored, fields), fields, altScored);
-    }).catch(function(){ showScoredPicker(pickerShortlist(scored, fields), fields, []); });
+    }).catch(function(){ noteResolveOutcome("picker"); showScoredPicker(pickerShortlist(scored, fields), fields, []); });
     return;
   }
   setOcrStatus(discardNote+'<p class="note">No printing wins clearly on the combined evidence, so nothing was auto-picked — the printings below are the shortlist the read\'s evidence actually discriminates between, ranked by how much of what was read they match. Tap the one that matches your card; nothing is added until you choose.</p>');
+  noteResolveOutcome("picker");
   showScoredPicker(pickerShortlist(scored, fields), fields);
 }
 function showScoredPicker(scored, fields, altScored){
   var wrap=document.createElement("div"); wrap.className="picker-overlay";
+  if(holdPicker){
+    // A picker outcome the second-read net is re-reading (see
+    // resolveWithSecondRead): park this render instead of
+    // showing it. The merged re-resolution renders the outcome
+    // that stands — an auto-select, or this same picker rebuilt
+    // from the combined evidence — so the first read's shortlist
+    // is never the thing the user is asked to tap.
+    heldPicker={ scored:scored, fields:fields, altScored:altScored };
+    return;
+  }
+  heldPicker=null;
   function cardHTML(s, attr, i){
     var it=s.item;
     var annParts=s.ev.slice();
@@ -3872,6 +4127,12 @@ function openDetail(item, keepEbayFilters){
     '<p class="sub" id="modalSub" style="margin-bottom:4px"></p><div id="modalEditions"></div><div id="modalSlab"></div>'+
     '<div class="kv"><div><span>Set</span><b id="kvSet"></b></div><div><span>Number</span><b id="kvNum"></b></div><div><span>Rarity</span><b id="kvRar"></b></div><div><span id="kvPriceLabel">Market price</span><b id="kvPrice"></b></div></div>'+
     '<div class="pricegrid" id="priceGrid">'+priceRowsHTML(item)+'</div>'+
+    '<div class="ebay-live"><div class="ebay-live-head"><h3 id="ebayHead">Live on eBay</h3><span class="count" id="ebayCount"></span></div>'+
+    '<p class="note" id="ebayNote" style="margin:6px 0 0">Real items for sale for this exact printing, fetched live. Tap any listing to open it on eBay and buy.</p>'+
+    ebayFiltersHTML()+
+    '<div class="ebay-list" id="ebayListings" aria-live="polite"></div>'+
+    '<div class="btnrow" style="margin-top:12px"><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayBin+'">All Buy It Now on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayAuction+'">All auctions on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebay+'">Browse all eBay results ↗</a></div>'+
+    '</div>'+
     '<div id="morePrices" aria-live="polite"></div>'+
     '<div id="extraSources"><div id="xsSold"></div><div id="xsMandarake"></div><div id="xsComc"></div><div id="xsSurugaya"></div></div>'+
     photoAddSlotHTML(item)+
@@ -3883,12 +4144,6 @@ function openDetail(item, keepEbayFilters){
     '<p class="note" style="margin:6px 0 0">Editions are separated below: <b>Unlimited</b> finishes link to their TCGplayer product page with the product photo. <b>1st Edition</b> has no separate TCGplayer product — its entries use the catalog image and link to a TCGplayer search filtered to 1st Edition for this card. Prices are never shared between editions.</p>'+
     '<div id="tcgFiltersWrap">'+tcgFiltersHTML(item)+'</div>'+
     '<div class="tcg-list" id="tcgListings" aria-live="polite"></div>'+
-    '</div>'+
-    '<div class="ebay-live"><div class="ebay-live-head"><h3 id="ebayHead">Live on eBay</h3><span class="count" id="ebayCount"></span></div>'+
-    '<p class="note" id="ebayNote" style="margin:6px 0 0">Real items for sale for this exact printing, fetched live. Tap any listing to open it on eBay and buy.</p>'+
-    ebayFiltersHTML()+
-    '<div class="ebay-list" id="ebayListings" aria-live="polite"></div>'+
-    '<div class="btnrow" style="margin-top:12px"><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayBin+'">All Buy It Now on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayAuction+'">All auctions on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebay+'">Browse all eBay results ↗</a></div>'+
     '</div>'+
     '<p class="note" style="margin-top:12px">The headline value is the raw (ungraded) PriceCharting price for this exact printing — what a typical ungraded copy is worth. TCGplayer figures are near-mint market prices and lowest asks per finish (1st Edition and Unlimited are separate printings with separate prices), and eBay prices are the live asks/bids on each listing, plus shipping where shown.</p>'+
     '</div></div>';
