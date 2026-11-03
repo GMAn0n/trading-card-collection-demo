@@ -49,11 +49,11 @@
   .sub{color:var(--muted);line-height:1.55;margin:0 0 16px;max-width:680px}
   .cardbox{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
   /* Camera */
-  .cam-shell{background:#0a0f0d;border-radius:16px;overflow:hidden;position:relative;aspect-ratio:4/3;max-height:560px}
-  .cam-shell video{width:100%;height:100%;object-fit:cover;display:block;background:#0a0f0d}
+  .cam-shell{background:#0a0f0d;border-radius:16px;overflow:hidden;position:relative;aspect-ratio:4/5;max-height:640px;max-width:480px;margin:0 auto;width:100%}
+  .cam-shell video{width:100%;height:100%;object-fit:contain;display:block;background:#0a0f0d}
   .cam-shell canvas{display:none}
-  .cam-frame{position:absolute;inset:9%;border:2px solid rgba(255,255,255,.85);border-radius:14px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.28)}
-  .cam-frame::after{content:"Fit the card inside the frame";position:absolute;left:50%;transform:translateX(-50%);bottom:-30px;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+  .cam-frame{position:absolute;top:3%;bottom:3%;left:50%;transform:translateX(-50%);height:94%;aspect-ratio:5/7;width:auto;max-width:94%;border:2px solid rgba(255,255,255,.9);border-radius:14px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.30)}
+  .cam-frame::after{content:"Fill this card frame — include the bottom edge";position:absolute;left:50%;transform:translateX(-50%);bottom:10px;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;text-shadow:0 1px 6px rgba(0,0,0,.7);background:rgba(0,0,0,.35);padding:3px 8px;border-radius:999px}
   .cam-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#cfe0d6;text-align:center;padding:24px}
   .cam-placeholder svg{width:52px;height:52px;opacity:.9}
   .cam-status{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
@@ -318,8 +318,8 @@
         <h3 style="margin:0 0 14px;font-size:17px">How scanning works here</h3>
         <ol class="steps">
           <li><span class="n">1</span><span><b>Turn on the camera</b> and allow access when your browser asks. On a phone it uses the rear camera automatically. No prompt? Tap <b>Take a photo — device camera</b> instead — it opens your phone's camera app directly.</span></li>
-          <li><span class="n">2</span><span><b>Frame the card</b> inside the guide, in good light, and tap <b>Take photo</b>.</span></li>
-          <li><span class="n">3</span><span><b>Let it read the card.</b> In-browser text recognition pulls the name, collector number and set size — the “4/102” that fingerprints the set — off the photo and matches the exact printing in the catalogue. If more than one printing fits, you pick from picture cards; it never guesses silently. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings.</span></li>
+          <li><span class="n">2</span><span><b>Fill the card-shaped guide</b> with the card, edge to edge — including its <b>bottom edge</b>, where the collector number sits — in good light, and tap <b>Take photo</b>. The preview shows the camera's full field (nothing is cropped away) and the photo is kept at full resolution.</span></li>
+          <li><span class="n">3</span><span><b>Let it read the card — from fixed places.</b> A Pokémon card's layout never changes, so the reader only ever looks in two spots on the card itself: the <b>name in the top band</b> (HP beside it as a cross-check) and the <b>collector number in the bottom-right</b> — the “4/102” that fingerprints the exact printing. Text elsewhere in the room is never read. The number resolves first; the name confirms it. If they disagree, or more than one printing fits, you pick from picture cards; if neither spot reads clearly, it says so and asks for a retake instead of guessing. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings.</span></li>
           <li><span class="n">4</span><span><b>Add it in one tap.</b> From a photo, the card page leads with a one-tap <b>Add to collection</b> — Raw by default, with Damaged and Graded (PSA / CGC / BGS / SGC / TAG) right there on the same sheet. A photo can't prove a 1st Edition stamp, so photo adds default to Unlimited unless you switch.</span></li>
         </ol>
         <p class="note" style="margin-top:16px">Live camera not prompting? Use <b>Take a photo — device camera</b> — it opens your phone's own camera app and needs no browser permission, and the photo works exactly the same way here. <b>Upload a photo</b> opens your camera roll or file picker. If you want the live viewfinder, open this link directly in Safari or Chrome (not inside another app's preview), tap the lock / site-settings icon in the address bar, set Camera to <b>Allow</b>, reload, and tap “Turn on camera” again.</p>
@@ -401,7 +401,7 @@
 "use strict";
 var $=function(id){return document.getElementById(id)};
 var money=function(n){ if(n==null||isNaN(n)) return "—"; return "$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); };
-var state={ game:"pokemon", collection:[], wishlist:[], current:null, stream:null, facing:"environment", captured:false, ebayType:"all", ebaySort:"best", ebayReq:0, tcgFinish:"all", tcgSort:"low", gradedGrade:"10", gradedReq:0, ocrBusy:false };
+var state={ game:"pokemon", collection:[], wishlist:[], current:null, stream:null, facing:"environment", captured:false, ebayType:"all", ebaySort:"best", ebayReq:0, tcgFinish:"all", tcgSort:"low", gradedGrade:"10", gradedReq:0, ocrBusy:false, cardBox:null, captureSource:null };
 var GRADERS=["PSA","CGC","BGS","SGC","TAG"];
 var GRADER_LABEL={PSA:"PSA",CGC:"CGC",BGS:"BGS (Beckett)",SGC:"SGC",TAG:"TAG"};
 var toastTimer=null;
@@ -526,7 +526,7 @@ function startCamera(){
   setBadge("Requesting permission…","warn");
   var gum=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
   var attempts=[
-    { audio:false, video:{ facingMode:{ ideal: state.facing }, width:{ ideal:1920 }, height:{ ideal:1080 } } },
+    { audio:false, video:{ facingMode:{ ideal: state.facing }, width:{ ideal:3840 }, height:{ ideal:2160 } } },
     { audio:false, video:{ facingMode:{ ideal: state.facing } } },
     { audio:false, video:true }
   ];
@@ -541,12 +541,31 @@ function startCamera(){
 }
 $("btnStartCam").addEventListener("click",startCamera);
 $("btnFlip").addEventListener("click",function(){ state.facing = state.facing==="environment" ? "user" : "environment"; if(state.stream){ stopCamera(); state.captured=false; startCamera(); } });
+/* The guide frame's position inside the live preview, mapped back to
+   native video pixels (the preview uses object-fit:contain, so the
+   full camera field is shown letterboxed, never cropped). This box is
+   where the card is in the captured photo — OCR only ever looks
+   inside it. Returned as fractions of the frame (0..1). */
+function computeGuideCardBox(){
+  try{
+    var shell=$("camShell").getBoundingClientRect(), frame=$("camFrame").getBoundingClientRect();
+    var vw=video.videoWidth, vh=video.videoHeight;
+    if(!vw || !vh || !shell.width || !frame.width) return null;
+    var scale=Math.min(shell.width/vw, shell.height/vh);
+    var offX=(shell.width-vw*scale)/2, offY=(shell.height-vh*scale)/2;
+    function cl(v){ return Math.max(0, Math.min(1, v)); }
+    var box={ x:cl(((frame.left-shell.left)-offX)/scale/vw), y:cl(((frame.top-shell.top)-offY)/scale/vh),
+              w:cl((frame.width/scale)/vw), h:cl((frame.height/scale)/vh) };
+    return (box.w>0.1 && box.h>0.1) ? box : null;
+  }catch(e){ return null; }
+}
 $("btnCapture").addEventListener("click",function(){
   if(!state.stream) return;
+  state.cardBox=computeGuideCardBox(); state.captureSource="live";
   var vw=video.videoWidth||1200, vh=video.videoHeight||900;
   canvas.width=vw; canvas.height=vh;
   var ctx=canvas.getContext("2d"); ctx.drawImage(video,0,0,vw,vh);
-  var url=canvas.toDataURL("image/jpeg",0.92);
+  var url=canvas.toDataURL("image/jpeg",0.95);
   var img=$("capturePreview"); img.src=url; img.hidden=false;
   state.captured=true;
   stopCamera();
@@ -556,11 +575,11 @@ $("btnCapture").addEventListener("click",function(){
   $("identifyInput").focus();
   maybeAutoIdentify();
 });
-$("btnRetake").addEventListener("click",function(){ state.captured=false; $("capturePreview").hidden=true; $("afterCapture").hidden=true; $("btnRetake").hidden=true; startCamera(); });
+$("btnRetake").addEventListener("click",function(){ state.cardBox=null; state.captureSource=null; state.captured=false; $("capturePreview").hidden=true; $("afterCapture").hidden=true; $("btnRetake").hidden=true; startCamera(); });
 function handlePhotoFile(f){
   if(!f) return;
   var reader=new FileReader();
-  reader.onload=function(){ var img=$("capturePreview"); img.src=reader.result; img.hidden=false; clearCamError(); state.captured=true; stopCamera(); state.captured=true; $("camPlaceholder").hidden=true; $("camFrame").hidden=true; $("btnRetake").hidden=false; $("afterCapture").hidden=false; setBadge("Photo loaded ✓","ok"); $("identifyInput").focus(); maybeAutoIdentify(); };
+  reader.onload=function(){ state.cardBox=null; state.captureSource="upload"; var img=$("capturePreview"); img.src=reader.result; img.hidden=false; clearCamError(); state.captured=true; stopCamera(); state.captured=true; $("camPlaceholder").hidden=true; $("camFrame").hidden=true; $("btnRetake").hidden=false; $("afterCapture").hidden=false; setBadge("Photo loaded ✓","ok"); $("identifyInput").focus(); maybeAutoIdentify(); };
   reader.readAsDataURL(f);
 }
 $("fileInput").addEventListener("change",function(e){ handlePhotoFile(e.target.files && e.target.files[0]); e.target.value=""; });
@@ -1682,50 +1701,103 @@ function openConditionPicker(sourceItem, existingCol, onDone){
 }
 /* ---------- Photo identification (in-browser OCR) ----------
    The photo never leaves the device. Tesseract.js (loaded from CDN in
-   <head>) reads the printed text; we systematically pull the fields
-   that identify a printing — name (top of card), collector number and
-   set size ("4/102": numerator = the card, denominator fingerprints
-   the set) and HP as a cross-check — then resolve against the same
-   TCGdex catalogue search uses. If the OCR library failed to load,
-   everything degrades to the manual name/number lookup.
+   <head>) reads the printed text — but ONLY from two fixed places on
+   the card itself, because a Pokémon card's layout never changes:
 
-   Why three OCR passes: a single whole-frame read was the Farfetch'd
-   failure — the card fills a third of a hand-held photo, so the name
-   line arrived tiny, glare-streaked and mixed with room text, and one
-   garbled line ("NS oot") was trusted as the name with no recovery.
-   Now the reader works on focused crops (the card region, then the
-   name strip across the top of the card, then the full frame), keeps
-   EVERY plausible name line as a candidate, and the catalogue itself
-   arbitrates: candidates are tried in score order — exact, then a
-   contains-match on the name's letter run (which bridges apostrophe
-   names like Farfetch'd however the apostrophe was read), then the
-   collector number + set size — until one actually resolves. */
+   • NAME — the top band of the card, left portion (x 4%–58%,
+     y 2%–9% of the card), with HP in the top-right of the same band
+     as a cross-check.
+   • COLLECTOR NUMBER — the bottom-right of the card (last 30% of
+     width, bottom 6% of height), read as "<num>/<set size>".
+
+   The card is first located in the frame — for a live capture, the
+   card-shaped guide's position is mapped back to native pixels; for
+   an upload, a centred portrait card box is assumed — and that box is
+   rectified (drawn) onto a canonical 1000×1400 (5:7) card. Every
+   crop is then a slice of that canonical card at the percentages
+   above. The whole frame is NEVER scanned for name-like text: room
+   signage and background print are what produced the earlier
+   gibberish reads ("NS oot", "coE rna so MIE" — background fragments
+   trusted as a name and shipped to the catalogue). Those reads also
+   arrived with no confidence check and no plausibility check, so
+   this pipeline adds both: Tesseract word/line confidences filter
+   each read, and a candidate must look like a card name (below)
+   before it is ever looked up. Nothing plausible + no number =
+   an honest "couldn't read it — retake", never a pre-filled guess.
+
+   Resolution is NUMBER-FIRST: number + set size fingerprints the
+   exact printing, so it resolves before the name; the name read
+   confirms it, and a disagreement shows the number's printings in
+   the candidate picker rather than trusting either read silently. */
+var CARD_CANON_W=1000, CARD_CANON_H=1400;
+function locateCardBox(W, H, alt){
+  // Live capture: where the guide said the card is.
+  if(!alt && state.cardBox && state.cardBox.w>0.1 && state.cardBox.h>0.1){
+    return { x:state.cardBox.x*W, y:state.cardBox.y*H, w:state.cardBox.w*W, h:state.cardBox.h*H };
+  }
+  // Upload / device photo: a centred portrait card box. `alt` is a
+  // second, larger framing tried only if the first reads nothing.
+  var frac = alt ? 0.98 : 0.88;
+  var h=H*frac, w=h*(5/7);
+  if(w>W*0.96){ w=W*0.96; h=w*(7/5); }
+  if(h>H*0.99){ h=H*0.99; w=h*(5/7); }
+  return { x:(W-w)/2, y:(H-h)/2, w:w, h:h };
+}
+function enhanceCanvas(srcCanvas, binarize){
+  // Grayscale + contrast stretch; optional binarisation for the
+  // small dark-on-light name and number print. Returns a padded
+  // canvas (Tesseract reads edge-touching text badly without one).
+  var w=srcCanvas.width, h=srcCanvas.height;
+  var out=document.createElement("canvas"); out.width=w+32; out.height=h+32;
+  var octx=out.getContext("2d"); octx.fillStyle="#fff"; octx.fillRect(0,0,out.width,out.height);
+  octx.drawImage(srcCanvas,16,16);
+  try{
+    var id=octx.getImageData(0,0,out.width,out.height), d=id.data;
+    var i, g, min=255, max=0, grays=new Uint8Array(out.width*out.height);
+    for(i=0;i<grays.length;i++){ g=Math.round(0.299*d[i*4]+0.587*d[i*4+1]+0.114*d[i*4+2]); grays[i]=g; if(g<min)min=g; if(g>max)max=g; }
+    var range=Math.max(1,max-min);
+    for(i=0;i<grays.length;i++){
+      g=Math.round((grays[i]-min)*255/range);
+      if(binarize) g = g<168 ? 0 : 255;
+      d[i*4]=g; d[i*4+1]=g; d[i*4+2]=g; d[i*4+3]=255;
+    }
+    octx.putImageData(id,0,0);
+  }catch(e){}
+  return out;
+}
 function ocrCropDataURLs(src, cb){
   var img=new Image();
   img.onload=function(){
     try{
       var W=img.naturalWidth||img.width||0, H=img.naturalHeight||img.height||0;
-      if(!W || !H){ cb([{tag:"full", url:src}]); return; }
-      function make(sx, sy, sw, sh, outW){
-        var scale=Math.min(2.2, Math.max(0.2, outW/sw));
-        var c=document.createElement("canvas");
-        c.width=Math.max(1,Math.round(sw*scale)); c.height=Math.max(1,Math.round(sh*scale));
-        c.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
-        return c.toDataURL("image/jpeg",0.92);
+      if(!W || !H){ cb([]); return; }
+      function cropsFor(box, suffix){
+        // Rectify: map the located card onto the canonical 5:7 card.
+        var canon=document.createElement("canvas"); canon.width=CARD_CANON_W; canon.height=CARD_CANON_H;
+        canon.getContext("2d").drawImage(img, box.x, box.y, box.w, box.h, 0, 0, CARD_CANON_W, CARD_CANON_H);
+        function slice(fx0, fy0, fx1, fy1, outW, binarize){
+          var sx=fx0*CARD_CANON_W, sy=fy0*CARD_CANON_H, sw=(fx1-fx0)*CARD_CANON_W, sh=(fy1-fy0)*CARD_CANON_H;
+          var c=document.createElement("canvas");
+          var scale=Math.max(1, outW/sw); // upscale small print; never downscale it away
+          c.width=Math.round(sw*scale); c.height=Math.round(sh*scale);
+          c.getContext("2d").drawImage(canon, sx, sy, sw, sh, 0, 0, c.width, c.height);
+          return enhanceCanvas(c, binarize).toDataURL("image/png");
+        }
+        return [
+          // Name: top band, left portion (x 4%–58%, y 2%–9%).
+          {tag:"name"+suffix, psm:"7", whitelist:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.- ", url:slice(0.04,0.02,0.58,0.09,1620,true)},
+          // HP cross-check: top-right of the same band.
+          {tag:"hp"+suffix, psm:"7", whitelist:"0123456789HPhp", url:slice(0.58,0.02,0.99,0.09,1200,true)},
+          // Collector number: bottom-right (last 30% width, bottom 6%).
+          {tag:"number"+suffix, psm:"6", whitelist:"0123456789/", url:slice(0.70,0.94,1.00,1.00,1500,true)}
+        ];
       }
-      // Card region: the on-screen guide frame (inset ~9%), slightly generous.
-      var cx=W*0.03, cy=H*0.03, cw=W*0.94, ch=H*0.94;
-      var crops=[
-        {tag:"card", url:make(cx, cy, cw, ch, Math.min(1500, Math.max(900, cw)))},
-        // Name strip: the top band of the card, upscaled — the printed
-        // name lives here, left of the HP.
-        {tag:"name", url:make(cx, cy, cw, ch*0.27, 1500)},
-        {tag:"full", url:make(0, 0, W, H, Math.min(1200, W))}
-      ];
+      var crops=cropsFor(locateCardBox(W,H,false), "");
+      crops=crops.concat(cropsFor(locateCardBox(W,H,true), "2"));
       cb(crops);
-    }catch(e){ cb([{tag:"full", url:src}]); }
+    }catch(e){ cb([]); }
   };
-  img.onerror=function(){ cb([{tag:"full", url:src}]); };
+  img.onerror=function(){ cb([]); };
   img.src=src;
 }
 function cleanOcrName(s){
@@ -1742,43 +1814,88 @@ function cleanOcrName(s){
 /* Card-body vocabulary that OCR lines love to surface and that is never
    a card's name (attack names, rules words, frame furniture). */
 var OCR_NONNAME=/^(leek|pot|gust|jab|smash|flip|coin|damage|weakness|resistance|retreat|evolves|energy|illus|copyright|printed|bench|defending|attack|paralyzed|confused|asleep|poisoned|burned|discard|shuffle|draw|trainer|stadium|supporter|item)\b/i;
+/* Would a printed card name ever look like this? Gibberish fragments
+   fail here before they can be looked up or pre-filled:
+   "NS oot" (two short fragments), "coE rna so MIE" (four short
+   fragments, one ending in a stray capital). A real name is 1–3
+   tokens with at least one solid token, a vowel in that token, and
+   sane capitalisation (Title Case, lower, or ALL CAPS — never a
+   lower-case run ending in capitals like "coE"). */
+function isPlausibleCardName(c){
+  if(!c) return false;
+  var tokens=String(c).split(/\s+/).filter(Boolean);
+  if(tokens.length<1 || tokens.length>3) return false;
+  var lens=tokens.map(function(t){ return (t.match(/[A-Za-z]/g)||[]).length; });
+  var maxTok=Math.max.apply(null,lens);
+  var avg=lens.reduce(function(a,b){return a+b;},0)/lens.length;
+  if(maxTok<4 && !(tokens.length===1 && lens[0]>=3)) return false; // Mew (3) alone is fine; fragments are not
+  if(tokens.length>1 && avg<3.0) return false;
+  for(var i=0;i<tokens.length;i++){
+    var t=tokens[i];
+    if(/[a-z]{2,}[A-Z]/.test(t)) return false;   // "coE" — stray trailing/internal capital
+    if(/^[a-z]+[A-Z]+$/.test(t)) return false;
+    if(lens[i]>=3 && !/[aeiouy]/i.test(t)) return false; // a solid token has a vowel
+  }
+  var longest=tokens[lens.indexOf(maxTok)];
+  if(!/[aeiouy]/i.test(longest)) return false;
+  if(OCR_NONNAME.test(c)) return false;
+  if(/^pok[eé]mon$/i.test(c)) return false;
+  return true;
+}
+/* Rebuild a read from Tesseract's own confidences: lines/words the
+   engine itself scored low are dropped, and a read whose overall
+   confidence is very low contributes nothing at all. */
+function confidentText(data){
+  if(!data) return "";
+  try{
+    if(data.lines && data.lines.length){
+      var lines=data.lines.filter(function(l){ return l && (l.confidence==null || l.confidence>=45); }).map(function(l){
+        var ws=(l.words||[]).filter(function(w){ return w && (w.confidence==null || w.confidence>=40); });
+        return ws.length ? ws.map(function(w){ return w.text; }).join(" ") : "";
+      }).filter(Boolean);
+      if(lines.length) return lines.join("\n");
+    }
+  }catch(e){}
+  if(data.confidence!=null && data.confidence<35) return "";
+  return data.text||"";
+}
 function extractCardFields(texts){
   texts=texts||{};
-  var allText=[texts.card||"", texts.name||"", texts.full||""].join("\n");
-  var numM=allText.match(/(\d{1,3})\s*\/\s*(\d{2,3})/);
-  var hpM=allText.match(/(\d{2,3})\s*HP/i);
-  var candMap={}, candList=[];
-  function consider(rawLine, zoneBoost, idx){
+  // Number comes ONLY from the bottom-right crop; HP only from the
+  // top-band cross-check crop; name only from the name strip.
+  var numText=[texts.number||"", texts.number2||""].join("\n");
+  var numM=numText.match(/(\d{1,3})\s*\/\s*(\d{2,3})/);
+  var hpText=[texts.hp||"", texts.hp2||"", texts.name||""].join("\n");
+  var hpM=hpText.match(/(\d{2,3})\s*HP/i);
+  var candMap={}, candList=[], rejected="";
+  function consider(rawLine, zoneBoost){
     if(!rawLine) return;
-    var hadHp=/HP/i.test(rawLine);
     var c=cleanOcrName(rawLine);
     if(!c) return;
     var letters=(c.match(/[A-Za-z]/g)||[]).length;
-    if(letters<3 || c.length<3 || c.length>32) return;
-    var tokens=c.split(/\s+/);
-    var maxTok=0; tokens.forEach(function(tok){ maxTok=Math.max(maxTok, (tok.match(/[A-Za-z]/g)||[]).length); });
-    // A name always has one solid token (Mew=3) or real length; two+
-    // short fragments ("NS oot") are read-noise, not a name.
-    if(!(maxTok>=4 || (tokens.length===1 && letters>=3) || letters>=8)) return;
-    if(/^pok[eé]mon$/i.test(c)) return; // the word Pokémon alone is never a card's name
-    if(OCR_NONNAME.test(c)) return;
+    if(letters<3 || c.length<3 || c.length>32) { return; }
+    if(!isPlausibleCardName(c)){ if(!rejected) rejected=c; return; }
     var ratio=letters/c.length;
-    if(ratio<0.5) return;
-    var score=zoneBoost + ratio*6 - idx*0.25 + (hadHp?4:0) - Math.abs(c.length-10)*0.06 - (tokens.length>3?2:0);
+    if(ratio<0.6) return;
     var key=c.toLowerCase();
+    var score=zoneBoost + ratio*6 - Math.abs(c.length-10)*0.06;
     if(candMap[key]==null || candMap[key].score<score){
       if(candMap[key]==null) candList.push(key);
       candMap[key]={name:c, score:score};
     }
   }
-  function scanZone(text, boost, limit){
-    String(text||"").split(/\r?\n/).map(function(s){ return s.trim(); }).filter(Boolean).slice(0, limit).forEach(function(line, idx){ consider(line, boost, idx); });
-  }
-  scanZone(texts.name, 12, 4);   // the name strip: anything name-like here leads
-  scanZone(texts.card, 6, 9);
-  scanZone(texts.full, 0, 10);
-  var candidates=candList.map(function(k){ return candMap[k]; }).sort(function(a,b){ return b.score-a.score; }).slice(0,5).map(function(x){ return x.name; });
-  return { name:candidates[0]||"", candidates:candidates, num:numM?String(parseInt(numM[1],10)):null, den:numM?String(parseInt(numM[2],10)):null, hp:hpM?hpM[1]:null };
+  // The name strip is read as a single line (PSM 7): each zone's whole
+  // read is one candidate; also try its first two tokens, since an HP
+  // remnant or stage tag can trail the real name.
+  [["name",12],["name2",8]].forEach(function(zone){
+    var raw=String(texts[zone[0]]||"").split(/\r?\n/).map(function(x){return x.trim();}).filter(Boolean)[0]||"";
+    consider(raw, zone[1]);
+    var toks=cleanOcrName(raw).split(/\s+/).filter(Boolean);
+    if(toks.length>2) consider(toks.slice(0,2).join(" "), zone[1]-1);
+    if(toks.length>1) consider(toks[0], zone[1]-2);
+  });
+  var candidates=candList.map(function(k){ return candMap[k]; }).sort(function(a,b){ return b.score-a.score; }).slice(0,4).map(function(x){ return x.name; });
+  return { name:candidates[0]||"", candidates:candidates, rejectedName:rejected, num:numM?String(parseInt(numM[1],10)):null, den:numM?String(parseInt(numM[2],10)):null, hp:hpM?hpM[1]:null };
 }
 function numEq(a,b){
   if(a==null||b==null||a===""||b==="") return false;
@@ -1804,6 +1921,7 @@ function identifyFromPhoto(){
   setOcrStatus('<p class="note"><span class="spinner"></span>Reading card…</p>');
   $("idFields").innerHTML="";
   ocrCropDataURLs(prev.src, function(crops){
+    if(!crops.length){ state.ocrBusy=false; ocrBtnReset(); finishIdentifyError("<b>That photo could not be loaded for reading.</b> Retake it, or type the name &amp; number below."); return; }
     var texts={}, timedOut=false, finished=false;
     var timer=setTimeout(function(){
       timedOut=true;
@@ -1816,24 +1934,34 @@ function identifyFromPhoto(){
       state.ocrBusy=false; ocrBtnReset();
       resolvePhotoFields(extractCardFields(texts));
     }
+    // Crops arrive as two groups of three (primary card box, then the
+    // alternate framing). OCR the primary name + number + HP first;
+    // the alternate group runs only if the primary read neither a
+    // plausible name nor a collector number.
+    var PRIMARY=3;
     (function next(i){
       if(timedOut || finished) return;
       if(i>=crops.length){ finish(); return; }
-      setOcrStatus('<p class="note"><span class="spinner"></span>Reading card… pass '+(i+1)+' of '+crops.length+'</p>');
-      window.Tesseract.recognize(crops[i].url, "eng", { logger:function(m){
+      if(i===PRIMARY){
+        var f0=extractCardFields(texts);
+        if(f0.candidates.length || (f0.num && f0.den)){ finish(); return; }
+      }
+      var crop=crops[i];
+      var label = crop.tag.indexOf("name")===0 ? "name strip" : (crop.tag.indexOf("number")===0 ? "collector number" : "top band");
+      setOcrStatus('<p class="note"><span class="spinner"></span>Reading the card\'s '+label+'…</p>');
+      var opts={ logger:function(m){
         if(timedOut || finished) return;
-        if(m && m.status==="recognizing text") setOcrStatus('<p class="note"><span class="spinner"></span>Reading card… pass '+(i+1)+' of '+crops.length+' · '+Math.round((m.progress||0)*100)+'%</p>');
-      }}).then(function(res){
+        if(m && m.status==="recognizing text") setOcrStatus('<p class="note"><span class="spinner"></span>Reading the card\'s '+label+'… '+Math.round((m.progress||0)*100)+'%</p>');
+      }};
+      if(crop.psm) opts.tessedit_pageseg_mode=crop.psm;
+      if(crop.whitelist) opts.tessedit_char_whitelist=crop.whitelist;
+      window.Tesseract.recognize(crop.url, "eng", opts).then(function(res){
         if(timedOut || finished) return;
-        texts[crops[i].tag]=(res&&res.data&&res.data.text)||"";
-        // Early exit once two passes have produced a name candidate AND
-        // the collector number + set size — the fields that pin a printing.
-        var f=extractCardFields(texts);
-        if(i>=1 && f.candidates.length && f.num && f.den){ finish(); return; }
+        texts[crop.tag]=confidentText(res&&res.data);
         next(i+1);
       }).catch(function(){
         if(timedOut || finished) return;
-        texts[crops[i].tag]="";
+        texts[crop.tag]="";
         next(i+1);
       });
     })(0);
@@ -1851,22 +1979,77 @@ function fieldsChipsHTML(f){
   if(f.hp) chips.push('<span class="badge">HP read: '+f.hp+'</span>');
   return chips.length ? '<div class="cam-status" style="margin:0">'+chips.join("")+'</div>' : "";
 }
+function photoUnreadable(fields){
+  // Nothing plausible was read: say so honestly, ask for a retake,
+  // and leave the manual box EMPTY — never pre-fill it with the
+  // unclear fragments the reader rejected.
+  $("identifyInput").value="";
+  setOcrStatus('<p class="note"><b>Couldn\'t read that card clearly.</b> The name strip and the collector number in the bottom-right didn\'t come through — unclear fragments are not looked up or filled in. Retake straight-on, filling the card-shaped guide edge to edge (including the bottom edge), in brighter light with less glare — or type the name &amp; number below.</p>');
+}
 function photoNoMatch(fields){
+  // Only ever called with a plausible name (see resolvePhotoFields):
+  // pre-filling a real-looking read for a spelling check is the
+  // manual fallback working as intended.
   setOcrStatus('<p class="note">Read “'+escHtml(fields.name||"")+'” but the catalogue has no match for it — the box below is pre-filled with what was read; check the spelling and look it up.</p>');
   $("identifyInput").value=(fields.name||"")+(fields.num?" "+fields.num:"");
 }
 function resolvePhotoFields(fields){
   $("idFields").innerHTML=fieldsChipsHTML(fields);
-  if(!fields.name && !fields.num){
-    setOcrStatus('<p class="note"><b>Nothing readable on that photo.</b> Glare, angle and blur defeat text reading — retake straight-on in good light, or type the name &amp; number below.</p>');
-    return;
+  if(!fields.name && !fields.num){ photoUnreadable(fields); return; }
+  /* NUMBER FIRST. Number + set size fingerprints the exact printing,
+     so when both were read, resolve from the bottom-right read
+     before the name is tried at all. The name confirms: if exactly
+     one of the number's printings carries the read name (or the HP),
+     it opens; if the name disagrees with every one of them, the
+     number still wins and its printings go to the picker. */
+  function byNumber(){
+    if(!fields.num) return Promise.resolve(false);
+    setOcrStatus('<p class="note"><span class="spinner"></span>Matching by the collector number '+fields.num+(fields.den?"/"+fields.den:"")+' from the bottom-right of the card…</p>');
+    return fetchDexByLocalId(fields.num).then(function(items){
+      var pool=(items||[]).slice();
+      if(fields.den){
+        var byDen=pool.filter(function(it){ return it.setTotal && numEq(it.setTotal, fields.den); });
+        if(byDen.length) pool=byDen;
+        else if(pool.length) return false; // number read, set size read, but they don't co-exist — don't trust either silently
+      }
+      if(!pool.length) return false;
+      if(fields.hp){
+        var hpHit=pool.filter(function(it){ return it.raw && String(it.raw.hp)===String(fields.hp); });
+        if(hpHit.length===1){ pool=hpHit; }
+      }
+      if(fields.name){
+        var nameHit=pool.filter(function(it){ return it.name && it.name.toLowerCase()===String(fields.name).toLowerCase(); });
+        if(nameHit.length===1){ handlePhotoCandidates(nameHit, fields); return true; }
+        if(pool.length>1 && !nameHit.length){
+          // Disagreement: prefer the number, show its printings.
+          setOcrStatus('<p class="note">The number on the card ('+fields.num+(fields.den?"/"+fields.den:"")+') points to these printings, but the name read (“'+escHtml(fields.name)+'”) doesn\'t match them — the number is the stronger read, so pick the printing that matches your card.</p>');
+          showCandidatePicker(pool.slice(0,12), fields);
+          return true;
+        }
+      }
+      handlePhotoCandidates(pool, fields);
+      return true;
+    }).catch(function(){ return false; });
   }
-  /* Resolution is a chain of attempts, each verified against the real
-     catalogue — a garbled front-runner no longer dead-ends the scan:
-     1) each candidate name exactly, 2) each candidate via the Pokémon
-     TCG API, 3) a contains-match on each candidate's longest letter run
-     (bridges apostrophe reads like Farfetch'd), 4) the collector
-     number + set size on their own. */
+  byNumber().then(function(done){
+    if(done) return;
+    if(!fields.name){
+      if(fields.num){
+        setOcrStatus('<p class="note">A collector number was read ('+fields.num+(fields.den?"/"+fields.den:"")+') but no name, and that number didn\'t resolve on its own — type the name below and include that number to pin the printing.</p>');
+        $("identifyInput").value=fields.num;
+        return;
+      }
+      photoUnreadable(fields);
+      return;
+    }
+    resolveByName(fields);
+  });
+}
+function resolveByName(fields){
+  /* Name chain — plausible candidates only, each verified against the
+     real catalogue: exact via TCGdex, then the Pokémon TCG API, then
+     a contains-match on the name's longest letter run (bridges
+     apostrophe reads like "Farfetchd" → Farfetch'd). */
   var attempts=[];
   var cands=fields.candidates && fields.candidates.length ? fields.candidates : (fields.name?[fields.name]:[]);
   cands.forEach(function(c){ attempts.push({kind:"dex", q:c, label:c}); });
@@ -1874,41 +2057,16 @@ function resolvePhotoFields(fields){
   var seenRuns={};
   cands.forEach(function(c){
     var run=((String(c).toLowerCase().match(/[a-z]+/g)||[]).sort(function(a,b){ return b.length-a.length; })[0])||"";
-    // Try the full run, then trimmed runs: an apostrophe read as a
-    // letter ("Farfetchd") still bridges to Farfetch'd via "farfetch".
     for(var cut=0; cut<=2; cut++){
       var r=run.slice(0, run.length-cut);
       if(r.length>=5 && !seenRuns[r]){ seenRuns[r]=true; attempts.push({kind:"contains", q:r, label:c}); }
     }
   });
-  function numberFallback(){
-    if(fields.num && fields.den){
-      setOcrStatus('<p class="note"><span class="spinner"></span>The name didn\'t resolve — matching by the collector number '+fields.num+'/'+fields.den+' instead…</p>');
-      return fetchDexByLocalId(fields.num).then(function(items){
-        var narrowed=(items||[]).filter(function(it){ return numEq(it.number, fields.num) && it.setTotal && numEq(it.setTotal, fields.den); });
-        if(fields.hp) {
-          var hpHit=narrowed.filter(function(it){ return it.raw && String(it.raw.hp)===String(fields.hp); });
-          if(hpHit.length) narrowed=hpHit;
-        }
-        if(narrowed.length){ handlePhotoCandidates(narrowed, fields); return true; }
-        return false;
-      }).catch(function(){ return false; });
-    }
-    return Promise.resolve(false);
-  }
   var weakFallback=null;
   (function tryNext(i){
     if(i>=attempts.length){
-      numberFallback().then(function(done){
-        if(done) return;
-        if(weakFallback){ handlePhotoCandidates(weakFallback, fields); return; }
-        if(!fields.name && fields.num){
-          setOcrStatus('<p class="note">A collector number was read ('+fields.num+(fields.den?"/"+fields.den:"")+') but no name — type the name below and include that number to pin the printing.</p>');
-          $("identifyInput").value=fields.num;
-          return;
-        }
-        photoNoMatch(fields);
-      });
+      if(weakFallback){ handlePhotoCandidates(weakFallback, fields); return; }
+      photoNoMatch(fields);
       return;
     }
     var at=attempts[i];
@@ -1916,10 +2074,6 @@ function resolvePhotoFields(fields){
     var p= at.kind==="dex" ? fetchDex(at.q) : (at.kind==="poke" ? fetchPokeFallback(at.q) : fetchDexContains(at.q));
     p.then(function(items){
       if(items && items.length){
-        // Results that contain a card with the read collector number
-        // are a strong resolution. Results without it (a stray word
-        // candidate matched some other card) are kept only as a
-        // last-resort picker while the chain keeps looking.
         if(fields.num && !items.some(function(it){ return numEq(it.number, fields.num); })){
           if(!weakFallback) weakFallback=items;
           tryNext(i+1);
