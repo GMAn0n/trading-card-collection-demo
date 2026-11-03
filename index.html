@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Trading Card Collection — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;700;800;900&family=Newsreader:opsz,wght@6..72,600;6..72,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef1ec; --surface:#ffffff; --surface2:#e3e9e1; --ink:#13201b; --muted:#5a6b62; --line:#d3ddd2;
+    --accent:#0f766e; --accent-ink:#ffffff; --accent-soft:#d7ebe6; --amber:#b45309; --amber-soft:#fdeecf;
+    --danger:#b42318; --shadow:0 10px 30px rgba(19,32,27,.12); --radius:18px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0d1411; --surface:#16201b; --surface2:#1d2a24; --ink:#e8f0ea; --muted:#9db0a5; --line:#2a3a32; --accent:#2dd4bf; --accent-ink:#06231f; --accent-soft:#12332e; --amber:#f5b453; --amber-soft:#33270f; --shadow:0 10px 30px rgba(0,0,0,.45); }
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  [hidden]{display:none !important}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Libre Franklin",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent)} button{font:inherit;cursor:pointer} input,select{font:inherit}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 18px 96px}
+  /* Header */
+  header{padding:26px 0 8px}
+  .topline{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+  h1{font-family:"Newsreader",Georgia,serif;font-size:clamp(30px,5vw,46px);line-height:.98;margin:0;letter-spacing:-.02em;font-weight:700}
+  h1 em{font-style:italic;color:var(--accent)}
+  .lede{margin:10px 0 0;color:var(--muted);font-size:16px;line-height:1.55;max-width:640px}
+  .demo-pill{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:13px;font-weight:700;white-space:nowrap}
+  .dot{width:9px;height:9px;border-radius:50%;background:#22a06b;box-shadow:0 0 0 4px rgba(34,160,107,.18)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0 6px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .stat b{display:block;font-size:22px;line-height:1} .stat span{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  /* Tabs */
+  nav.tabs{position:sticky;top:10px;z-index:30;display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px;margin:16px 0 20px;box-shadow:var(--shadow);overflow-x:auto;scrollbar-width:none}
+  nav.tabs::-webkit-scrollbar{display:none}
+  .tab{flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:0;background:transparent;color:var(--muted);font-weight:800;font-size:14px;padding:10px 14px;border-radius:999px}
+  .tab svg{width:17px;height:17px;flex:none}
+  .tab[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+  .tab .count{background:var(--accent);color:var(--accent-ink);border-radius:999px;font-size:11px;padding:1px 7px;font-weight:900}
+  section.panel{display:none} section.panel.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){section.panel.active{animation:none}}
+  h2{font-family:"Newsreader",Georgia,serif;font-size:28px;margin:4px 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--muted);line-height:1.55;margin:0 0 16px;max-width:680px}
+  .cardbox{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  /* Camera */
+  .cam-shell{background:#0a0f0d;border-radius:16px;overflow:hidden;position:relative;aspect-ratio:4/3;max-height:560px}
+  .cam-shell video{width:100%;height:100%;object-fit:cover;display:block;background:#0a0f0d}
+  .cam-shell canvas{display:none}
+  .cam-frame{position:absolute;inset:9%;border:2px solid rgba(255,255,255,.85);border-radius:14px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.28)}
+  .cam-frame::after{content:"Fit the card inside the frame";position:absolute;left:50%;transform:translateX(-50%);bottom:-30px;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+  .cam-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#cfe0d6;text-align:center;padding:24px}
+  .cam-placeholder svg{width:52px;height:52px;opacity:.9}
+  .cam-status{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+  .badge{font-size:12.5px;font-weight:700;border-radius:999px;padding:6px 10px;background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+  .badge.ok{background:var(--accent-soft)} .badge.warn{background:var(--amber-soft);color:var(--amber)}
+  .btnrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:11px 18px;font-weight:800;font-size:14.5px;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .btn svg{width:17px;height:17px}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .btn.dark{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.small{padding:8px 13px;font-size:13px}
+  .capture-img{width:100%;border-radius:14px;border:1px solid var(--line);display:block}
+  .grid2{display:grid;grid-template-columns:1.35fr .85fr;gap:16px;align-items:start}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:640px){
+    nav.tabs{flex-wrap:wrap;border-radius:20px;overflow-x:visible}
+    .tab{flex:1 1 28%;padding:9px 6px;font-size:12.5px;gap:5px}
+    .tab svg{width:15px;height:15px}
+  }
+  .steps{margin:0;padding:0;list-style:none;display:grid;gap:12px}
+  .steps li{display:flex;gap:12px;line-height:1.5;font-size:14.5px}
+  .steps .n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:900;font-size:13px}
+  .note{font-size:13.5px;color:var(--muted);line-height:1.55}
+  .err{background:#fdecea;border:1px solid #f3b8b1;color:#7a271a;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.5;margin-top:12px}
+  @media (prefers-color-scheme: dark){.err{background:#331714;border-color:#6b2d24;color:#ffb4a6}}
+  /* Search */
+  .searchbar{display:flex;gap:10px;flex-wrap:wrap}
+  .searchbar .grow{flex:1 1 240px;position:relative}
+  .searchbar input[type="search"]{width:100%;padding:14px 16px 14px 44px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:16px;outline:none}
+  .searchbar input[type="search"]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .searchbar .mag{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:19px;height:19px;color:var(--muted);pointer-events:none}
+  .seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;gap:4px}
+  .seg button{border:0;background:transparent;border-radius:999px;padding:9px 15px;font-weight:800;font-size:13.5px;color:var(--muted)}
+  .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:700;color:var(--ink)}
+  .chip:hover{border-color:var(--accent)}
+  .results{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;margin-top:16px}
+  @media(max-width:480px){.results{grid-template-columns:repeat(2,1fr);gap:10px}}
+  .rcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-align:left;padding:0;display:flex;flex-direction:column;transition:transform .15s ease, box-shadow .15s ease}
+  .rcard:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+  .rcard img{width:100%;aspect-ratio:63/88;object-fit:contain;background:var(--surface2);display:block}
+  .rcard .meta{padding:11px 12px 13px;display:flex;flex-direction:column;gap:3px;flex:1}
+  .rcard .nm{font-weight:800;font-size:14.5px;line-height:1.25}
+  .rcard .st{font-size:12.5px;color:var(--muted);line-height:1.35}
+  .rcard .pr{margin-top:auto;padding-top:7px;font-weight:900;font-size:16px;color:var(--accent)}
+  .rcard .pr small{display:block;font-weight:600;font-size:11px;color:var(--muted)}
+  .empty{border:1.5px dashed var(--line);border-radius:var(--radius);padding:34px 22px;text-align:center;color:var(--muted);line-height:1.6;background:var(--surface)}
+  .empty b{color:var(--ink)}
+  .ebaybar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:14px}
+  .ebaybar .eb-t{font-weight:800;font-size:14px}
+  .ebaybar .eb-s{font-size:13px;color:var(--muted);flex:1 1 180px}
+  .spinner{width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin .8s linear infinite;display:inline-block;vertical-align:-5px;margin-right:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* Collection lists */
+  .crow{display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}
+  .crow img{width:52px;height:73px;object-fit:contain;border-radius:6px;background:var(--surface2);flex:none}
+  .crow .info{flex:1;min-width:0} .crow .info b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .crow .info span{font-size:13px;color:var(--muted)}
+  .crow .val{font-weight:900;text-align:right;white-space:nowrap}
+  .crow .val small{display:block;font-weight:600;font-size:11px;color:var(--muted)}
+  .iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;width:38px;height:38px;display:grid;place-items:center;flex:none;color:var(--muted)}
+  .iconbtn svg{width:17px;height:17px}
+  .totalbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--ink);color:var(--bg);border-radius:16px;padding:16px 18px;margin-bottom:16px}
+  .totalbar .big{font-family:"Newsreader",Georgia,serif;font-size:30px;font-weight:700}
+  .totalbar p{margin:0;opacity:.75;font-size:13.5px}
+  /* Modal */
+  .modal{position:fixed;inset:0;z-index:60;display:none}
+  .modal.open{display:block}
+  .modal .scrim{position:absolute;inset:0;background:rgba(5,10,8,.62);backdrop-filter:blur(3px)}
+  .modal .sheet{position:absolute;inset:auto 0 0 0;max-height:92dvh;overflow:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  @media(min-width:760px){.modal .sheet{inset:50% auto auto 50%;transform:translate(-50%,-50%);width:min(880px,94vw);border-radius:22px;max-height:88dvh}}
+  .sheetgrid{display:grid;grid-template-columns:280px 1fr;gap:22px}
+  @media(max-width:700px){.sheetgrid{grid-template-columns:1fr}.sheetgrid img.big{max-width:250px;margin:0 auto}}
+  .sheetgrid img.big{width:100%;border-radius:12px;box-shadow:var(--shadow);display:block}
+  .kv{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:14px 0}
+  .kv div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+  .kv span{display:block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:800}
+  .kv b{font-size:15px}
+  .pricegrid{display:grid;gap:8px;margin:12px 0}
+  .pricegrid .prow{display:flex;justify-content:space-between;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:14.5px}
+  .pricegrid .prow b{font-size:16px}
+  .closex{position:absolute;top:12px;right:12px;z-index:2}
+  .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);border-radius:999px;padding:12px 20px;font-weight:800;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:80;box-shadow:var(--shadow);max-width:92vw;text-align:center}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  /* About */
+  .aboutgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+  .aboutgrid .cardbox h3{margin:0 0 8px;font-size:17px}
+  .aboutgrid p{margin:0;color:var(--muted);line-height:1.6;font-size:14.5px}
+  footer{margin-top:34px;color:var(--muted);font-size:13px;line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="topline">
+      <div>
+        <h1>Trading Card <em>Collection</em></h1>
+        <p class="lede">Scan a card with your camera, look up live market prices, and keep a running collection and wishlist — right here in the browser.</p>
+      </div>
+      <span class="demo-pill"><span class="dot"></span> Shareable demo · camera enabled</span>
+    </div>
+    <div class="stats" aria-label="Collection summary">
+      <div class="stat"><span>In collection</span><b id="statCount">0 cards</b></div>
+      <div class="stat"><span>Collection value</span><b id="statValue">$0.00</b></div>
+      <div class="stat"><span>On wishlist</span><b id="statWish">0 cards</b></div>
+      <div class="stat"><span>Camera</span><b id="statCam" style="font-size:16px;padding-top:4px">Checking…</b></div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Demo sections">
+    <button class="tab" role="tab" data-tab="scan" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Scan</button>
+    <button class="tab" role="tab" data-tab="search" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Search</button>
+    <button class="tab" role="tab" data-tab="collection" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>Collection <span class="count" id="tabCountCol" hidden>0</span></button>
+    <button class="tab" role="tab" data-tab="wishlist" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Wishlist <span class="count" id="tabCountWish" hidden>0</span></button>
+    <button class="tab" role="tab" data-tab="about" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>About</button>
+  </nav>
+
+  <!-- SCAN -->
+  <section class="panel active" id="panel-scan" role="tabpanel">
+    <h2>Scan a card</h2>
+    <p class="sub">Point your camera at the front of a card and take a photo, or upload one. Then type the card's name and number to pull its live prices — the photo stays on your device and is never uploaded anywhere.</p>
+    <div class="grid2">
+      <div class="cardbox">
+        <div class="cam-shell" id="camShell">
+          <video id="camVideo" playsinline muted autoplay></video>
+          <canvas id="camCanvas" width="1200" height="900"></canvas>
+          <div class="cam-frame" id="camFrame" hidden></div>
+          <div class="cam-placeholder" id="camPlaceholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <div><b style="color:#fff">Camera preview will appear here</b><br><span style="font-size:13.5px">Tap “Turn on camera” below. Your browser will ask for permission — choose Allow. If no prompt appears, use “Take a photo — device camera” — it opens your phone's camera app directly, no permission prompt needed.</span></div>
+          </div>
+          <img id="capturePreview" class="capture-img" alt="Photo you just took of a trading card" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0a0f0d" hidden>
+        </div>
+        <div class="cam-status">
+          <span class="badge" id="badgeSupport">Checking camera support…</span>
+          <span class="badge" id="badgeState">Camera off</span>
+        </div>
+        <div id="camError"></div>
+        <div class="btnrow">
+          <button class="btn primary" id="btnStartCam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Turn on camera</button>
+          <button class="btn dark" id="btnCapture" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg>Take photo</button>
+          <button class="btn" id="btnFlip" disabled>Flip camera</button>
+          <button class="btn" id="btnRetake" hidden>Retake</button>
+          <label class="btn" for="cameraInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Take a photo — device camera</label>
+          <input class="sr" type="file" id="cameraInput" accept="image/*" capture="environment">
+          <label class="btn" for="fileInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5M12 3v12"/></svg>Upload a photo</label>
+          <input class="sr" type="file" id="fileInput" accept="image/*">
+        </div>
+        <div id="afterCapture" hidden>
+          <p class="note" style="margin:16px 0 10px"><b style="color:var(--ink)">Got the photo.</b> Now tell the demo which card it is and it will fetch live market prices for it:</p>
+          <div class="searchbar">
+            <div class="grow">
+              <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="search" id="identifyInput" placeholder="Card name — e.g. Umbreon VMAX 215" aria-label="Name of the card in your photo">
+            </div>
+            <button class="btn primary" id="btnIdentify">Look up this card</button>
+          </div>
+        </div>
+      </div>
+      <div class="cardbox">
+        <h3 style="margin:0 0 14px;font-size:17px">How scanning works here</h3>
+        <ol class="steps">
+          <li><span class="n">1</span><span><b>Turn on the camera</b> and allow access when your browser asks. On a phone it uses the rear camera automatically. No prompt? Tap <b>Take a photo — device camera</b> instead — it opens your phone's camera app directly.</span></li>
+          <li><span class="n">2</span><span><b>Frame the card</b> inside the guide, in good light, and tap <b>Take photo</b>.</span></li>
+          <li><span class="n">3</span><span><b>Type the name &amp; number</b> printed on the card. Prices come live from TCGdex (TCGplayer market data) and Scryfall, with live eBay listings for the same card alongside.</span></li>
+          <li><span class="n">4</span><span><b>Add it</b> to your collection or wishlist from the card page, and jump straight to buy listings on TCGplayer or eBay.</span></li>
+        </ol>
+        <p class="note" style="margin-top:16px">Live camera not prompting? Use <b>Take a photo — device camera</b> — it opens your phone's own camera app and needs no browser permission, and the photo works exactly the same way here. <b>Upload a photo</b> opens your camera roll or file picker. If you want the live viewfinder, open this link directly in Safari or Chrome (not inside another app's preview), tap the lock / site-settings icon in the address bar, set Camera to <b>Allow</b>, reload, and tap “Turn on camera” again.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEARCH -->
+  <section class="panel" id="panel-search" role="tabpanel">
+    <h2>Search the catalogue</h2>
+    <p class="sub">Search pulls the card catalogue and TCGplayer market prices live (via TCGdex — the same TCGplayer data <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors daily), and every search also surfaces what's actually for sale on eBay right now. Tap any card for the full price breakdown and live listings.</p>
+    <div class="searchbar" role="search">
+      <div class="grow">
+        <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" id="searchInput" placeholder="Try “Umbreon VMAX”, “Charizard”, “Mew”…  (add a number for an exact printing)" aria-label="Search for a card">
+      </div>
+      <div class="seg" role="group" aria-label="Game">
+        <button id="gamePoke" aria-pressed="true">Pokémon</button>
+        <button id="gameMtg" aria-pressed="false">Magic</button>
+      </div>
+      <button class="btn primary" id="btnSearch">Search</button>
+    </div>
+    <div class="chips" aria-label="Popular searches">
+      <button class="chip" data-q="Umbreon VMAX 215">Umbreon VMAX · 215</button>
+      <button class="chip" data-q="Charizard">Charizard</button>
+      <button class="chip" data-q="Mew">Mew</button>
+      <button class="chip" data-q="Pikachu">Pikachu</button>
+      <button class="chip" data-q="Gengar">Gengar</button>
+      <button class="chip" data-q="Rayquaza VMAX">Rayquaza VMAX</button>
+    </div>
+    <div id="searchStatus" aria-live="polite"></div>
+    <div class="results" id="results"></div>
+  </section>
+
+  <!-- COLLECTION -->
+  <section class="panel" id="panel-collection" role="tabpanel">
+    <h2>Your collection</h2>
+    <p class="sub">Cards you add during this visit, valued at current market price. This demo keeps everything in the page only — add cards from Search to see the portfolio total move.</p>
+    <div class="totalbar"><div><p>Portfolio value · market</p><div class="big" id="colTotal">$0.00</div></div><button class="btn small" id="btnGoSearch1" style="background:transparent;color:inherit;border-color:currentColor">+ Add cards from Search</button></div>
+    <div id="collectionList"></div>
+  </section>
+
+  <!-- WISHLIST -->
+  <section class="panel" id="panel-wishlist" role="tabpanel">
+    <h2>Wishlist</h2>
+    <p class="sub">Cards you're hunting, with the market price tracked against a target you set. When a card's market price drops to your target, it flags right here.</p>
+    <div id="wishList"></div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="panel" id="panel-about" role="tabpanel">
+    <h2>About · Data &amp; Partners</h2>
+    <p class="sub">What this demo does, where its data comes from, and how buying works.</p>
+    <div class="aboutgrid">
+      <div class="cardbox"><h3>What it is</h3><p>A trading card companion: photograph or search any Pokémon or Magic card, see what it's worth right now, track a collection's total value, and keep a wishlist with target prices — all in one place, on phone or desktop.</p></div>
+      <div class="cardbox"><h3>Data sources</h3><p>Pokémon card images, sets and TCGplayer market prices come live from <a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex</a>, with the <a href="https://pokemontcg.io" target="_blank" rel="noopener">Pokémon TCG API</a> as backup. That TCGplayer pricing is the same catalogue <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors as daily price files, which this demo uses as its pricing reference while direct TCGplayer access is pending. Magic data and prices come from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Prices are fetched fresh each time you search.</p></div>
+      <div class="cardbox"><h3>Buying</h3><p>Every search and every card page surfaces live eBay listings for that exact card — Buy It Now sorted lowest-first and auctions ending soonest — alongside the <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> link, so a card you find here is one tap from the real items for sale. Listings open on eBay itself, where prices and photos are always current; purchases happen on the marketplace — this demo never handles payment.</p></div>
+      <div class="cardbox"><h3>For partners</h3><p>Built by Muse Enterprise Solutions as a working product exhibit for marketplace and data partnership conversations — including TCGplayer affiliate (Impact) and partner data access. The full version adds photo identification, graded-card pricing boards, population data and daily price alerts.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    Demo build — collection and wishlist live for this visit only and reset when the page closes. Card data © their respective publishers; Pokémon prices via TCGdex (TCGplayer data, mirrored daily by TCGCSV) with Pokémon TCG API backup; Magic prices via Scryfall. Buy links go to live TCGplayer and eBay listings for the exact card shown.
+  </footer>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Card details">
+  <div class="scrim" id="modalScrim"></div>
+  <div class="sheet">
+    <button class="btn small iconbtn closex" id="modalClose" aria-label="Close" style="width:40px;height:40px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var money=function(n){ if(n==null||isNaN(n)) return "—"; return "$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); };
+var state={ game:"pokemon", collection:[], wishlist:[], current:null, stream:null, facing:"environment", captured:false };
+var toastTimer=null;
+function toast(msg){ var t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(function(){t.classList.remove("show")},2600); }
+
+/* ---------- Tabs ---------- */
+var tabs=document.querySelectorAll(".tab");
+function showTab(name){
+  tabs.forEach(function(b){ b.setAttribute("aria-selected", b.dataset.tab===name ? "true":"false"); });
+  document.querySelectorAll(".panel").forEach(function(p){ p.classList.toggle("active", p.id==="panel-"+name); });
+  if(name!=="scan"){ stopCamera(); }
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+tabs.forEach(function(b){ b.addEventListener("click",function(){ showTab(b.dataset.tab); }); });
+$("btnGoSearch1").addEventListener("click",function(){ showTab("search"); });
+
+/* ---------- Stats ---------- */
+function marketOf(item){ return item.price!=null? item.price : null; }
+function refreshStats(){
+  var total=0; state.collection.forEach(function(c){ if(c.price!=null) total+=c.price; });
+  $("statCount").textContent=state.collection.length+(state.collection.length===1?" card":" cards");
+  $("statValue").textContent=money(total);
+  $("statWish").textContent=state.wishlist.length+(state.wishlist.length===1?" card":" cards");
+  $("colTotal").textContent=money(total);
+  var cc=$("tabCountCol"), cw=$("tabCountWish");
+  cc.hidden=state.collection.length===0; cc.textContent=state.collection.length;
+  cw.hidden=state.wishlist.length===0; cw.textContent=state.wishlist.length;
+  renderCollection(); renderWishlist();
+}
+
+/* ---------- Camera ---------- */
+var video=$("camVideo"), canvas=$("camCanvas");
+function setBadge(stateTxt, cls){ var b=$("badgeState"); b.textContent=stateTxt; b.className="badge"+(cls?" "+cls:""); }
+function camSupported(){
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+}
+function initCamBadges(){
+  var sup=$("badgeSupport"), stat=$("statCam");
+  if(window.isSecureContext===false){ sup.textContent="Needs a secure (HTTPS) page for camera"; sup.className="badge warn"; stat.textContent="Needs HTTPS"; return; }
+  if(camSupported()){ sup.textContent="Camera supported on this device"; sup.className="badge ok"; stat.textContent="Supported ✓"; }
+  else { sup.textContent="No live-camera API here — use “Take a photo — device camera”"; sup.className="badge warn"; stat.textContent="Device camera / upload"; }
+  // If camera permission was already denied earlier, say so up front —
+  // the browser will never show the prompt again until it's reset.
+  if(navigator.permissions && navigator.permissions.query){
+    navigator.permissions.query({name:"camera"}).then(function(res){
+      function apply(){
+        if(res.state==="denied"){
+          sup.textContent="Camera permission is set to Blocked in this browser";
+          sup.className="badge warn";
+          stat.textContent="Blocked in settings";
+          setBadge("Camera blocked in browser settings","warn");
+          showCamError(camHelpHTML("denied"));
+        } else if(res.state==="granted"){
+          sup.textContent="Camera permission already allowed"; sup.className="badge ok";
+        }
+      }
+      apply();
+      if(res.addEventListener) res.addEventListener("change",apply); else res.onchange=apply;
+    }).catch(function(){});
+  }
+}
+function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent||"") || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1); }
+function camHelpHTML(kind){
+  var steps;
+  if(isIOS()){
+    steps="On iPhone/iPad: open this page directly in <b>Safari</b>, tap the <b>AA / lock icon</b> in the address bar → <b>Website Settings</b> → <b>Camera</b> → <b>Allow</b>, then reload and tap “Turn on camera” again. If you opened the link inside another app, tap its <b>Open in Safari</b> option first — in-app previews can block the camera prompt entirely.";
+  } else {
+    steps="In <b>Chrome</b>: tap the <b>lock / tune icon</b> in the address bar → <b>Site settings</b> → <b>Camera</b> → <b>Allow</b>, then reload and tap “Turn on camera” again. If you opened the link inside another app, open it in Chrome directly instead — in-app previews can block the camera prompt entirely.";
+  }
+  var lead = kind==="denied"
+    ? "<b>Camera permission is blocked, so no prompt can appear.</b> The browser remembers an earlier “Block / Don't allow” choice and denies the camera instantly. To fix it: "+steps
+    : "<b>The camera was blocked before a prompt could appear.</b> That happens when this page runs inside an app's embedded preview, or permission was denied earlier. "+steps;
+  return lead+"<br><br><b>No settings needed:</b> tap <b>“Take a photo — device camera”</b> below — it opens your phone's own camera app, needs no browser permission, and the photo works exactly the same way. <b>Upload a photo</b> works too.";
+}
+initCamBadges();
+
+function stopCamera(){
+  if(state.stream){ state.stream.getTracks().forEach(function(t){ t.stop(); }); state.stream=null; }
+  video.srcObject=null;
+  if(!state.captured){ $("camPlaceholder").hidden=false; $("camFrame").hidden=true; }
+  $("btnCapture").disabled=true; $("btnFlip").disabled=true;
+  $("btnStartCam").innerHTML="Turn on camera";
+  if(!state.captured) setBadge("Camera off","");
+}
+function showCamError(html){ $("camError").innerHTML='<div class="err">'+html+'</div>'; }
+function clearCamError(){ $("camError").innerHTML=""; }
+
+function onCamStream(stream){
+  state.stream=stream; state.captured=false;
+  $("capturePreview").hidden=true; $("afterCapture").hidden=true;
+  video.srcObject=stream;
+  var p=video.play(); if(p&&p.catch) p.catch(function(){});
+  $("camPlaceholder").hidden=true; $("camFrame").hidden=false;
+  $("btnCapture").disabled=false; $("btnFlip").disabled=false; $("btnRetake").hidden=true;
+  $("btnStartCam").textContent="Camera on — tap to restart";
+  setBadge("Camera live · "+(state.facing==="environment"?"rear":"front"),"ok");
+  $("statCam").textContent="Live ✓";
+}
+function onCamError(err){
+  setBadge("Camera blocked","warn"); $("statCam").textContent="Blocked";
+  if(err && (err.name==="NotAllowedError"||err.name==="PermissionDeniedError"||err.name==="SecurityError")){
+    // No prompt appeared: either permission is already set to Blocked,
+    // or this embedded preview can't show the prompt at all. Check which.
+    if(navigator.permissions && navigator.permissions.query){
+      navigator.permissions.query({name:"camera"}).then(function(res){
+        showCamError(camHelpHTML(res.state==="denied" ? "denied" : "embedded"));
+      }).catch(function(){ showCamError(camHelpHTML("embedded")); });
+    } else {
+      showCamError(camHelpHTML("embedded"));
+    }
+  } else if(err && (err.name==="NotFoundError"||err.name==="DevicesNotFoundError")){
+    showCamError("<b>No camera found on this device.</b> Use <b>Take a photo — device camera</b> or <b>Upload a photo</b> instead.");
+  } else if(err && err.name==="NotReadableError"){
+    showCamError("<b>The camera is busy</b> — another app or tab is using it. Close it and try again, or use <b>Take a photo — device camera</b>.");
+  } else {
+    showCamError("<b>The camera couldn't start</b> ("+(err&&err.name?err.name:"unknown error")+"). Use <b>Take a photo — device camera</b> instead — it works the same way.");
+  }
+}
+function startCamera(){
+  clearCamError();
+  if(!camSupported()){ showCamError("<b>No live camera in this browser view.</b> Use <b>Take a photo — device camera</b> — it opens your phone's camera app and works the same way. Or open this link directly in Safari / Chrome for the live viewfinder."); return; }
+  setBadge("Requesting permission…","warn");
+  var gum=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  var attempts=[
+    { audio:false, video:{ facingMode:{ ideal: state.facing }, width:{ ideal:1920 }, height:{ ideal:1080 } } },
+    { audio:false, video:{ facingMode:{ ideal: state.facing } } },
+    { audio:false, video:true }
+  ];
+  (function tryNext(i){
+    gum(attempts[i]).then(onCamStream).catch(function(err){
+      // Constraint problems get a simpler retry; a permission denial
+      // would fail every retry identically, so stop there and explain.
+      if(i<attempts.length-1 && err && (err.name==="OverconstrainedError"||err.name==="NotFoundError"||err.name==="TypeError")){ tryNext(i+1); }
+      else onCamError(err);
+    });
+  })(0);
+}
+$("btnStartCam").addEventListener("click",startCamera);
+$("btnFlip").addEventListener("click",function(){ state.facing = state.facing==="environment" ? "user" : "environment"; if(state.stream){ stopCamera(); state.captured=false; startCamera(); } });
+$("btnCapture").addEventListener("click",function(){
+  if(!state.stream) return;
+  var vw=video.videoWidth||1200, vh=video.videoHeight||900;
+  canvas.width=vw; canvas.height=vh;
+  var ctx=canvas.getContext("2d"); ctx.drawImage(video,0,0,vw,vh);
+  var url=canvas.toDataURL("image/jpeg",0.92);
+  var img=$("capturePreview"); img.src=url; img.hidden=false;
+  state.captured=true;
+  stopCamera();
+  $("camPlaceholder").hidden=true; $("camFrame").hidden=true;
+  $("btnRetake").hidden=false; $("afterCapture").hidden=false;
+  setBadge("Photo taken ✓","ok");
+  $("identifyInput").focus();
+});
+$("btnRetake").addEventListener("click",function(){ state.captured=false; $("capturePreview").hidden=true; $("afterCapture").hidden=true; $("btnRetake").hidden=true; startCamera(); });
+function handlePhotoFile(f){
+  if(!f) return;
+  var reader=new FileReader();
+  reader.onload=function(){ var img=$("capturePreview"); img.src=reader.result; img.hidden=false; clearCamError(); state.captured=true; stopCamera(); state.captured=true; $("camPlaceholder").hidden=true; $("camFrame").hidden=true; $("btnRetake").hidden=false; $("afterCapture").hidden=false; setBadge("Photo loaded ✓","ok"); $("identifyInput").focus(); };
+  reader.readAsDataURL(f);
+}
+$("fileInput").addEventListener("change",function(e){ handlePhotoFile(e.target.files && e.target.files[0]); e.target.value=""; });
+$("cameraInput").addEventListener("change",function(e){ handlePhotoFile(e.target.files && e.target.files[0]); e.target.value=""; });
+document.addEventListener("visibilitychange",function(){ if(document.hidden) stopCamera(); });
+
+/* ---------- Search ---------- */
+function setGame(g){
+  state.game=g;
+  $("gamePoke").setAttribute("aria-pressed", g==="pokemon"?"true":"false");
+  $("gameMtg").setAttribute("aria-pressed", g==="mtg"?"true":"false");
+  $("searchInput").placeholder = g==="pokemon" ? "Try “Umbreon VMAX”, “Charizard”, “Mew”…  (add a number for an exact printing)" : "Try “Black Lotus”, “Lightning Bolt”, “The One Ring”…";
+}
+$("gamePoke").addEventListener("click",function(){ setGame("pokemon"); });
+$("gameMtg").addEventListener("click",function(){ setGame("mtg"); });
+
+function parseQuery(q){
+  // split trailing number like "215" or "215/285"
+  var m=q.trim().match(/^(.*?)[\s#]*(\d{1,4}(?:\/\d{1,4})?)$/);
+  if(m && m[1].trim()) return { name:m[1].trim(), number:m[2].split("/")[0] };
+  return { name:q.trim(), number:null };
+}
+function pokePrice(card){
+  var p=card.tcgplayer && card.tcgplayer.prices; if(!p) return {price:null,label:""};
+  var order=["holofoil","reverseHolofoil","normal","1stEditionHolofoil","1stEditionNormal"];
+  for(var i=0;i<order.length;i++){ var v=p[order[i]]; if(v && (v.market!=null||v.mid!=null)) return { price:(v.market!=null?v.market:v.mid), label:order[i].replace(/([A-Z])/g," $1").toLowerCase() }; }
+  return {price:null,label:""};
+}
+function normalizePoke(card){
+  var pr=pokePrice(card);
+  return { id:"poke-"+card.id, game:"Pokémon", name:card.name, set:card.set?card.set.name:"", number:card.number||"", rarity:card.rarity||"", image:(card.images&&(card.images.large||card.images.small))||"", price:pr.price, priceLabel:pr.label?("TCGplayer · "+pr.label):"TCGplayer", prices: pokePriceRows(card), tcgUrl: card.tcgplayer && card.tcgplayer.url ? card.tcgplayer.url : null, raw:card };
+}
+function pokePriceRows(card){
+  var rows=[]; var p=card.tcgplayer && card.tcgplayer.prices;
+  if(p){ Object.keys(p).forEach(function(k){ var v=p[k]; var val=(v.market!=null?v.market:(v.mid!=null?v.mid:null)); if(val!=null) rows.push({label:"TCGplayer — "+k.replace(/([A-Z])/g," $1").toLowerCase(), value:val}); }); }
+  var cm=card.cardmarket && card.cardmarket.prices;
+  if(cm && cm.averageSellPrice!=null) rows.push({label:"Cardmarket — average sell", value:cm.averageSellPrice, cur:"€"});
+  return rows;
+}
+function normalizeMtg(card){
+  var foil=card.prices && card.prices.usd_foil ? parseFloat(card.prices.usd_foil) : null;
+  var usd=card.prices && card.prices.usd ? parseFloat(card.prices.usd) : null;
+  var price=usd!=null?usd:foil;
+  var rows=[];
+  if(usd!=null) rows.push({label:"Scryfall — USD", value:usd});
+  if(foil!=null) rows.push({label:"Scryfall — USD foil", value:foil});
+  if(card.prices && card.prices.eur) rows.push({label:"Scryfall — EUR", value:parseFloat(card.prices.eur)});
+  return { id:"mtg-"+card.id, game:"Magic", name:card.name, set:card.set_name||"", number:card.collector_number||"", rarity:card.rarity||"", image:(card.image_uris&&(card.image_uris.large||card.image_uris.normal))||(card.card_faces&&card.card_faces[0]&&card.card_faces[0].image_uris?(card.card_faces[0].image_uris.large||card.card_faces[0].image_uris.normal):""), price:price, priceLabel:"Scryfall · market", prices:rows, tcgUrl:null, raw:card };
+}
+function ebayURL(q, mode){
+  var base="https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent(q);
+  if(mode==="bin") return base+"&LH_BIN=1&_sop=15";
+  if(mode==="auction") return base+"&LH_Auction=1&_sop=1";
+  return base;
+}
+function searchURLs(item){
+  var q=(item.name+" "+(item.number||"")+" "+item.set).trim();
+  return {
+    tcg: item.tcgUrl || ("https://www.tcgplayer.com/search/all/product?productLineName="+(item.game==="Pokémon"?"pokemon":"magic")+"&q="+encodeURIComponent(item.name+" "+(item.number||""))),
+    ebay: ebayURL(q),
+    ebayBin: ebayURL(q,"bin"),
+    ebayAuction: ebayURL(q,"auction")
+  };
+}
+function ebayBarHTML(query){
+  var esc=query.replace(/</g,"&lt;");
+  return '<div class="ebaybar"><span class="eb-t">For sale on eBay</span><span class="eb-s">Live listings for “'+esc+'” — real items for sale, loaded straight from eBay:</span>'+
+    '<a class="btn small primary" target="_blank" rel="noopener" href="'+ebayURL(query,'bin')+'">Buy It Now · lowest first ↗</a>'+
+    '<a class="btn small" target="_blank" rel="noopener" href="'+ebayURL(query,'auction')+'">Auctions · ending soonest ↗</a>'+
+    '<a class="btn small" target="_blank" rel="noopener" href="'+ebayURL(query)+'">All listings ↗</a></div>';
+}
+/* --- Pokémon via TCGdex (primary) ---
+   TCGdex is a free, keyless, browser-friendly (CORS-open) API whose pricing
+   is TCGplayer + Cardmarket data — the same TCGplayer catalogue that
+   TCGCSV (tcgcsv.com) mirrors as daily CSV/JSON. TCGCSV itself sends no
+   CORS headers, so a browser page cannot fetch it directly; TCGdex can
+   be, and carries the same prices, refreshed through the day. */
+function dexPrice(detail){
+  var rows=[], price=null, label="";
+  var pr=detail.pricing||{};
+  if(pr.tcgplayer){
+    Object.keys(pr.tcgplayer).forEach(function(k){
+      if(k==="unit"||k==="updated") return;
+      var v=pr.tcgplayer[k]; if(!v) return;
+      var mp=(v.marketPrice!=null?v.marketPrice:(v.midPrice!=null?v.midPrice:null));
+      if(mp!=null){ rows.push({label:"TCGplayer — "+k+" market", value:mp}); if(price==null){ price=mp; label="TCGplayer · "+k; } }
+      if(v.lowPrice!=null && v.lowPrice!==mp) rows.push({label:"TCGplayer — "+k+" low", value:v.lowPrice});
+      if(v.directLowPrice!=null) rows.push({label:"TCGplayer — "+k+" direct low", value:v.directLowPrice});
+    });
+  }
+  if(pr.cardmarket){
+    var cm=pr.cardmarket, trend=(cm.trend!=null?cm.trend:(cm.avg!=null?cm.avg:null));
+    if(trend!=null) rows.push({label:"Cardmarket — trend", value:trend, cur:"€"});
+    if(cm.low!=null) rows.push({label:"Cardmarket — low", value:cm.low, cur:"€"});
+  }
+  return { price:price, label:label, rows:rows };
+}
+function normalizeDex(detail, brief){
+  var p=dexPrice(detail);
+  var imgBase=detail.image||(brief&&brief.image)||"";
+  return { id:"dex-"+detail.id, game:"Pokémon", name:detail.name, set:detail.set?detail.set.name:"", number:detail.localId||(brief&&brief.localId)||"", rarity:detail.rarity||"", image:imgBase?imgBase+"/high.webp":"", price:p.price, priceLabel:p.label||"TCGdex", prices:p.rows, tcgUrl:null, raw:detail };
+}
+function fetchDex(query){
+  var pq=parseQuery(query);
+  var url="https://api.tcgdex.net/v2/en/cards?name="+encodeURIComponent(pq.name);
+  if(pq.number) url+="&localId="+encodeURIComponent(pq.number);
+  return fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(list){
+    if(!Array.isArray(list)) return [];
+    var nameLc=pq.name.toLowerCase();
+    list=list.filter(function(b){ return b.image; });
+    list.sort(function(a,b){
+      var ae=a.name.toLowerCase()===nameLc?0:1, be=b.name.toLowerCase()===nameLc?0:1;
+      return ae-be;
+    });
+    return Promise.all(list.slice(0,24).map(function(b){
+      return fetch("https://api.tcgdex.net/v2/en/cards/"+encodeURIComponent(b.id),{headers:{"Accept":"application/json"}}).then(function(r){
+        if(!r.ok) throw new Error("HTTP "+r.status);
+        return r.json();
+      }).then(function(d){ return normalizeDex(d,b); }).catch(function(){
+        return { id:"dex-"+b.id, game:"Pokémon", name:b.name, set:"", number:b.localId||"", rarity:"", image:b.image+"/high.webp", price:null, priceLabel:"TCGdex", prices:[], tcgUrl:null, raw:b };
+      });
+    }));
+  });
+}
+/* --- Pokémon via Pokémon TCG API (fallback) ---
+   NOTE: this API returns HTTP 500 for a quoted multi-word name and for
+   field-select queries, which is what used to dead-end search. Query it
+   one name-token at a time, with no select parameter. */
+function fetchPokeFallback(query){
+  var pq=parseQuery(query);
+  var words=pq.name.split(/\s+/).filter(Boolean).map(function(w){ return 'name:"'+w.replace(/"/g,"")+'*"'; });
+  var q=words.join(" ");
+  if(pq.number) q+=" number:"+pq.number;
+  var url="https://api.pokemontcg.io/v2/cards?q="+encodeURIComponent(q)+"&pageSize=24&orderBy=-set.releaseDate";
+  return fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(data){
+    return (data.data||[]).slice(0,24).map(normalizePoke).filter(function(c){ return c.image; });
+  });
+}
+function renderResults(list, query, sourceNote){
+  var status=$("searchStatus"), results=$("results");
+  var esc=query.replace(/</g,"&lt;");
+  if(!list.length){
+    status.innerHTML="";
+    results.innerHTML='<div class="empty" style="grid-column:1/-1"><b>No catalogue cards found for “'+esc+'”.</b><br>Check the spelling, or try the name without a number — then add the number from the bottom corner of the card. Live eBay listings for it are one tap away below.</div>';
+    var holder=document.createElement("div"); holder.style.gridColumn="1/-1"; holder.innerHTML=ebayBarHTML(query);
+    results.appendChild(holder);
+    return;
+  }
+  status.innerHTML='<p class="sub" style="margin-bottom:2px">'+list.length+' result'+(list.length===1?"":"s")+' · '+sourceNote+' · tap a card for its price breakdown &amp; live eBay listings</p>'+ebayBarHTML(query);
+  results.innerHTML="";
+  list.forEach(function(item){
+    var b=document.createElement("button"); b.className="rcard";
+    b.innerHTML='<img loading="lazy" alt="" src="'+item.image+'"><div class="meta"><span class="nm"></span><span class="st"></span><span class="pr">'+(item.price!=null?money(item.price):"Price n/a")+'<small>'+(item.price!=null?item.priceLabel:"see card page")+'</small><small>Tap for live eBay listings ↗</small></span></div>';
+    b.querySelector(".nm").textContent=item.name+(item.number?" · #"+item.number:"");
+    b.querySelector(".st").textContent=item.set+(item.rarity?" · "+item.rarity:"");
+    b.addEventListener("click",function(){ openDetail(item); });
+    results.appendChild(b);
+  });
+}
+function searchFailed(query){
+  var status=$("searchStatus"), results=$("results");
+  var esc=query.replace(/</g,"&lt;");
+  status.innerHTML="";
+  results.innerHTML='<div class="empty" style="grid-column:1/-1"><b>Both card catalogues are unreachable right now.</b><br>The cards for sale are still one tap away — these buttons open live eBay listings for “'+esc+'”, and <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> has the TCGplayer price files while the APIs recover.</div>';
+  var holder=document.createElement("div"); holder.style.gridColumn="1/-1"; holder.innerHTML=ebayBarHTML(query);
+  results.appendChild(holder);
+}
+function doSearch(query){
+  query=(query||"").trim();
+  if(!query){ toast("Type a card name first"); return; }
+  var status=$("searchStatus"), results=$("results");
+  var esc=query.replace(/</g,"&lt;");
+  status.innerHTML='<p class="sub"><span class="spinner"></span>Searching for “'+esc+'” — catalogue prices plus live eBay listings…</p>';
+  results.innerHTML="";
+  if(state.game==="mtg"){
+    fetch("https://api.scryfall.com/cards/search?q="+encodeURIComponent(query+" unique:prints")+"&order=released&dir=desc",{headers:{"Accept":"application/json"}}).then(function(r){
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.json();
+    }).then(function(data){
+      renderResults((data.data||[]).slice(0,24).map(normalizeMtg).filter(function(c){ return c.image; }), query, "prices via Scryfall");
+    }).catch(function(){ searchFailed(query); });
+    return;
+  }
+  fetchDex(query).then(function(list){
+    if(list.length){ renderResults(list, query, "TCGplayer market prices via TCGdex"); return; }
+    return fetchPokeFallback(query).then(function(list2){
+      renderResults(list2, query, "prices via Pokémon TCG API");
+    });
+  }).catch(function(){
+    fetchPokeFallback(query).then(function(list2){
+      renderResults(list2, query, "prices via Pokémon TCG API");
+    }).catch(function(){ searchFailed(query); });
+  });
+}
+$("btnSearch").addEventListener("click",function(){ doSearch($("searchInput").value); });
+$("searchInput").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); doSearch($("searchInput").value); } });
+document.querySelectorAll(".chip").forEach(function(ch){ ch.addEventListener("click",function(){ setGame("pokemon"); $("searchInput").value=ch.dataset.q; doSearch(ch.dataset.q); }); });
+$("btnIdentify").addEventListener("click",function(){
+  var v=$("identifyInput").value.trim(); if(!v){ toast("Type the card's name from the photo first"); return; }
+  showTab("search"); $("searchInput").value=v; doSearch(v);
+});
+$("identifyInput").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); $("btnIdentify").click(); } });
+
+/* ---------- Detail modal ---------- */
+function openDetail(item){
+  state.current=item;
+  var urls=searchURLs(item);
+  var inCol=state.collection.some(function(c){return c.id===item.id});
+  var inWish=state.wishlist.some(function(c){return c.id===item.id});
+  var priceRows=item.prices && item.prices.length ? item.prices.map(function(r){ return '<div class="prow"><span>'+r.label+'</span><b>'+(r.cur==="€" ? "€"+Number(r.value).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : money(r.value))+'</b></div>'; }).join("") : '<div class="prow"><span>Market price</span><b>Not listed — check buy links</b></div>';
+  $("modalBody").innerHTML=
+    '<div class="sheetgrid"><div><img class="big" id="modalImg" alt=""></div><div>'+
+    '<h2 style="margin-top:2px" id="modalName"></h2>'+
+    '<p class="sub" id="modalSub" style="margin-bottom:4px"></p>'+
+    '<div class="kv"><div><span>Set</span><b id="kvSet"></b></div><div><span>Number</span><b id="kvNum"></b></div><div><span>Rarity</span><b id="kvRar"></b></div><div><span>Market price</span><b id="kvPrice"></b></div></div>'+
+    '<div class="pricegrid">'+priceRows+'</div>'+
+    '<div class="btnrow"><button class="btn primary" id="mAddCol">'+(inCol?"✓ In your collection":"Add to collection")+'</button><button class="btn" id="mAddWish">'+(inWish?"✓ On wishlist":"Add to wishlist")+'</button></div>'+
+    '<div class="btnrow"><a class="btn dark" target="_blank" rel="noopener" href="'+urls.tcg+'">Buy on TCGplayer ↗</a></div>'+
+    '<p class="note" style="margin:14px 0 0"><b style="color:var(--ink)">For sale on eBay — live listings for this exact printing:</b></p>'+
+    '<div class="btnrow" style="margin-top:8px"><a class="btn primary" target="_blank" rel="noopener" href="'+urls.ebayBin+'">eBay Buy It Now · lowest first ↗</a><a class="btn" target="_blank" rel="noopener" href="'+urls.ebayAuction+'">eBay auctions · ending soonest ↗</a><a class="btn" target="_blank" rel="noopener" href="'+urls.ebay+'">All eBay listings ↗</a></div>'+
+    '<p class="note" style="margin-top:12px">Prices above are the catalogue market figures fetched just now. The eBay buttons open eBay\'s live results for this card — real items for sale, with their current prices and photos, straight from eBay.</p>'+
+    '</div></div>';
+  $("modalImg").src=item.image;
+  $("modalName").textContent=item.name;
+  $("modalSub").textContent=item.game+" · tap the buttons below to track or buy this printing";
+  $("kvSet").textContent=item.set||"—"; $("kvNum").textContent=item.number?("#"+item.number):"—"; $("kvRar").textContent=item.rarity||"—"; $("kvPrice").textContent=money(item.price);
+  $("modal").classList.add("open"); document.body.style.overflow="hidden";
+  $("mAddCol").addEventListener("click",function(){ toggleCollection(item); openDetail(item); });
+  $("mAddWish").addEventListener("click",function(){ toggleWishlist(item); openDetail(item); });
+}
+function closeModal(){ $("modal").classList.remove("open"); document.body.style.overflow=""; }
+$("modalClose").addEventListener("click",closeModal);
+$("modalScrim").addEventListener("click",closeModal);
+document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeModal(); });
+
+function toggleCollection(item){
+  var i=state.collection.findIndex(function(c){return c.id===item.id});
+  if(i>=0){ state.collection.splice(i,1); toast("Removed from collection"); }
+  else { state.collection.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:item.price,game:item.game}); toast("Added to collection ✓"); }
+  refreshStats();
+}
+function toggleWishlist(item){
+  var i=state.wishlist.findIndex(function(c){return c.id===item.id});
+  if(i>=0){ state.wishlist.splice(i,1); toast("Removed from wishlist"); }
+  else { state.wishlist.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:item.price,game:item.game,target:item.price!=null?Math.round(item.price*0.85*100)/100:null}); toast("Added to wishlist ✓"); }
+  refreshStats();
+}
+
+/* ---------- Collection / wishlist render ---------- */
+function rowHTML(item, isWish){
+  var hit = isWish && item.target!=null && item.price!=null && item.price<=item.target;
+  return '<img alt="" src="'+item.image+'"><div class="info"><b></b><span>'+(item.set||"")+(item.number?" · #"+item.number:"")+'</span>'+(isWish?'<span style="display:block;margin-top:3px">Target: <b style="display:inline;font-size:13px">'+money(item.target)+'</b>'+(hit?' · <b style="display:inline;color:var(--accent);font-size:13px">TARGET HIT ✓</b>':'')+'</span>':"")+'</div><div class="val">'+money(item.price)+'<small>market</small></div>';
+}
+function renderCollection(){
+  var el=$("collectionList");
+  if(!state.collection.length){ el.innerHTML='<div class="empty"><b>Nothing here yet.</b><br>Search for a card, open it, and tap <b>Add to collection</b> — its market value lands in the portfolio total above.</div>'; return; }
+  el.innerHTML="";
+  state.collection.forEach(function(item){
+    var d=document.createElement("div"); d.className="crow"; d.innerHTML=rowHTML(item,false)+'<button class="iconbtn" aria-label="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6"/></svg></button>';
+    d.querySelector(".info b").textContent=item.name;
+    d.querySelector(".iconbtn").addEventListener("click",function(){ toggleCollection(item); if($("modal").classList.contains("open")&&state.current&&state.current.id===item.id) openDetail(state.current); });
+    el.appendChild(d);
+  });
+}
+function renderWishlist(){
+  var el=$("wishList");
+  if(!state.wishlist.length){ el.innerHTML='<div class="empty"><b>Your wishlist is empty.</b><br>Open any card and tap <b>Add to wishlist</b>. A target price is set 15% under market to start — edit it any time.</div>'; return; }
+  el.innerHTML="";
+  state.wishlist.forEach(function(item){
+    var d=document.createElement("div"); d.className="crow"; d.innerHTML=rowHTML(item,true);
+    d.querySelector(".info b").textContent=item.name;
+    var edit=document.createElement("button"); edit.className="btn small"; edit.textContent="Set target";
+    edit.addEventListener("click",function(){ prompt2(item); });
+    var rm=document.createElement("button"); rm.className="iconbtn"; rm.setAttribute("aria-label","Remove from wishlist");
+    rm.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+    rm.addEventListener("click",function(){ toggleWishlist(item); });
+    d.appendChild(edit); d.appendChild(rm);
+    el.appendChild(d);
+  });
+}
+function prompt2(item){
+  var wrap=document.createElement("div");
+  wrap.style.cssText="position:fixed;inset:0;z-index:90;background:rgba(5,10,8,.6);display:flex;align-items:center;justify-content:center;padding:18px";
+  var cur=item.target!=null?String(item.target):"";
+  wrap.innerHTML='<div style="background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:20px;width:min(360px,100%)"><h3 style="margin:0 0 6px;font-size:17px">Target price</h3><p class="note" style="margin:0 0 12px">Flag <b style="color:var(--ink)"></b> when market is at or under:</p><div style="display:flex;gap:8px;flex-wrap:wrap"><input type="number" min="0" step="0.01" style="flex:1;min-width:110px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:16px" aria-label="Target price in dollars"><button class="btn primary" data-ok="1">Save</button><button class="btn" data-cancel="1">Cancel</button></div></div>';
+  wrap.querySelector("b").textContent=item.name;
+  var input=wrap.querySelector("input"); input.value=cur;
+  document.body.appendChild(wrap); input.focus();
+  wrap.querySelector("[data-ok]").addEventListener("click",function(){ var v=parseFloat(input.value); document.body.removeChild(wrap); if(!isNaN(v)&&v>=0){ item.target=v; refreshStats(); toast("Target set to "+money(v)); } });
+  wrap.querySelector("[data-cancel]").addEventListener("click",function(){ document.body.removeChild(wrap); });
+  wrap.addEventListener("click",function(e){ if(e.target===wrap) document.body.removeChild(wrap); });
+  return null;
+};
+
+refreshStats();
+})();
+</script>
+</body>
+</html>
