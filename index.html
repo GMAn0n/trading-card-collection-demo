@@ -2489,6 +2489,16 @@ function isPlausibleCardName(c){
     if(/[a-z]{2,}[A-Z]/.test(t)) return false;   // "coE" — stray trailing/internal capital
     if(/^[a-z]+[A-Z]+$/.test(t)) return false;
     if(lens[i]>=3 && !/[aeiouy]/i.test(t)) return false; // a solid token has a vowel
+    if(lens[i]>=4){
+      // Consonant mush: Latin OCR chewing on a non-Latin name
+      // strip yields letter runs with almost no vowels ("TFICH"
+      // — 1 vowel in 5). Real names stay above one vowel in five
+      // even at their most consonant-heavy ("Farfetch'd" 2 in 9,
+      // "Jynx" 1 in 4), so a token at or under that line is a
+      // fragment, not a name.
+      var vow=(t.match(/[aeiouy]/gi)||[]).length;
+      if(vow/lens[i]<=0.2) return false;
+    }
   }
   var longest=tokens[lens.indexOf(maxTok)];
   if(!/[aeiouy]/i.test(longest)) return false;
@@ -2641,28 +2651,42 @@ function identifyFromPhoto(){
    the card-data proxy's /identify endpoint (AI vision). On found,
    its name/hp/number feed the SAME resolution pipeline as OCR. Any
    failure — found:false, timeout, network error, bad response —
-   falls back to the on-device OCR flow; the user is never blocked
-   on the AI path. */
+   is retried ONCE before the on-device OCR flow takes over; the
+   user is never blocked on the AI path. The retry matters most
+   for Japanese cards: the OCR fallback reads Latin script only,
+   so a single transient AI failure there used to end the scan in
+   "couldn't read that card" even on a clean photo. */
 var IDENTIFY_URL="https://ebay-search-proxy.369samclarkisfine.workers.dev/identify";
 function aiIdentifyFields(src, cb){
+  // The callback fires EXACTLY ONCE, through done(). The callback
+  // runs the resolver; if anything in that handoff ever throws,
+  // the throw must not drift back into this function's promise
+  // .catch and re-invoke the callback with null — a silent second
+  // call is how a read that succeeded could be replaced by the
+  // OCR fallback's output (gibberish pre-filled for the GB
+  // Venusaur, an honest-failure message for the Japanese Mew).
+  var cbDone=false;
+  function done(f){ if(cbDone) return; cbDone=true; cb(f); }
   var img=new Image();
   img.onload=function(){
     try{
       var W=img.naturalWidth||img.width||0, H=img.naturalHeight||img.height||0;
-      if(!W||!H){ cb(null); return; }
+      if(!W||!H){ done(null); return; }
       var scale=Math.min(1, 1024/Math.max(W,H));
       var c=document.createElement("canvas");
       c.width=Math.max(2,Math.round(W*scale)); c.height=Math.max(2,Math.round(H*scale));
       c.getContext("2d").drawImage(img,0,0,c.width,c.height);
       var dataUrl=c.toDataURL("image/jpeg",0.85);
       var b64=dataUrl.indexOf(",")>=0 ? dataUrl.split(",")[1] : "";
-      if(!b64){ cb(null); return; }
+      if(!b64){ done(null); return; }
+      function fail(n){ if(n<1) attempt(n+1); else done(null); }
+      function attempt(n){
       var ctrl=(typeof AbortController!=="undefined") ? new AbortController() : null;
       var to=ctrl ? setTimeout(function(){ try{ ctrl.abort(); }catch(e){} }, 20000) : null;
       fetch(IDENTIFY_URL, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({image:b64}), signal:ctrl?ctrl.signal:undefined })
         .then(function(r){ if(to) clearTimeout(to); return r.ok ? r.json() : null; })
         .then(function(j){
-          if(!j || !j.found || !j.name){ cb(null); return; }
+          if(!j || !j.found || !j.name){ fail(n); return; }
           var num=null, den=null;
           if(j.number){
             var m=String(j.number).match(/(\d{1,3})\s*\/\s*(\d{2,3})/);
@@ -2717,12 +2741,14 @@ function aiIdentifyFields(src, cb){
           var printed=(j.namePrinted==null?null:String(j.namePrinted));
           var lang=(j.language==null?null:String(j.language).toLowerCase());
           if(!lang && printed && /[^\u0000-\u024F]/.test(printed)) lang="ja";
-          cb({ name:nm, candidates:[nm], rejectedName:"", num:num, den:den, hp:j.hp?String(j.hp):null, attacks:atks, power:power, firstEdition:(typeof j.firstEdition==="boolean"?j.firstEdition:null), setSymbol:(j.setSymbol==null?null:String(j.setSymbol)), yearLine:(j.yearLine==null?null:String(j.yearLine)), illustrator:(j.illustrator?String(j.illustrator):null), finish:fin, slab:slab, numFromLabel:numFromLabel, language:lang, namePrinted:printed, dexNo:(j.dexNo==null?null:String(j.dexNo)), ai:true });
+          done({ name:nm, candidates:[nm], rejectedName:"", num:num, den:den, hp:j.hp?String(j.hp):null, attacks:atks, power:power, firstEdition:(typeof j.firstEdition==="boolean"?j.firstEdition:null), setSymbol:(j.setSymbol==null?null:String(j.setSymbol)), yearLine:(j.yearLine==null?null:String(j.yearLine)), illustrator:(j.illustrator?String(j.illustrator):null), finish:fin, slab:slab, numFromLabel:numFromLabel, language:lang, namePrinted:printed, dexNo:(j.dexNo==null?null:String(j.dexNo)), ai:true });
         })
-        .catch(function(){ if(to) clearTimeout(to); cb(null); });
-    }catch(e){ cb(null); }
+        .catch(function(){ if(to) clearTimeout(to); fail(n); });
+      }
+      attempt(0);
+    }catch(e){ done(null); }
   };
-  img.onerror=function(){ cb(null); };
+  img.onerror=function(){ done(null); };
   img.src=src;
 }
 function identifyFromCapture(){
@@ -2735,7 +2761,14 @@ function identifyFromCapture(){
   $("idFields").innerHTML="";
   aiIdentifyFields(prev.src, function(fields){
     state.ocrBusy=false; ocrBtnReset();
-    if(fields && (fields.name || fields.num)){ resolvePhotoFields(fields); return; }
+    if(fields && (fields.name || fields.num)){
+      // A throw inside resolution surfaces as itself — it is
+      // never mistaken for "the AI couldn't read it", which would
+      // silently substitute the OCR fallback's Latin-only read.
+      try{ resolvePhotoFields(fields); }
+      catch(e){ setOcrStatus('<p class="note"><b>Identification hit a snag</b> matching that read against the catalogue — nothing was guessed from it. Tap <b>Identify this card from the photo</b> to try again, or type the name &amp; number below.</p>'); }
+      return;
+    }
     // AI couldn't read it — fall back to the on-device reader.
     if(window.Tesseract){ identifyFromPhoto(); }
     else { setOcrStatus('<p class="note">AI identification couldn\'t read that photo, and the on-device reader is still loading — tap <b>Identify this card from the photo</b> in a moment, or type the name below.</p>'); }
@@ -3125,8 +3158,17 @@ function scoreCandidate(it, f){
   if(years.length){
     var era=eraClassOf(it);
     var has2000=years.some(function(y){ return y>=2000; });
-    if(has2000){ if(era==="reprint2000" || era==="wizpromo"){ score+=35; ev.push("© line runs to 2000 ✓"); types.push("year"); } }
-    else if(era==="original"){ score+=30; ev.push("© line ends in the 1990s ✓"); types.push("year"); }
+    var maxYear=Math.max.apply(null, years);
+    // The WotC-era bonus belongs only to a line that ENDS at the
+    // era's boundary: WotC © lines run out at 2000 (Black Star
+    // promos, Base Set 2, Legendary Collection). A line ending
+    // in 2002 or later is a Nintendo-era line and matches no
+    // WotC printing — handing every Black Star promo +35 for
+    // ANY line containing a 2000+ year is how a "© 2002" read
+    // of the English Southern Islands Mew put six promos that
+    // matched nothing else on top of the picker.
+    if(has2000 && maxYear<=2001){ if(era==="reprint2000" || era==="wizpromo"){ score+=35; ev.push("© line runs to 2000 ✓"); types.push("year"); } }
+    else if(!has2000 && era==="original"){ score+=30; ev.push("© line ends in the 1990s ✓"); types.push("year"); }
   }
   // GLYPH-SCRIPT EXCLUSION — the one negative-evidence rule in
   // this scorer, applying to exactly one printing: the Japanese
@@ -3327,7 +3369,7 @@ function suppItem(e){
    overwritten, and the fill applies to the scored photo pool
    only, never to search results. */
 var EN_CATALOGUE_SUPPLEMENTS=[
-  { name:"Mew", set:"Southern Islands", number:"1", hp:30, attacks:[{name:"Rainbow Wave",damage:""}] }
+  { name:"Mew", set:"Southern Islands", number:"1", hp:30, attacks:[{name:"Rainbow Wave",damage:""}], acceptFinishes:["holo","reverse"] }
 ];
 function enrichEnSupplements(pool){
   if(!Array.isArray(pool)) return pool;
@@ -3338,6 +3380,20 @@ function enrichEnSupplements(pool){
       if(normKeyText(it.name)===normKeyText(s.name) && normKeyText(it.set)===normKeyText(s.set) && numEq(it.number, s.number)){
         if(it.raw.hp==null || it.raw.hp==="") it.raw.hp=s.hp;
         if(!Array.isArray(it.raw.attacks) || !it.raw.attacks.length) it.raw.attacks=s.attacks.map(function(a){ return { name:a.name, damage:a.damage }; });
+        if(s.acceptFinishes && it.raw.variants && typeof it.raw.variants==="object" && !Array.isArray(it.raw.variants)){
+          // This printing's foil covers the whole card, so a
+          // camera reads it as "holo" on one run and "reverse
+          // holo" on the next — the same physical printing (the
+          // Japanese entry accepts both for the identical
+          // reason). TCGdex stores only the reverse flag, which
+          // left the finish signal unscoreable on a holo read
+          // and the true printing with name+HP evidence only.
+          // The accepted reads are ADDED to the stored flags;
+          // no stored flag is ever removed or flipped.
+          var nv={}; for(var vk in it.raw.variants) nv[vk]=it.raw.variants[vk];
+          s.acceptFinishes.forEach(function(k){ nv[k]=true; });
+          it.raw.variants=nv;
+        }
       }
     }
   });
@@ -3533,7 +3589,18 @@ function resolvePhotoFields(fields){
       return;
     }
     $("idFields").innerHTML=fieldsChipsHTML(fields);
-    if(fields.name) photoNoMatch(fields); else photoUnreadable(fields);
+    // Catalogue verification is the gibberish backstop: a read
+    // that matched NOTHING — no name pool, no supplemental gate,
+    // no number — is only pre-filled for the spelling check when
+    // it came from the AI reader (a plausible name a human can
+    // correct). An on-device OCR read that verifies against
+    // nothing is a fragment the Latin reader invented (it read
+    // the GB Venusaur's Japanese evolution strip as "wy TFICH"
+    // and that was pre-filled as if it were a name) — fragments
+    // get the honest retake message and an EMPTY box, exactly as
+    // the reader's own design states: a read that matches no
+    // real card is never resolved or pre-filled.
+    if(fields.name && fields.ai) photoNoMatch(fields); else photoUnreadable(fields);
   });
 }
 function langNoCatalogue(fields){
@@ -3558,6 +3625,39 @@ function resolvePhotoFieldsLang(fields){
     langNoCatalogue(fields);
   });
 }
+/* Picker drill-down: the picker is a SHORTLIST of printings the
+   read's discriminating evidence actually touches — never the
+   top dozen namesakes by raw score. A candidate is discriminating
+   when at least one matched signal type beyond HP separates it
+   from its namesakes (number, printed name, attack, power,
+   illustrator, finish, symbol, © year, dex № — the English name
+   is never a signal type, and HP alone is shared by too many
+   siblings to separate anything). Ordering: discriminating
+   candidates first, in score order, with the read's own language
+   ahead on ties; name+HP-only candidates appear only to pad a
+   short list up to three, and never above a discriminating
+   match; the list is capped at six. This is what stops a weak
+   read (name + HP + one noisy signal) from presenting a
+   12-card wall with the true printing — the only candidate the
+   HP and finish evidence actually fits — buried at the bottom.
+   The "None of these — search by name" escape stays below the
+   list whatever it holds. Auto-select is unaffected: it runs on
+   the full scored pool before the picker is built. */
+function pickerShortlist(scored, fields){
+  var lang=(fields && fields.language) || "en";
+  function disc(s){ return (s.types||[]).some(function(t){ return t!=="hp"; }); }
+  function offLang(s){ return langOf(s.item)===lang ? 0 : 1; }
+  var arr=(scored||[]).slice();
+  arr.sort(function(a,b){
+    var da=disc(a)?0:1, db=disc(b)?0:1;
+    if(da!==db) return da-db;
+    if(b.score!==a.score) return b.score-a.score;
+    return offLang(a)-offLang(b);
+  });
+  var shown=arr.filter(disc);
+  for(var i=0;i<arr.length && shown.length<3;i++){ if(shown.indexOf(arr[i])<0) shown.push(arr[i]); }
+  return shown.slice(0,6);
+}
 function finishScoredResolve(fields, pool){
   // Hallucinated-number guard: a read number that NO printing of
   // this name carries is discarded as evidence entirely — it is
@@ -3572,7 +3672,7 @@ function finishScoredResolve(fields, pool){
   }
   $("idFields").innerHTML=fieldsChipsHTML(fields);
   if(!pool.length){
-    if(fields.name) photoNoMatch(fields); else photoUnreadable(fields);
+    if(fields.name && fields.ai) photoNoMatch(fields); else photoUnreadable(fields);
     return;
   }
   var scored=sortScored(pool.map(function(it){ return scoreCandidate(it, fields); }));
@@ -3597,20 +3697,23 @@ function finishScoredResolve(fields, pool){
     setOcrStatus(discardNote+'<p class="note">No '+escHtml(langNameOf(fields.language))+' printing wins clearly on the combined evidence, so nothing was auto-picked — the '+escHtml(langNameOf(fields.language))+' printings are ranked below by how much of what was read they match. Other languages appear underneath as manual alternatives only; they are different printings with different values and were not matched to your photo.</p>');
     fetchNamePool(fields.name||"").then(function(altPool){
       enrichEnSupplements(altPool||[]);
-      var altScored=sortScored((altPool||[]).map(function(it){ return scoreCandidate(it, fields); })).slice(0,8);
-      showScoredPicker(scored.slice(0,12), fields, altScored);
-    }).catch(function(){ showScoredPicker(scored.slice(0,12), fields, []); });
+      var altScored=pickerShortlist(sortScored((altPool||[]).map(function(it){ return scoreCandidate(it, fields); })), fields);
+      showScoredPicker(pickerShortlist(scored, fields), fields, altScored);
+    }).catch(function(){ showScoredPicker(pickerShortlist(scored, fields), fields, []); });
     return;
   }
-  setOcrStatus(discardNote+'<p class="note">No printing wins clearly on the combined evidence, so nothing was auto-picked — the printings are ranked below by how much of what was read they match. Tap the one that matches your card; nothing is added until you choose.</p>');
-  showScoredPicker(scored.slice(0,12), fields);
+  setOcrStatus(discardNote+'<p class="note">No printing wins clearly on the combined evidence, so nothing was auto-picked — the printings below are the shortlist the read\'s evidence actually discriminates between, ranked by how much of what was read they match. Tap the one that matches your card; nothing is added until you choose.</p>');
+  showScoredPicker(pickerShortlist(scored, fields), fields);
 }
 function showScoredPicker(scored, fields, altScored){
   var wrap=document.createElement("div"); wrap.className="picker-overlay";
   function cardHTML(s, attr, i){
     var it=s.item;
     var annParts=s.ev.slice();
-    if(!fields.num) annParts.push(fields.numDiscarded?"number read matches no printing":"number not read");
+    // A discarded number is explained ONCE in the status note
+    // above the picker; stamping it on every card was noise that
+    // made a shortlist read like a wall of failures.
+    if(!fields.num && !fields.numDiscarded) annParts.push("number not read");
     s.gaps.forEach(function(g){ annParts.push(g); });
     var ann=annParts.length?annParts.join(" · "):"no signal matched";
     return '<button class="cand-card" '+attr+'="'+i+'"><img alt="" src="'+escAttr(it.image)+'"><span class="cand-nm">'+escHtml(it.name)+(it.number?" · #"+escHtml(it.number):"")+'</span><span class="cand-st">'+escHtml(it.promoLabel||it.set||"")+(candSetTotal(it)?" · set of "+candSetTotal(it):"")+(it.rarity?" · "+escHtml(it.rarity):"")+'</span>'+(it.supplemental?'<span class="cand-st" style="font-weight:800;color:var(--ink)">Japanese promo · built-in promo catalogue — TCGdex doesn\'t carry this printing</span>':"")+'<span class="cand-st" style="color:var(--accent);font-weight:700">'+escHtml(ann)+'</span></button>';
