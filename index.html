@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;700;800;900&family=Newsreader:opsz,wght@6..72,600;6..72,700&display=swap" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
 <style>
   :root{
     --bg:#eef1ec; --surface:#ffffff; --surface2:#e3e9e1; --ink:#13201b; --muted:#5a6b62; --line:#d3ddd2;
@@ -151,7 +152,7 @@
   .spinner{width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin .8s linear infinite;display:inline-block;vertical-align:-5px;margin-right:8px}
   @keyframes spin{to{transform:rotate(360deg)}}
   /* Collection lists */
-  .crow{display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}
+  .crow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}
   .crow img{width:52px;height:73px;object-fit:contain;border-radius:6px;background:var(--surface2);flex:none}
   .crow .info{flex:1;min-width:0} .crow .info b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .crow .info span{font-size:13px;color:var(--muted)}
@@ -175,9 +176,20 @@
   .kv div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
   .kv span{display:block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:800}
   .kv b{font-size:15px}
-  .pricegrid{display:grid;gap:8px;margin:12px 0}
+  .pricegrid{display:grid;gap:14px;margin:12px 0}
+  .price-group{display:grid;gap:6px}
+  .price-group-title{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:800;margin:2px 0 0}
   .pricegrid .prow{display:flex;justify-content:space-between;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:14.5px}
   .pricegrid .prow b{font-size:16px}
+  a.prow{text-decoration:none;color:inherit}
+  a.prow:hover{border-color:var(--accent)}
+  a.prow b{color:var(--accent)}
+  .cond-row{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}
+  .cond-row .cond-label{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:800;display:block;margin-bottom:6px}
+  .cond-links{display:flex;flex-wrap:wrap;gap:6px}
+  .cond-chip{display:inline-flex;font-size:12px;font-weight:800;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);text-decoration:none}
+  .cond-chip:hover{border-color:var(--accent);color:var(--accent)}
+  .cond-chip.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   .closex{position:absolute;top:12px;right:12px;z-index:2}
   .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);border-radius:999px;padding:12px 20px;font-weight:800;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:80;box-shadow:var(--shadow);max-width:92vw;text-align:center}
   .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -186,6 +198,45 @@
   .aboutgrid .cardbox h3{margin:0 0 8px;font-size:17px}
   .aboutgrid p{margin:0;color:var(--muted);line-height:1.6;font-size:14.5px}
   footer{margin-top:34px;color:var(--muted);font-size:13px;line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
+  .ed-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .ed-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;padding:4px 8px;border-radius:999px;border:1px solid var(--line);line-height:1}
+  .ed-badge.unlimited{background:var(--surface2);color:var(--ink)}
+  .ed-badge.first{background:#92400e;color:#fff;border-color:#92400e}
+  @media(prefers-color-scheme:dark){.ed-badge.first{background:#b45309;border-color:#b45309}}
+  .edition-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 8px}
+  .edition-head strong{font-size:14px;letter-spacing:.01em}
+  .edition-head span.note2{font-size:12.5px;color:var(--muted);font-weight:600}
+  .grade-badge{display:inline-flex;font-size:11.5px;font-weight:900;padding:4px 8px;border-radius:999px;background:var(--accent);color:var(--accent-ink);letter-spacing:.02em;vertical-align:1px}
+  .grade-badge.raw{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+  .grade-badge.damaged{background:var(--amber-soft);color:var(--amber);border:1px solid var(--amber)}
+  .graded-live{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .service-row{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:14.5px;text-decoration:none;color:inherit}
+  a.service-row:hover{border-color:var(--accent)}
+  .service-row b{color:var(--accent)}
+  .picker-overlay{position:fixed;inset:0;z-index:95;background:rgba(5,10,8,.62);display:flex;align-items:flex-end;justify-content:center;padding:0}
+  @media(min-width:640px){.picker-overlay{align-items:center;padding:18px}}
+  .picker-box{background:var(--bg);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px;width:min(520px,100%);max-height:92dvh;overflow:auto}
+  @media(min-width:640px){.picker-box{border-radius:20px}}
+  .picker-box h3{margin:0 0 4px;font-size:19px}
+  .picker-seg{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .picker-seg button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 14px;font-weight:800;font-size:13.5px}
+  .picker-seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .picker-field{margin:12px 0}
+  .picker-field label{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:6px}
+  .picker-field select{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:16px}
+  .picker-preview{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.5}
+  /* Photo identification + one-click add */
+  .quickadd{background:var(--accent-soft);border:1px solid var(--accent);border-radius:14px;padding:14px;margin:14px 0}
+  .quickadd .picker-field{margin:10px 0}
+  .quickadd .picker-field:first-of-type{margin-top:12px}
+  .id-banner b{font-size:15.5px;display:block}
+  .id-banner span{font-size:13px;color:var(--muted);line-height:1.45;display:block;margin-top:2px}
+  .cand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin-top:12px}
+  .cand-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px;text-align:left;display:flex;flex-direction:column;gap:4px;color:var(--ink)}
+  .cand-card:hover{border-color:var(--accent)}
+  .cand-card img{width:100%;aspect-ratio:63/88;object-fit:contain;background:var(--surface2);border-radius:6px;display:block}
+  .cand-nm{font-weight:800;font-size:13px;line-height:1.3}
+  .cand-st{font-size:12px;color:var(--muted);line-height:1.35}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
@@ -218,7 +269,7 @@
   <!-- SCAN -->
   <section class="panel active" id="panel-scan" role="tabpanel">
     <h2>Scan a card</h2>
-    <p class="sub">Point your camera at the front of a card and take a photo, or upload one. Then type the card's name and number to pull its live prices — the photo stays on your device and is never uploaded anywhere.</p>
+    <p class="sub">Point your camera at the front of a card and take a photo, or upload one. The demo reads the name, collector number and set size printed on the card — right here in your browser — matches the exact printing, and pulls its live prices. The photo itself never leaves your device; only the text read from it is used for the catalogue lookup.</p>
     <div class="grid2">
       <div class="cardbox">
         <div class="cam-shell" id="camShell">
@@ -247,7 +298,13 @@
           <input class="sr" type="file" id="fileInput" accept="image/*">
         </div>
         <div id="afterCapture" hidden>
-          <p class="note" style="margin:16px 0 10px"><b style="color:var(--ink)">Got the photo.</b> Now tell the demo which card it is and it will fetch live market prices for it:</p>
+          <p class="note" style="margin:16px 0 10px"><b style="color:var(--ink)">Got the photo.</b> The demo reads the card's printed name, collector number and set size and matches the exact printing — then you can add it to your collection in one tap.</p>
+          <div class="btnrow" style="margin-top:0">
+            <button class="btn primary" id="btnOcr">Identify this card from the photo</button>
+          </div>
+          <div id="ocrStatus" aria-live="polite" style="margin-top:10px"></div>
+          <div id="idFields" style="margin-top:10px"></div>
+          <p class="note" style="margin:14px 0 10px">Photo too glary to read? Type the name &amp; number instead:</p>
           <div class="searchbar">
             <div class="grow">
               <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -262,8 +319,8 @@
         <ol class="steps">
           <li><span class="n">1</span><span><b>Turn on the camera</b> and allow access when your browser asks. On a phone it uses the rear camera automatically. No prompt? Tap <b>Take a photo — device camera</b> instead — it opens your phone's camera app directly.</span></li>
           <li><span class="n">2</span><span><b>Frame the card</b> inside the guide, in good light, and tap <b>Take photo</b>.</span></li>
-          <li><span class="n">3</span><span><b>Type the name &amp; number</b> printed on the card. The headline value is the raw (ungraded) price for that exact printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings for the same card.</span></li>
-          <li><span class="n">4</span><span><b>Add it</b> to your collection or wishlist from the card page, and jump straight to buy listings on TCGplayer or eBay.</span></li>
+          <li><span class="n">3</span><span><b>Let it read the card.</b> In-browser text recognition pulls the name, collector number and set size — the “4/102” that fingerprints the set — off the photo and matches the exact printing in the catalogue. If more than one printing fits, you pick from picture cards; it never guesses silently. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings.</span></li>
+          <li><span class="n">4</span><span><b>Add it in one tap.</b> From a photo, the card page leads with a one-tap <b>Add to collection</b> — Raw by default, with Damaged and Graded (PSA / CGC / BGS / SGC / TAG) right there on the same sheet. A photo can't prove a 1st Edition stamp, so photo adds default to Unlimited unless you switch.</span></li>
         </ol>
         <p class="note" style="margin-top:16px">Live camera not prompting? Use <b>Take a photo — device camera</b> — it opens your phone's own camera app and needs no browser permission, and the photo works exactly the same way here. <b>Upload a photo</b> opens your camera roll or file picker. If you want the live viewfinder, open this link directly in Safari or Chrome (not inside another app's preview), tap the lock / site-settings icon in the address bar, set Camera to <b>Allow</b>, reload, and tap “Turn on camera” again.</p>
       </div>
@@ -300,8 +357,8 @@
   <!-- COLLECTION -->
   <section class="panel" id="panel-collection" role="tabpanel">
     <h2>Your collection</h2>
-    <p class="sub">Cards you add during this visit, valued at the raw (ungraded) PriceCharting price for each card's exact printing where available — TCGplayer market otherwise. This demo keeps everything in the page only — add cards from Search to see the portfolio total move.</p>
-    <div class="totalbar"><div><p>Portfolio value · raw (ungraded)</p><div class="big" id="colTotal">$0.00</div></div><button class="btn small" id="btnGoSearch1" style="background:transparent;color:inherit;border-color:currentColor">+ Add cards from Search</button></div>
+    <p class="sub">Cards you add during this visit. Each copy is stored as <b>Damaged, Raw, or Graded</b> (PSA / CGC / BGS / SGC / TAG, grades 1–10) and valued by that state: Raw = PriceCharting ungraded for the exact printing, Damaged = ½ ungraded (labelled estimate), Graded = the matching PriceCharting ladder row. Tap <b>Edit condition</b> on any card to change it. This demo keeps everything in the page only.</p>
+    <div class="totalbar"><div><p>Portfolio value · by condition / grade</p><div class="big" id="colTotal">$0.00</div></div><button class="btn small" id="btnGoSearch1" style="background:transparent;color:inherit;border-color:currentColor">+ Add cards from Search</button></div>
     <div id="collectionList"></div>
   </section>
 
@@ -320,7 +377,7 @@
       <div class="cardbox"><h3>What it is</h3><p>A trading card companion: photograph or search any Pokémon or Magic card, see what it's worth right now, track a collection's total value, and keep a wishlist with target prices — all in one place, on phone or desktop.</p></div>
       <div class="cardbox"><h3>Data sources</h3><p>Headline values are the <b>raw (ungraded) price for the exact printing</b> — name, set and collector number — from <a href="https://www.pricecharting.com" target="_blank" rel="noopener">PriceCharting</a>, fetched per card: a Base Set Raichu, a Fossil Raichu and a 1st Edition printing each carry their own value. Pokémon card images, sets and TCGplayer market prices come live from <a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex</a>, with the <a href="https://pokemontcg.io" target="_blank" rel="noopener">Pokémon TCG API</a> as backup; those TCGplayer figures are near-mint market prices, shown as labelled per-finish rows (1st Edition and Unlimited separately), never as the headline. That TCGplayer pricing is the same catalogue <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors as daily price files. Magic data and prices come from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Prices are fetched fresh each time you search.</p></div>
       <div class="cardbox"><h3>Buying</h3><p>Every card page shows two ways to buy that exact printing. <b>For sale on TCGplayer:</b> one product card per finish (Holofoil, Normal, Reverse Holofoil…) with the TCGplayer product photo, “from” lowest current ask, market price and TCGplayer Direct price when available — filter by finish and sort by lowest ask or market price, then tap through to that finish's <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> product page with every seller. <b>Live on eBay:</b> thumbnail, price + shipping and all-in total, bids and end time on auctions, seller and condition — fetched live via the eBay search proxy, with filters for Auction / Buy It Now and sorting by best match, price, or ending soonest. Purchases happen on the marketplace — this demo never handles payment.</p></div>
-      <div class="cardbox"><h3>For partners</h3><p>Built by Muse Enterprise Solutions as a working product exhibit for marketplace and data partnership conversations — including TCGplayer affiliate (Impact) and partner data access. The full version adds photo identification, graded-card pricing boards, population data and daily price alerts.</p></div>
+      <div class="cardbox"><h3>For partners</h3><p>Built by Muse Enterprise Solutions as a working product exhibit for marketplace and data partnership conversations — including TCGplayer affiliate (Impact) and partner data access. Photo identification (in-browser OCR of the printed name, number and set size) and graded-card states are live in this demo; the full version adds population data and daily price alerts.</p></div>
     </div>
   </section>
 
@@ -344,7 +401,9 @@
 "use strict";
 var $=function(id){return document.getElementById(id)};
 var money=function(n){ if(n==null||isNaN(n)) return "—"; return "$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); };
-var state={ game:"pokemon", collection:[], wishlist:[], current:null, stream:null, facing:"environment", captured:false, ebayType:"all", ebaySort:"best", ebayReq:0, tcgFinish:"all", tcgSort:"low" };
+var state={ game:"pokemon", collection:[], wishlist:[], current:null, stream:null, facing:"environment", captured:false, ebayType:"all", ebaySort:"best", ebayReq:0, tcgFinish:"all", tcgSort:"low", gradedGrade:"10", gradedReq:0, ocrBusy:false };
+var GRADERS=["PSA","CGC","BGS","SGC","TAG"];
+var GRADER_LABEL={PSA:"PSA",CGC:"CGC",BGS:"BGS (Beckett)",SGC:"SGC",TAG:"TAG"};
 var toastTimer=null;
 function toast(msg){ var t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(function(){t.classList.remove("show")},2600); }
 
@@ -495,12 +554,13 @@ $("btnCapture").addEventListener("click",function(){
   $("btnRetake").hidden=false; $("afterCapture").hidden=false;
   setBadge("Photo taken ✓","ok");
   $("identifyInput").focus();
+  maybeAutoIdentify();
 });
 $("btnRetake").addEventListener("click",function(){ state.captured=false; $("capturePreview").hidden=true; $("afterCapture").hidden=true; $("btnRetake").hidden=true; startCamera(); });
 function handlePhotoFile(f){
   if(!f) return;
   var reader=new FileReader();
-  reader.onload=function(){ var img=$("capturePreview"); img.src=reader.result; img.hidden=false; clearCamError(); state.captured=true; stopCamera(); state.captured=true; $("camPlaceholder").hidden=true; $("camFrame").hidden=true; $("btnRetake").hidden=false; $("afterCapture").hidden=false; setBadge("Photo loaded ✓","ok"); $("identifyInput").focus(); };
+  reader.onload=function(){ var img=$("capturePreview"); img.src=reader.result; img.hidden=false; clearCamError(); state.captured=true; stopCamera(); state.captured=true; $("camPlaceholder").hidden=true; $("camFrame").hidden=true; $("btnRetake").hidden=false; $("afterCapture").hidden=false; setBadge("Photo loaded ✓","ok"); $("identifyInput").focus(); maybeAutoIdentify(); };
   reader.readAsDataURL(f);
 }
 $("fileInput").addEventListener("change",function(e){ handlePhotoFile(e.target.files && e.target.files[0]); e.target.value=""; });
@@ -539,9 +599,10 @@ function normalizePoke(card){
 }
 function pokePriceRows(card){
   var rows=[]; var p=card.tcgplayer && card.tcgplayer.prices;
-  if(p){ Object.keys(p).forEach(function(k){ var v=p[k]; var val=(v.market!=null?v.market:(v.mid!=null?v.mid:null)); if(val!=null) rows.push({label:"TCGplayer — "+finishLabel(k)+" market", value:val}); }); }
+  var prodUrl=card.tcgplayer && card.tcgplayer.url ? card.tcgplayer.url : null;
+  if(p){ Object.keys(p).forEach(function(k){ var v=p[k]; var val=(v.market!=null?v.market:(v.mid!=null?v.mid:null)); if(val!=null){ var isFirst=/1stEdition/i.test(k); rows.push({label:"TCGplayer — "+finishLabel(k)+" market", value:val, url:(isFirst?null:prodUrl), source:"tcg", edition:(isFirst?"first":"unlimited")}); } }); }
   var cm=card.cardmarket && card.cardmarket.prices;
-  if(cm && cm.averageSellPrice!=null) rows.push({label:"Cardmarket — average sell", value:cm.averageSellPrice, cur:"€"});
+  if(cm && cm.averageSellPrice!=null) rows.push({label:"Cardmarket — average sell", value:cm.averageSellPrice, cur:"€", source:"cardmarket"});
   return rows;
 }
 function normalizeMtg(card){
@@ -592,11 +653,99 @@ function ebayBarHTML(query){
    be, and carries the same prices, refreshed through the day. */
 function finishLabel(key){
   if(!key) return "";
-  // Handles both TCGdex kebab-case keys ("1st-edition-holofoil",
-  // "unlimited-holofoil") and Pokémon TCG API camelCase keys
-  // ("1stEditionHolofoil") so every finish reads as its own edition.
   var s=String(key).replace(/-/g," ").replace(/([a-z0-9])([A-Z])/g,"$1 $2").toLowerCase().replace(/\s+/g," ").trim();
   return s.replace(/(^|\s)(\S)/g,function(m,pre,c){ return pre+c.toUpperCase(); });
+}
+function isFirstEditionKey(keyOrLabel){ return /1st[\s-]?edition/i.test(String(keyOrLabel||"")) || /1stEdition/.test(String(keyOrLabel||"")); }
+function isFirstFinish(f){ return isFirstEditionKey(f&&(f.key||f.label)); }
+function editionOfFinish(f){ return isFirstFinish(f)?"first":"unlimited"; }
+function setSlug2(name){ return String(name||"").toLowerCase().trim().replace(/&/g,"and").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+function tcgPrintingSearchUrl(item, printingLabel){
+  var seg=item.game==="Magic"?"magic":"pokemon";
+  return "https://www.tcgplayer.com/search/"+seg+"/product?q="+encodeURIComponent(item.name||"")+"&setName="+encodeURIComponent(setSlug2(item.set||""))+"&printing="+encodeURIComponent(printingLabel||"1st Edition Holofoil");
+}
+function cardVariants(item){ return (item&&item.raw&&(item.raw.variants||item.raw.variants_detailed))||{}; }
+function cardHasFirstEditionVariant(item){
+  var v=cardVariants(item);
+  if(v.firstEdition===true||v.first_edition===true) return true;
+  if(Array.isArray(v)){ return v.some(function(x){return x&&/first/i.test(String(x));}); }
+  // Pokémon TCG API fallback: presence of 1stEdition price keys counts
+  var fins=getTcgFinishesSafe(item);
+  return fins.some(isFirstFinish);
+}
+function getTcgFinishesSafe(item){ try{ return (item&&item.tcgFinishes)||[]; }catch(e){ return []; } }
+function editionSummary(item){
+  var fins=getTcgFinishesSafe(item);
+  var hasFirst=fins.some(isFirstFinish);
+  var hasUnlim=fins.some(function(f){return !isFirstFinish(f);});
+  // Fallback API path: finishes empty, but price rows carry editions
+  if(!fins.length && item.prices && item.prices.length){
+    hasFirst=item.prices.some(function(r){return r.edition==="first"||isFirstEditionKey(r.label);});
+    hasUnlim=item.prices.some(function(r){return /^TCGplayer/i.test(r.label) && !(r.edition==="first"||isFirstEditionKey(r.label));}) || hasUnlim;
+    if(!hasUnlim && item.tcgUrl) hasUnlim=true;
+  }
+  var variantFirst=cardHasFirstEditionVariant(item);
+  return {hasFirst:hasFirst,hasUnlim:hasUnlim,variantFirst:variantFirst,needsSeparateFirstEntry:(!hasFirst&&variantFirst&&(hasUnlim||!!item.tcgUrl||fins.length>0))};
+}
+function editionBadgesHTML(item){
+  var s=editionSummary(item); var out='';
+  if(s.hasUnlim) out+='<span class="ed-badge unlimited">Unlimited</span>';
+  if(s.hasFirst) out+='<span class="ed-badge first">1st Edition</span>';
+  else if(s.needsSeparateFirstEntry) out+='<span class="ed-badge first">1st Edition · separate — no price in feed</span>';
+  if(!out && s.variantFirst) out+='<span class="ed-badge unlimited">Unlimited</span>';
+  return out?'<div class="ed-badges">'+out+'</div>':'';
+}
+function ladderThreshold(label){
+  var l=String(label||"").toLowerCase();
+  if(/psa\s*10/.test(l)) return 10;
+  if(/9\.5/.test(l)) return 9.5;
+  if(/grade\s*9(?!.)|grade 9$/.test(l)||l==="grade 9") return 9;
+  if(/grade\s*8/.test(l)) return 8;
+  if(/grade\s*7/.test(l)) return 7;
+  if(/ungraded|raw/.test(l)) return 0;
+  var m=l.match(/grade\s*([0-9.]+)/); if(m) return parseFloat(m[1]);
+  return null;
+}
+function ladderLookup(ladder, grade){
+  if(!ladder||!ladder.length) return null;
+  var rows=ladder.map(function(e){return {label:e.label,price:e.price,thr:ladderThreshold(e.label)};}).filter(function(r){return r.thr!=null;}).sort(function(a,b){return a.thr-b.thr;});
+  if(!rows.length) return null;
+  var g=parseFloat(grade); var pick=null;
+  rows.forEach(function(r){ if(r.thr<=g) pick=r; });
+  if(!pick) pick=rows[0];
+  return pick;
+}
+function collectionValueFor(source, condState, grader, grade){
+  // source: {rawValue, ladder, price, priceLabel}
+  var ungraded=(source.rawValue!=null?source.rawValue:(source.price!=null?source.price:null));
+  var ungradedLabel=(source.rawValue!=null?"PriceCharting ungraded":"TCGplayer market (no PriceCharting row)");
+  if(condState==="damaged"){
+    if(ungraded==null) return {value:null,label:"Damaged est. (½ ungraded)",basis:"Damaged est. (½ ungraded)"};
+    return {value:Math.round(ungraded*0.5*100)/100,label:"Damaged est. (½ ungraded)",basis:"Damaged est. (½ ungraded) · ½ × "+money(ungraded)};
+  }
+  if(condState==="graded"){
+    var g=parseFloat(grade)||10;
+    if(source.ladder&&source.ladder.length){
+      var hit=ladderLookup(source.ladder,g);
+      if(hit) return {value:hit.price,label:(grader||"PSA")+" "+(g%1===0?g.toFixed(0):g)+" · valued at "+hit.label+" row",basis:"valued at "+hit.label+" row · PriceCharting"};
+    }
+    if(ungraded!=null) return {value:ungraded,label:(grader||"PSA")+" "+g+" · valued at Ungraded row (no ladder)",basis:"valued at Ungraded row · PriceCharting"};
+    return {value:null,label:(grader||"PSA")+" "+g,basis:"No ladder data for this printing"};
+  }
+  // raw default
+  return {value:ungraded,label:"Raw · "+ungradedLabel,basis:ungradedLabel};
+}
+function conditionBadgeHTML(col){
+  if(!col) return '<span class="grade-badge raw">Raw</span>';
+  if(col.conditionState==="graded") return '<span class="grade-badge">'+escHtml(col.grader||"PSA")+" "+escHtml(String(col.grade%1===0?Number(col.grade).toFixed(0):col.grade))+'</span>';
+  if(col.conditionState==="damaged") return '<span class="grade-badge damaged">Damaged</span>';
+  return '<span class="grade-badge raw">Raw</span>';
+}
+function conditionBadgeText(col){
+  if(!col) return "Raw";
+  if(col.conditionState==="graded") return (col.grader||"PSA")+" "+(col.grade%1===0?Number(col.grade).toFixed(0):col.grade);
+  if(col.conditionState==="damaged") return "Damaged";
+  return "Raw";
 }
 function dexPrice(detail){
   var rows=[], price=null, label="", finishes=[], lowPrice=null;
@@ -635,27 +784,32 @@ function dexPrice(detail){
     // finish/edition as its own labelled row with its own price.
     priced.forEach(function(f){
       var mp=(f.marketPrice!=null?f.marketPrice:f.midPrice);
-      rows.push({label:"TCGplayer — "+f.label+" market", value:mp});
+      // 1st Edition has NO separate TCGplayer product — never link its rows to the Unlimited product page (Charizard #4 bug). Leave url null here; priceRowsHTML / TCG section resolve it to a printing-filtered search.
+      var purl=(!isFirstFinish(f) && f.productId!=null)?("https://www.tcgplayer.com/product/"+f.productId):null;
+      rows.push({label:"TCGplayer — "+f.label+" market", value:mp, url:purl, productId:(isFirstFinish(f)?null:f.productId), source:"tcg", edition:editionOfFinish(f)});
       // Sanity rule: a finish's low / direct-low can never exceed its own
       // market price. TCGdex occasionally returns impossible rows (e.g.
       // Legendary Collection Hitmonlee reverse-holofoil low $893.14 vs
       // market $196.97) — drop those instead of presenting them as fact.
-      if(f.lowPrice!=null && f.lowPrice<mp) rows.push({label:"TCGplayer — "+f.label+" low", value:f.lowPrice});
-      if(f.directLowPrice!=null && f.directLowPrice<=mp) rows.push({label:"TCGplayer — "+f.label+" direct low", value:f.directLowPrice});
+      if(f.lowPrice!=null && f.lowPrice<mp) rows.push({label:"TCGplayer — "+f.label+" low", value:f.lowPrice, url:purl, productId:(isFirstFinish(f)?null:f.productId), source:"tcg", edition:editionOfFinish(f)});
+      if(f.directLowPrice!=null && f.directLowPrice<=mp) rows.push({label:"TCGplayer — "+f.label+" direct low", value:f.directLowPrice, url:purl, productId:(isFirstFinish(f)?null:f.productId), source:"tcg", edition:editionOfFinish(f)});
     });
   }
   if(pr.cardmarket){
     var cm=pr.cardmarket, trend=(cm.trend!=null?cm.trend:(cm.avg!=null?cm.avg:null));
-    if(trend!=null) rows.push({label:"Cardmarket — trend", value:trend, cur:"€"});
-    if(cm.low!=null) rows.push({label:"Cardmarket — low", value:cm.low, cur:"€"});
+    if(trend!=null) rows.push({label:"Cardmarket — trend", value:trend, cur:"€", source:"cardmarket"});
+    if(cm.low!=null) rows.push({label:"Cardmarket — low", value:cm.low, cur:"€", source:"cardmarket"});
   }
   return { price:price, label:label, rows:rows, finishes:finishes, lowPrice:lowPrice };
 }
 function normalizeDex(detail, brief){
   var p=dexPrice(detail);
+  var sc=detail.set?detail.set.cardCount:null;
+  var setTotal=(typeof sc==="number")?sc:((sc&&(sc.total||sc.official))||null);
   var imgBase=detail.image||(brief&&brief.image)||"";
-  var firstTcgUrl = (p.finishes && p.finishes.length) ? ("https://www.tcgplayer.com/product/"+p.finishes[0].productId) : null;
-  return { id:"dex-"+detail.id, game:"Pokémon", name:detail.name, set:detail.set?detail.set.name:"", number:detail.localId||(brief&&brief.localId)||"", rarity:detail.rarity||"", image:imgBase?imgBase+"/high.webp":"", price:p.price, priceLabel:p.label||"TCGdex", lowPrice:(p.lowPrice!=null?p.lowPrice:null), prices:p.rows, tcgUrl:firstTcgUrl, tcgFinishes:p.finishes||[], raw:detail };
+  var unlimFinish=(p.finishes||[]).filter(function(f){return !isFirstFinish(f) && f.productId!=null;})[0];
+  var firstTcgUrl = unlimFinish ? ("https://www.tcgplayer.com/product/"+unlimFinish.productId) : null;
+  return { id:"dex-"+detail.id, game:"Pokémon", name:detail.name, set:detail.set?detail.set.name:"", number:detail.localId||(brief&&brief.localId)||"", rarity:detail.rarity||"", setTotal:setTotal, image:imgBase?imgBase+"/high.webp":"", price:p.price, priceLabel:p.label||"TCGdex", lowPrice:(p.lowPrice!=null?p.lowPrice:null), prices:p.rows, tcgUrl:firstTcgUrl, tcgFinishes:p.finishes||[], raw:detail };
 }
 function fetchDex(query){
   var pq=parseQuery(query);
@@ -711,8 +865,8 @@ var VALUE_EP="https://ebay-search-proxy.369samclarkisfine.workers.dev/value";
 var valueCache={}, valueQueue=[], valueActive=0;
 function valueKey(item){ return (item.name+"|"+item.set+"|"+item.number).toLowerCase(); }
 function applyValueEntry(item, entry){
-  if(entry.found){ item.rawValue=entry.ungraded; item.rawUrl=entry.url||null; item.grade9=(entry.grade9!=null?entry.grade9:null); item.psa10=(entry.psa10!=null?entry.psa10:null); item.rawState="ok"; }
-  else { item.rawState="none"; }
+  if(entry.found){ item.rawValue=entry.ungraded; item.rawUrl=entry.url||null; item.grade9=(entry.grade9!=null?entry.grade9:null); item.psa10=(entry.psa10!=null?entry.psa10:null); item.ladder=(entry.ladder&&entry.ladder.length?entry.ladder:null); item.rawState="ok"; }
+  else { item.rawState="none"; item.ladder=null; }
 }
 function ensureValue(item, cb){
   if(!item || item.game!=="Pokémon" || !item.set || !item.number){ if(item && !item.rawState) item.rawState="skip"; if(cb)cb(item); return; }
@@ -722,7 +876,7 @@ function ensureValue(item, cb){
   var entry=valueCache[key];
   if(entry && entry.done){ applyValueEntry(item, entry); if(cb)cb(item); return; }
   if(!entry){
-    entry=valueCache[key]={done:false,found:false,ungraded:null,grade9:null,psa10:null,url:null,cbs:[]};
+    entry=valueCache[key]={done:false,found:false,ungraded:null,grade9:null,psa10:null,url:null,ladder:null,cbs:[]};
     valueQueue.push({entry:entry,name:item.name,set:item.set,number:item.number});
     pumpValues();
   }
@@ -737,7 +891,7 @@ function pumpValues(){
       return r.json();
     }).then(function(d){
       job.entry.found=!!(d && d.found && d.ungraded!=null);
-      if(d){ job.entry.ungraded=(d.ungraded!=null?d.ungraded:null); job.entry.grade9=(d.grade9!=null?d.grade9:null); job.entry.psa10=(d.psa10!=null?d.psa10:null); job.entry.url=d.url||null; }
+      if(d){ job.entry.ungraded=(d.ungraded!=null?d.ungraded:null); job.entry.grade9=(d.grade9!=null?d.grade9:null); job.entry.psa10=(d.psa10!=null?d.psa10:null); job.entry.url=d.url||null; job.entry.ladder=(Array.isArray(d.ladder)?d.ladder.filter(function(e){return e&&e.label&&e.price!=null;}).map(function(e){return {label:String(e.label),price:e.price};}):null); if(job.entry.ladder && !job.entry.ladder.length) job.entry.ladder=null; }
     }).catch(function(){ job.entry.found=false; }).then(function(){
       job.entry.done=true; valueActive--;
       var cbs=job.entry.cbs.slice(); job.entry.cbs=[];
@@ -771,24 +925,67 @@ function updateTilePrice(item){
   var pr=el.querySelector(".pr");
   if(pr) pr.innerHTML=tilePriceHTML(item);
 }
-function fmtRowVal(r){ return r.cur==="€" ? "€"+Number(r.value).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : money(r.value); }
+function fmtRowVal(r){ var v=(r.value!=null?r.value:r.price); return r.cur==="€" ? "€"+Number(v).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : money(v); }
+function escAttr(s){ return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+function escHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function cardmarketUrl(item){
+  if(item.game==="Magic") return "https://www.cardmarket.com/en/Magic/Products/Search?searchString="+encodeURIComponent(item.name||"");
+  return "https://www.cardmarket.com/en/Pokemon/Products/Search?searchString="+encodeURIComponent(item.name||"");
+}
+function rowLinkHTML(r){
+  if(r.noPrice) return '<a class="prow" href="'+escAttr(r.url||"#")+'" target="_blank" rel="noopener"><span>'+escHtml(r.label)+'</span><b>Search listings ↗</b></a>';
+  var val=fmtRowVal(r);
+  if(r.pending) return '<div class="prow"><span>'+escHtml(r.label)+'</span><b>Fetching…</b></div>';
+  if(r.url) return '<a class="prow" href="'+escAttr(r.url)+'" target="_blank" rel="noopener"><span>'+escHtml(r.label)+'</span><b>'+val+' ↗</b></a>';
+  return '<div class="prow"><span>'+escHtml(r.label)+'</span><b>'+val+'</b></div>';
+}
 function priceRowsHTML(item){
-  var rows=[];
   var h=headlineOf(item);
-  if(item.rawValue!=null){
-    rows.push({label:"PriceCharting — raw (ungraded)", value:item.rawValue, url:item.rawUrl});
-    if(item.grade9!=null) rows.push({label:"PriceCharting — Grade 9", value:item.grade9, url:item.rawUrl});
-    if(item.psa10!=null) rows.push({label:"PriceCharting — PSA 10", value:item.psa10, url:item.rawUrl});
+  var groups=[];
+  // PriceCharting ladder — only rows the endpoint actually returned
+  if(item.rawValue!=null && item.ladder && item.ladder.length){
+    var pcRows=item.ladder.map(function(e){ return {label:e.label, value:e.price, url:item.rawUrl}; });
+    groups.push({title:"Values · PriceCharting", rows:pcRows});
+  } else if(item.rawValue!=null){
+    // /value found but no ladder array in the response — keep single rows, no duplication beyond what we have
+    var pcFallback=[{label:"Ungraded", value:item.rawValue, url:item.rawUrl}];
+    if(item.grade9!=null) pcFallback.push({label:"Grade 9", value:item.grade9, url:item.rawUrl});
+    if(item.psa10!=null) pcFallback.push({label:"PSA 10", value:item.psa10, url:item.rawUrl});
+    groups.push({title:"Values · PriceCharting", rows:pcFallback});
   } else if(h.pending){
-    rows.push({label:"PriceCharting — raw (ungraded)", pending:true});
+    groups.push({title:"Values · PriceCharting", rows:[{label:"Ungraded", pending:true}]});
   }
-  (item.prices||[]).forEach(function(r){ rows.push(r); });
-  if(!rows.length) return '<div class="prow"><span>Market price</span><b>Not listed — check listings below</b></div>';
-  return rows.map(function(r){
-    if(r.pending) return '<div class="prow"><span>'+r.label+'</span><b>Fetching…</b></div>';
-    var val=fmtRowVal(r);
-    var b=r.url ? '<a href="'+r.url+'" target="_blank" rel="noopener">'+val+' ↗</a>' : val;
-    return '<div class="prow"><span>'+r.label+'</span><b>'+b+'</b></div>';
+  // Split the remaining rows by source AND edition — never blend 1st Edition with Unlimited
+  var tcgFirst=[], tcgUnlim=[], cmRows=[], otherRows=[];
+  (item.prices||[]).forEach(function(r){
+    var isFirst=(r.edition==="first")||isFirstEditionKey(r.label);
+    var copy={label:r.label, value:r.value, cur:r.cur, url:r.url||null, source:r.source||"", edition:(isFirst?"first":"unlimited")};
+    if(/^TCGplayer/i.test(r.label)||copy.source==="tcg"){
+      if(isFirst){
+        // 1st Edition: NO product page exists — link to printing-filtered search, never the unlimited product
+        copy.url=tcgPrintingSearchUrl(item, r.label.replace(/^TCGplayer\s*—\s*/,"").replace(/\s+(market|low|direct low)$/i,"")||"1st Edition Holofoil");
+      } else if(!copy.url){
+        var fins=item.tcgFinishes||[];
+        for(var i=0;i<fins.length;i++){ if(!isFirstFinish(fins[i]) && fins[i].productId!=null && r.label.toLowerCase().indexOf(fins[i].label.toLowerCase())>=0){ copy.url="https://www.tcgplayer.com/product/"+fins[i].productId; break; } }
+        if(!copy.url && item.tcgUrl) copy.url=item.tcgUrl;
+      }
+    }
+    if(/^Cardmarket/i.test(r.label)||copy.source==="cardmarket"){ if(!copy.url) copy.url=cardmarketUrl(item); cmRows.push(copy); }
+    else if(/^TCGplayer/i.test(r.label)||copy.source==="tcg"){ (isFirst?tcgFirst:tcgUnlim).push(copy); }
+    else { otherRows.push(copy); }
+  });
+  if(tcgUnlim.length) groups.push({title:"TCGplayer · Unlimited", rows:tcgUnlim});
+  if(tcgFirst.length) groups.push({title:"TCGplayer · 1st Edition", rows:tcgFirst});
+  // Base Set-style: no 1st Edition price in feed, but printing has a 1st Edition variant — show a distinct entry point with NO price
+  var es=editionSummary(item);
+  if(es.needsSeparateFirstEntry){
+    groups.push({title:"TCGplayer · 1st Edition", rows:[{label:"1st Edition — separate printing (no price in TCGplayer feed for Base Set)", value:null, url:tcgPrintingSearchUrl(item,"1st Edition Holofoil"), noPrice:true}]});
+  }
+  if(cmRows.length) groups.push({title:"Cardmarket", rows:cmRows});
+  if(otherRows.length) groups.push({title:"More prices", rows:otherRows});
+  if(!groups.length) return '<div class="prow"><span>Market price</span><b>Not listed — check listings below</b></div>';
+  return groups.map(function(g){
+    return '<div class="price-group"><div class="price-group-title">'+escHtml(g.title)+'</div>'+g.rows.map(rowLinkHTML).join("")+'</div>';
   }).join("");
 }
 function kvPriceHTML(h){
@@ -803,6 +1000,8 @@ function updateDetailValue(item){
   if(kp) kp.innerHTML=kvPriceHTML(h);
   if(kl) kl.textContent=h.label||"Market price";
   if(pg) pg.innerHTML=priceRowsHTML(item);
+  var ga=$("gradedAnchors"); if(ga) ga.innerHTML=gradedAnchorsHTML(item);
+  var edEl=$("modalEditions"); if(edEl && !edEl.innerHTML) edEl.innerHTML=editionBadgesHTML(item);
 }
 function renderResults(list, query, sourceNote){
   var status=$("searchStatus"), results=$("results");
@@ -818,9 +1017,10 @@ function renderResults(list, query, sourceNote){
   results.innerHTML="";
   list.forEach(function(item){
     var b=document.createElement("button"); b.className="rcard"; b.setAttribute("data-iid", item.id);
-    b.innerHTML='<img loading="lazy" alt="" src="'+item.image+'"><div class="meta"><span class="nm"></span><span class="st"></span><span class="pr">'+tilePriceHTML(item)+'</span></div>';
+    b.innerHTML='<img loading="lazy" alt="" src="'+item.image+'"><div class="meta"><span class="nm"></span><span class="st"></span><span class="ed-slot"></span><span class="pr">'+tilePriceHTML(item)+'</span></div>';
     b.querySelector(".nm").textContent=item.name+(item.number?" · #"+item.number:"");
     b.querySelector(".st").textContent=item.set+(item.rarity?" · "+item.rarity:"");
+    var edSlot=b.querySelector(".ed-slot"); if(edSlot) edSlot.innerHTML=editionBadgesHTML(item);
     b.addEventListener("click",function(){ openDetail(item); });
     results.appendChild(b);
     // Lazily resolve this printing's raw (ungraded) headline value —
@@ -1013,6 +1213,12 @@ function tcgFiltersHTML(item){
 /* A finish's lowest ask can never exceed its own market price — TCGdex
    sometimes returns impossible rows (low $893.14 vs market $196.97), so
    treat those asks as absent rather than presenting them as fact. */
+function setSlug(name){ return String(name||"").toLowerCase().trim().replace(/&/g,"and").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+function tcgConditionUrl(item, finish, condition){
+  var seg=item.game==="Magic"?"magic":"pokemon";
+  return "https://www.tcgplayer.com/search/"+seg+"/product?q="+encodeURIComponent(item.name||"")+"&setName="+encodeURIComponent(setSlug(item.set||""))+"&printing="+encodeURIComponent(finish.label||"")+"&condition="+encodeURIComponent(condition||"");
+}
+var TCG_CONDITIONS=["Near Mint","Lightly Played","Moderately Played","Heavily Played","Damaged"];
 function tcgEffLow(f){ if(f.lowPrice==null) return null; if(f.marketPrice!=null && f.lowPrice>f.marketPrice) return null; return f.lowPrice; }
 function tcgEffDirect(f){ if(f.directLowPrice==null) return null; if(f.marketPrice!=null && f.directLowPrice>f.marketPrice) return null; return f.directLowPrice; }
 function renderTcgProducts(item){
@@ -1029,27 +1235,44 @@ function renderTcgProducts(item){
   var filtered=finishes.filter(function(f){ return state.tcgFinish==="all" || f.key===state.tcgFinish; });
   // If the saved filter doesn't match this card's finishes (switched cards), fall back to all
   if(!filtered.length){ filtered=finishes.slice(); state.tcgFinish="all"; }
-  // Sort low-first, nulls last
+  // Sort within edition (Unlimited first, 1st Edition second — never blended), low-first, nulls last
   filtered.sort(function(a,b){
+    var ea=isFirstFinish(a)?1:0, eb=isFirstFinish(b)?1:0; if(ea!==eb) return ea-eb;
     var av, bv;
     if(state.tcgSort==="market"){ av=(a.marketPrice!=null?a.marketPrice:(tcgEffLow(a)!=null?tcgEffLow(a):Infinity)); bv=(b.marketPrice!=null?b.marketPrice:(tcgEffLow(b)!=null?tcgEffLow(b):Infinity)); }
     else { av=(tcgEffLow(a)!=null?tcgEffLow(a):(a.marketPrice!=null?a.marketPrice:Infinity)); bv=(tcgEffLow(b)!=null?tcgEffLow(b):(b.marketPrice!=null?b.marketPrice:Infinity)); }
     return av-bv;
   });
-  if(countEl) countEl.textContent= finishes.length+(finishes.length===1?" finish":" finishes")+" · tap to buy";
+  if(countEl) countEl.textContent= finishes.length+(finishes.length===1?" finish":" finishes")+" · editions separated";
   box.innerHTML="";
+  var lastEdition=null;
   filtered.forEach(function(f){
-    var a=document.createElement("a");
-    a.className="tcg-prod"; a.href="https://www.tcgplayer.com/product/"+f.productId; a.target="_blank"; a.rel="noopener";
-    var primary="https://tcgplayer-cdn.tcgplayer.com/product/"+f.productId+"_in_1000x1000.jpg";
-    var fallback="https://tcgplayer-cdn.tcgplayer.com/product/"+f.productId+"_200w.jpg";
-    a.innerHTML='<img loading="lazy" alt=""><div class="p-main"><div class="p-finish"></div><div class="p-from"></div><div class="p-meta"></div><div class="p-cta">View all sellers on TCGplayer ↗</div></div>';
+    var isFirst=isFirstFinish(f);
+    var ed=isFirst?"first":"unlimited";
+    if(ed!==lastEdition){
+      lastEdition=ed;
+      var head=document.createElement("div"); head.className="edition-head";
+      head.innerHTML=(isFirst?'<span class="ed-badge first">1st Edition</span><strong>1st Edition</strong><span class="note2">Separate printing — search-filtered listings, no single product page</span>':'<span class="ed-badge unlimited">Unlimited</span><strong>Unlimited</strong><span class="note2">Product page for this printing</span>');
+      box.appendChild(head);
+    }
+    var productUrl=isFirst?tcgPrintingSearchUrl(item,f.label):"https://www.tcgplayer.com/product/"+f.productId;
+    var a=document.createElement("div");
+    a.className="tcg-prod";
+    var primary=isFirst?item.image:"https://tcgplayer-cdn.tcgplayer.com/product/"+f.productId+"_in_1000x1000.jpg";
+    var fallback=isFirst?item.image:"https://tcgplayer-cdn.tcgplayer.com/product/"+f.productId+"_200w.jpg";
+    a.innerHTML='<img loading="lazy" alt=""><div class="p-main"><div class="p-finish"></div><div class="p-from"></div><div class="p-meta"></div><a class="p-cta" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">'+(isFirst?'View 1st Edition listings on TCGplayer ↗':'View all sellers on TCGplayer ↗')+'</a><div class="cond-row"><span class="cond-label">Shop by condition</span><div class="cond-links"></div></div></div>';
+    a.querySelector(".p-cta").href=productUrl;
+    var condWrap=a.querySelector(".cond-links");
+    var allChip=document.createElement("a"); allChip.className="cond-chip primary"; allChip.href=productUrl; allChip.target="_blank"; allChip.rel="noopener"; allChip.textContent="All conditions ↗"; condWrap.appendChild(allChip);
+    TCG_CONDITIONS.forEach(function(cond){
+      var chip=document.createElement("a"); chip.className="cond-chip"; chip.href=tcgConditionUrl(item,f,cond); chip.target="_blank"; chip.rel="noopener"; chip.textContent=cond+" ↗"; condWrap.appendChild(chip);
+    });
     var img=a.querySelector("img");
-    img.alt=item.name+" — "+f.label+" — product photo on TCGplayer";
+    img.alt=item.name+" — "+f.label+(isFirst?" — catalog image (1st Edition has no separate product photo)":" — product photo on TCGplayer");
     img.src=primary;
     img.onerror=function(){
-      if(img.src===primary){ img.src=fallback; }
-      else if(img.src===fallback){ img.onerror=null; if(item.image) img.src=item.image; else img.style.display="none"; }
+      if(!isFirst && img.src===primary){ img.src=fallback; }
+      else if(!isFirst && img.src===fallback){ img.onerror=null; if(item.image) img.src=item.image; else img.style.display="none"; }
       else { img.onerror=null; img.style.display="none"; }
     };
     a.querySelector(".p-finish").textContent=f.label;
@@ -1078,9 +1301,377 @@ function renderTcgProducts(item){
     }
     box.appendChild(a);
   });
+  var es2=editionSummary(item);
+  if(es2.needsSeparateFirstEntry && state.tcgFinish==="all"){
+    var head2=document.createElement("div"); head2.className="edition-head"; head2.innerHTML='<span class="ed-badge first">1st Edition</span><strong>1st Edition</strong><span class="note2">Separate printing — not the Unlimited product above</span>'; box.appendChild(head2);
+    var extra=document.createElement("div"); extra.className="tcg-prod";
+    extra.innerHTML='<img loading="lazy" alt=""><div class="p-main"><div class="p-finish">1st Edition Holofoil</div><div class="p-from" style="color:var(--muted);font-size:14px">No price in TCGplayer feed for this printing</div><div class="p-meta">TCGplayer has no separate 1st Edition product or price for Base Set. The Unlimited prices above must not be used for a 1st Edition copy. Use the filtered search to see live 1st Edition listings.</div><a class="p-cta" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">View 1st Edition listings on TCGplayer ↗</a></div>';
+    extra.querySelector("img").src=item.image; extra.querySelector("img").alt=item.name+" — catalog image";
+    extra.querySelector(".p-cta").href=tcgPrintingSearchUrl(item,"1st Edition Holofoil");
+    box.appendChild(extra);
+  }
   if(!filtered.length){
     box.innerHTML='<div class="ebay-note">No finish matches this filter. Try <b>All finishes</b>.</div>';
   }
+}
+
+/* ---------- Graded comparison (per service, live eBay asks) ---------- */
+function gradedAnchorsHTML(item){
+  var rows=[];
+  if(item.ladder&&item.ladder.length){
+    ["PSA 10","Grade 9.5","Grade 9"].forEach(function(lbl){
+      var hit=item.ladder.filter(function(e){return e.label===lbl;})[0];
+      if(hit) rows.push({label:"PriceCharting — "+lbl,value:hit.price,url:item.rawUrl});
+    });
+  } else {
+    if(item.psa10!=null) rows.push({label:"PriceCharting — PSA 10",value:item.psa10,url:item.rawUrl});
+    if(item.grade9!=null) rows.push({label:"PriceCharting — Grade 9",value:item.grade9,url:item.rawUrl});
+  }
+  if(!rows.length) return '<div class="ebay-note">No PriceCharting ladder row for this printing yet — if one loads it will appear here. Live per-service asks below are fetched independently from eBay.</div>';
+  return rows.map(rowLinkHTML).join("");
+}
+function gradedSectionHTML(item){
+  function gbtn(val,label){ return '<button data-ggrade="'+val+'" aria-pressed="'+(state.gradedGrade===val?"true":"false")+'">'+label+'</button>'; }
+  return '<div class="graded-live"><div class="ebay-live-head"><h3>Graded values — by service</h3><span class="count">Same card · same grade · different services</span></div>'+
+  '<p class="note" style="margin:6px 0 0">PriceCharting anchors are one blended ladder. The per-service rows underneath are different: the lowest live Buy It Now ask on eBay right now for that exact grader + grade of this printing. No listings = “no live asks” — never an invented number.</p>'+
+  '<div class="price-group" style="margin-top:10px"><div class="price-group-title">Anchors · PriceCharting</div><div id="gradedAnchors" style="display:grid;gap:6px">'+gradedAnchorsHTML(item)+'</div></div>'+
+  '<div class="filter-group" style="margin-top:12px"><label>Compare grade</label><div class="fseg" role="group" aria-label="Grade to compare">'+gbtn("10","Grade 10")+gbtn("9.5","Grade 9.5")+gbtn("9","Grade 9")+'</div></div>'+
+  '<div id="gradedServices" style="display:grid;gap:6px;margin-top:10px" aria-live="polite"><p class="sub" style="margin:4px 0"><span class="spinner"></span>Fetching live asks per grading service…</p></div>'+
+  '<p class="note" style="margin-top:8px">Tap a service row to open its live eBay listings. BGS is Beckett.</p></div>';
+}
+function loadGradedComparison(item){
+  var box=$("gradedServices"); if(!box) return;
+  var grade=state.gradedGrade; var req=++state.gradedReq;
+  box.innerHTML='<p class="sub" style="margin:4px 0"><span class="spinner"></span>Fetching live asks per grading service…</p>';
+  GRADERS.forEach(function(grader, idx){
+    var q=[item.name,item.set,item.number,grader,grade].filter(Boolean).join(" ");
+    var url=EBAY_PROXY+"?q="+encodeURIComponent(q)+"&type=bin&sort=price&limit=5";
+    fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); }).then(function(data){
+      if(req!==state.gradedReq) return;
+      var items=(data&&data.items)||[];
+      var first=items[0]||null;
+      var low=first?((first.allIn!=null?first.allIn:first.price)):null;
+      item._gradedCache=item._gradedCache||{}; item._gradedCache[grader+" "+grade]={low:low,url:first?first.url:ebayURL(q,"bin"),count:(data&&typeof data.total==="number"?data.total:items.length)};
+      renderGradedServices(item);
+    }).catch(function(){
+      if(req!==state.gradedReq) return;
+      item._gradedCache=item._gradedCache||{}; item._gradedCache[grader+" "+grade]={low:null,url:ebayURL(q,"bin"),count:0,error:true};
+      renderGradedServices(item);
+    });
+  });
+}
+function renderGradedServices(item){
+  var box=$("gradedServices"); if(!box) return;
+  var grade=state.gradedGrade; var cache=item._gradedCache||{};
+  var allDone=GRADERS.every(function(g){return cache[g+" "+grade];});
+  if(!allDone && !GRADERS.some(function(g){return cache[g+" "+grade];})){
+    box.innerHTML='<p class="sub" style="margin:4px 0"><span class="spinner"></span>Fetching live asks per grading service…</p>'; return;
+  }
+  box.innerHTML="";
+  GRADERS.forEach(function(grader){
+    var e=cache[grader+" "+grade];
+    var a=document.createElement("a"); a.className="service-row"; a.target="_blank"; a.rel="noopener";
+    if(!e){ a.href=ebayURL([item.name,item.set,item.number,grader,grade].filter(Boolean).join(" "),"bin"); a.innerHTML='<span>'+escHtml(GRADER_LABEL[grader])+' '+escHtml(grade)+'</span><b>Fetching…</b>'; }
+    else if(e.low!=null){ a.href=e.url; a.innerHTML='<span>'+escHtml(GRADER_LABEL[grader])+' '+escHtml(grade)+' — live eBay</span><b>from '+money(e.low)+' ↗</b>'; }
+    else { a.href=e.url; a.innerHTML='<span>'+escHtml(GRADER_LABEL[grader])+' '+escHtml(grade)+' — live eBay</span><b>no live asks ↗</b>'; }
+    box.appendChild(a);
+  });
+  var anchors=$("gradedAnchors"); if(anchors) anchors.innerHTML=gradedAnchorsHTML(item);
+}
+/* ---------- Condition / grading picker ---------- */
+function openConditionPicker(sourceItem, existingCol, onDone){
+  // sourceItem: catalogue item (has rawValue/ladder/price) ; existingCol: collection item to edit or null
+  var sel={conditionState:(existingCol&&existingCol.conditionState)||"raw", grader:(existingCol&&existingCol.grader)||"PSA", grade:(existingCol&&existingCol.grade!=null?existingCol.grade:10)};
+  var wrap=document.createElement("div"); wrap.className="picker-overlay";
+  var gradeOpts=""; for(var gv=10; gv>=1; gv-=0.5){ var gvv=Math.round(gv*10)/10; gradeOpts+='<option value="'+gvv+'"'+(Number(sel.grade)===gvv?' selected':'')+'>'+(gvv%1===0?gvv.toFixed(0):gvv)+'</option>'; }
+  var graderOpts=GRADERS.map(function(g){return '<option value="'+g+'"'+(sel.grader===g?' selected':'')+'>'+GRADER_LABEL[g]+'</option>';}).join("");
+  wrap.innerHTML='<div class="picker-box" role="dialog" aria-modal="true" aria-label="Card condition and grading"><h3>'+(existingCol?'Edit condition / grade':'Add as — condition / grade')+'</h3><p class="note" style="margin:0"></p>'+
+  '<div class="picker-seg" role="group" aria-label="State"><button data-state="damaged">Damaged</button><button data-state="raw">Raw (ungraded)</button><button data-state="graded">Graded</button></div>'+
+  '<div class="graded-fields"><div class="picker-field"><label>Grading service</label><select id="pkGrader">'+graderOpts+'</select></div><div class="picker-field"><label>Grade (1–10, 0.5 steps)</label><select id="pkGrade">'+gradeOpts+'</select></div></div>'+
+  '<div class="picker-preview" id="pkPreview"></div>'+
+  '<div class="btnrow"><button class="btn primary" data-save="1">'+(existingCol?'Save changes':'Add to collection')+'</button><button class="btn" data-cancel="1">Cancel</button>'+(existingCol?'<button class="btn" data-remove="1">Remove from collection</button>':'')+'</div></div>';
+  wrap.querySelector("p.note").textContent=sourceItem.name+(sourceItem.set?" · "+sourceItem.set:"")+(sourceItem.number?" · #"+sourceItem.number:"");
+  document.body.appendChild(wrap);
+  function sourceForValue(){
+    return {rawValue:(sourceItem.rawValue!=null?sourceItem.rawValue:(existingCol&&existingCol.rawValue!=null?existingCol.rawValue:null)), ladder:(sourceItem.ladder||(existingCol&&existingCol.ladder)||null), price:(sourceItem.price!=null?sourceItem.price:(existingCol?existingCol._basePrice:null))};
+  }
+  function sync(){
+    wrap.querySelectorAll("[data-state]").forEach(function(b){ b.setAttribute("aria-pressed", b.dataset.state===sel.conditionState?"true":"false"); });
+    var gf=wrap.querySelector(".graded-fields"); gf.style.display=sel.conditionState==="graded"?"block":"none";
+    sel.grader=wrap.querySelector("#pkGrader").value; sel.grade=parseFloat(wrap.querySelector("#pkGrade").value);
+    var src=sourceForValue(); var calc=collectionValueFor(src, sel.conditionState, sel.grader, sel.grade);
+    var pv=wrap.querySelector("#pkPreview");
+    if(src.rawValue==null && src.price==null && !src.ladder){ pv.innerHTML="<b>Value still loading…</b><br>PriceCharting value for this printing has not landed yet. You can still save — the basis will use the catalogue price available."; }
+    else if(calc.value!=null){ pv.innerHTML="<b>Value for this copy: "+money(calc.value)+"</b><br><span style='color:var(--muted)'>"+escHtml(calc.label)+"</span>"+(sel.conditionState==="damaged"?"<br><span style='color:var(--muted)'>PriceCharting has no damaged tier — this is a labelled estimate: ½ × ungraded.</span>":"")+(sel.conditionState==="graded"?"<br><span style='color:var(--muted)'>Graded values use the PriceCharting ladder row at or below the grade. Compare live per-service asks in “Graded values — by service” on the card page.</span>":""); }
+    else { pv.innerHTML="<b>No value available for this state yet</b><br>Save anyway — it will show as — until a PriceCharting row exists."; }
+  }
+  wrap.querySelectorAll("[data-state]").forEach(function(b){ b.addEventListener("click",function(){ sel.conditionState=b.dataset.state; sync(); }); });
+  wrap.querySelector("#pkGrader").addEventListener("change",sync);
+  wrap.querySelector("#pkGrade").addEventListener("change",sync);
+  // If PriceCharting value hasn't landed yet, fetch it and refresh preview
+  if(sourceItem.game==="Pokémon" && sourceItem.rawState!=="ok" && sourceItem.rawState!=="none"){ ensureValue(sourceItem,function(){ sync(); if(onDone) {/* keep modal detail in sync */} updateDetailValue(sourceItem); }); }
+  sync();
+  wrap.querySelector("[data-cancel]").addEventListener("click",function(){ document.body.removeChild(wrap); });
+  wrap.addEventListener("click",function(e){ if(e.target===wrap) document.body.removeChild(wrap); });
+  var removeBtn=wrap.querySelector("[data-remove]"); if(removeBtn) removeBtn.addEventListener("click",function(){ document.body.removeChild(wrap); if(existingCol){ var ix=state.collection.findIndex(function(c){return c===existingCol||c.id===existingCol.id;}); if(ix>=0) state.collection.splice(ix,1); refreshStats(); toast("Removed from collection"); if(onDone) onDone(null); } });
+  wrap.querySelector("[data-save]").addEventListener("click",function(){
+    sel.grader=wrap.querySelector("#pkGrader").value; sel.grade=parseFloat(wrap.querySelector("#pkGrade").value);
+    var src=sourceForValue(); var calc=collectionValueFor(src, sel.conditionState, sel.grader, sel.grade);
+    document.body.removeChild(wrap);
+    if(existingCol){
+      existingCol.conditionState=sel.conditionState; existingCol.grader=sel.conditionState==="graded"?sel.grader:null; existingCol.grade=sel.conditionState==="graded"?sel.grade:null;
+      existingCol.rawValue=src.rawValue; existingCol.ladder=src.ladder; existingCol._basePrice=src.price;
+      existingCol.price=calc.value; existingCol.priceLabel=calc.label; existingCol.valueBasis=calc.basis;
+      refreshStats(); toast("Updated — "+conditionBadgeText(existingCol)+" · "+money(calc.value));
+      if(onDone) onDone(existingCol);
+    } else {
+      var hv=headlineOf(sourceItem);
+      var col={id:sourceItem.id,name:sourceItem.name,set:sourceItem.set,number:sourceItem.number,image:sourceItem.image,game:sourceItem.game,conditionState:sel.conditionState,grader:sel.conditionState==="graded"?sel.grader:null,grade:sel.conditionState==="graded"?sel.grade:null,rawValue:src.rawValue,ladder:src.ladder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis};
+      // Avoid duplicate id entries stacking silently: replace existing copy of same printing+condition? Keep separate copies allowed only if condition differs — simplest: if same id+condition+grader+grade exists, toast instead
+      state.collection.unshift(col); refreshStats(); toast("Added to collection — "+conditionBadgeText(col)+" ✓");
+      if(onDone) onDone(col);
+    }
+  });
+}
+/* ---------- Photo identification (in-browser OCR) ----------
+   The photo never leaves the device. Tesseract.js (loaded from CDN in
+   <head>) reads the printed text; we systematically pull the fields
+   that identify a printing — name (top of card), collector number and
+   set size ("4/102": numerator = the card, denominator fingerprints
+   the set) and HP as a cross-check — then resolve against the same
+   TCGdex catalogue search uses. If the OCR library failed to load,
+   everything degrades to the manual name/number lookup. */
+function downscaleForOcr(src, cb){
+  var img=new Image();
+  img.onload=function(){
+    try{
+      var maxW=1200, w=img.naturalWidth||img.width||maxW, h=img.naturalHeight||img.height||maxW;
+      var scale=w>maxW ? maxW/w : 1;
+      var c=document.createElement("canvas");
+      c.width=Math.max(1,Math.round(w*scale)); c.height=Math.max(1,Math.round(h*scale));
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      cb(c.toDataURL("image/jpeg",0.9));
+    }catch(e){ cb(src); }
+  };
+  img.onerror=function(){ cb(src); };
+  img.src=src;
+}
+function extractCardFields(text){
+  var t=String(text||"");
+  var numM=t.match(/(\d{1,3})\s*\/\s*(\d{2,3})/);
+  var hpM=t.match(/(\d{2,3})\s*HP/i);
+  function cleanName(s){
+    if(!s) return "";
+    s=String(s);
+    s=s.replace(/(\d{2,3})\s*HP.*$/i," ");
+    s=s.replace(/\bLV\.?\s*X?\b.*$/i," ");
+    s=s.replace(/^\s*(basic|stage\s*[12]|pok[eé]mon)\b[\s:.\-]*/i," ");
+    s=s.replace(/[^A-Za-z0-9'’.\- ]/g," ");
+    s=s.replace(/\s+/g," ").trim();
+    return s;
+  }
+  var lines=t.split(/\r?\n/).map(function(s){ return s.trim(); }).filter(Boolean);
+  var best="", bestScore=-1;
+  lines.slice(0,7).forEach(function(line, idx){
+    var hadHp=/HP/i.test(line);
+    var c=cleanName(line);
+    if(!c) return;
+    var letters=(c.match(/[A-Za-z]/g)||[]).length;
+    if(letters<3 || c.length<3 || c.length>30) return;
+    var ratio=letters/Math.max(c.length,1);
+    var score=ratio*10 - idx*0.7 + (hadHp?3:0) - Math.abs(c.length-10)*0.08;
+    if(score>bestScore){ bestScore=score; best=c; }
+  });
+  // The name sits immediately left of the HP on the top line — if that
+  // line's prefix cleans up to something name-like, trust it most.
+  if(hpM){
+    var hpLine=lines.filter(function(l){ return /HP/i.test(l); })[0];
+    var pre=cleanName(hpLine||"");
+    if(pre && pre.length>=3 && (pre.match(/[A-Za-z]/g)||[]).length>=3) best=pre;
+  }
+  return { name:best, num:numM?String(parseInt(numM[1],10)):null, den:numM?String(parseInt(numM[2],10)):null, hp:hpM?hpM[1]:null };
+}
+function numEq(a,b){
+  if(a==null||b==null||a===""||b==="") return false;
+  var x=parseInt(a,10), y=parseInt(b,10);
+  return !isNaN(x)&&!isNaN(y)&&x===y;
+}
+function setOcrStatus(html){ var el=$("ocrStatus"); if(el) el.innerHTML=html; }
+function ocrBtnReset(){ var btn=$("btnOcr"); if(btn){ btn.disabled=false; btn.textContent="Identify this card from the photo"; } }
+function finishIdentifyError(msg){
+  state.ocrBusy=false; ocrBtnReset();
+  setOcrStatus('<p class="note">'+msg+'</p>');
+}
+function identifyFromPhoto(){
+  if(state.ocrBusy) return;
+  var prev=$("capturePreview");
+  if(!prev || prev.hidden || !prev.src){ toast("Take or upload a photo first"); return; }
+  if(!window.Tesseract){
+    setOcrStatus('<p class="note">Automatic photo reading could not load — the OCR library did not arrive. No problem: type the name &amp; number below and look the card up the usual way.</p>');
+    return;
+  }
+  state.ocrBusy=true;
+  var btn=$("btnOcr"); if(btn){ btn.disabled=true; btn.textContent="Reading card…"; }
+  setOcrStatus('<p class="note"><span class="spinner"></span>Reading card…</p>');
+  $("idFields").innerHTML="";
+  downscaleForOcr(prev.src, function(dataUrl){
+    var timedOut=false;
+    var timer=setTimeout(function(){
+      timedOut=true;
+      finishIdentifyError("Reading the photo took too long — try a straighter, brighter photo, or type the name &amp; number below.");
+    }, 90000);
+    window.Tesseract.recognize(dataUrl, "eng", { logger:function(m){
+      if(timedOut) return;
+      if(m && m.status==="recognizing text") setOcrStatus('<p class="note"><span class="spinner"></span>Reading card… '+Math.round((m.progress||0)*100)+'%</p>');
+    }}).then(function(res){
+      if(timedOut) return;
+      clearTimeout(timer);
+      state.ocrBusy=false; ocrBtnReset();
+      resolvePhotoFields(extractCardFields((res&&res.data&&res.data.text)||""));
+    }).catch(function(){
+      if(timedOut) return;
+      clearTimeout(timer);
+      finishIdentifyError("That photo could not be read — glare, angle and blur defeat text reading. Retake straight-on in good light, or type the name &amp; number below.");
+    });
+  });
+}
+function maybeAutoIdentify(){
+  if(window.Tesseract){ identifyFromPhoto(); }
+  else { setOcrStatus('<p class="note">Photo saved. Automatic reading is still loading — tap <b>Identify this card from the photo</b> in a moment, or type the name below.</p>'); }
+}
+$("btnOcr").addEventListener("click", identifyFromPhoto);
+function fieldsChipsHTML(f){
+  var chips=[];
+  if(f.name) chips.push('<span class="badge ok">Name read: '+escHtml(f.name)+'</span>');
+  if(f.num) chips.push('<span class="badge ok">Number read: '+f.num+(f.den?"/"+f.den:"")+'</span>');
+  if(f.hp) chips.push('<span class="badge">HP read: '+f.hp+'</span>');
+  return chips.length ? '<div class="cam-status" style="margin:0">'+chips.join("")+'</div>' : "";
+}
+function photoNoMatch(fields){
+  setOcrStatus('<p class="note">Read “'+escHtml(fields.name||"")+'” but the catalogue has no match for it — the box below is pre-filled with what was read; check the spelling and look it up.</p>');
+  $("identifyInput").value=(fields.name||"")+(fields.num?" "+fields.num:"");
+}
+function resolvePhotoFields(fields){
+  $("idFields").innerHTML=fieldsChipsHTML(fields);
+  if(!fields.name && !fields.num){
+    setOcrStatus('<p class="note"><b>Nothing readable on that photo.</b> Glare, angle and blur defeat text reading — retake straight-on in good light, or type the name &amp; number below.</p>');
+    return;
+  }
+  if(!fields.name){
+    setOcrStatus('<p class="note">A collector number was read ('+fields.num+(fields.den?"/"+fields.den:"")+') but no name — type the name below and include that number to pin the printing.</p>');
+    return;
+  }
+  setOcrStatus('<p class="note"><span class="spinner"></span>Matching “'+escHtml(fields.name)+'” against the catalogue…</p>');
+  fetchDex(fields.name).then(function(items){
+    if(items && items.length){ handlePhotoCandidates(items, fields); return; }
+    return fetchPokeFallback(fields.name).then(function(items2){ handlePhotoCandidates(items2||[], fields); });
+  }).catch(function(){
+    fetchPokeFallback(fields.name).then(function(items2){ handlePhotoCandidates(items2||[], fields); }).catch(function(){ photoNoMatch(fields); });
+  });
+}
+function handlePhotoCandidates(items, fields){
+  if(!items.length){ photoNoMatch(fields); return; }
+  var byNum=fields.num ? items.filter(function(it){ return numEq(it.number, fields.num); }) : [];
+  var exact=byNum.filter(function(it){ return fields.den && it.setTotal && numEq(it.setTotal, fields.den); });
+  var pick=null;
+  if(exact.length===1) pick=exact[0];
+  else if(byNum.length===1) pick=byNum[0];
+  if(pick){
+    setOcrStatus('<p class="note"><b>Matched:</b> '+escHtml(pick.name)+' · '+escHtml(pick.set||"")+' · #'+escHtml(pick.number||"")+'. Opening it — add it to your collection in one tap.</p>');
+    pick._fromPhoto=true; pick._photoFields=fields;
+    openDetail(pick);
+    return;
+  }
+  var cands=(byNum.length?byNum:items).slice();
+  cands.sort(function(a,b){
+    function sc(it){ return (fields.den&&it.setTotal&&numEq(it.setTotal,fields.den)?2:0) + (fields.name&&it.name.toLowerCase()===String(fields.name).toLowerCase()?1:0); }
+    return sc(b)-sc(a);
+  });
+  setOcrStatus('<p class="note">More than one printing fits what was read — pick the one that matches your card below. Nothing is added until you choose.</p>');
+  showCandidatePicker(cands.slice(0,12), fields);
+}
+function showCandidatePicker(items, fields){
+  var wrap=document.createElement("div"); wrap.className="picker-overlay";
+  var cards=items.map(function(it,i){
+    return '<button class="cand-card" data-cand="'+i+'"><img alt="" src="'+escAttr(it.image)+'"><span class="cand-nm">'+escHtml(it.name)+(it.number?" · #"+escHtml(it.number):"")+'</span><span class="cand-st">'+escHtml(it.set||"")+(it.setTotal?" · "+it.setTotal+" cards in set":"")+(it.rarity?" · "+escHtml(it.rarity):"")+'</span></button>';
+  }).join("");
+  wrap.innerHTML='<div class="picker-box" role="dialog" aria-modal="true" aria-label="Which card is it?" style="width:min(680px,100%)"><h3>Which one is it?</h3><p class="note" style="margin:0">Read from your photo: <b style="color:var(--ink)">'+escHtml(fields.name||"")+'</b>'+(fields.num?' · number '+fields.num+(fields.den?"/"+fields.den:""):"")+(fields.hp?' · '+fields.hp+' HP':"")+'. Tap the printing that matches your card.</p><div class="cand-grid">'+cards+'</div><div class="btnrow"><button class="btn" data-none="1">None of these — search by name</button><button class="btn" data-cancel="1">Cancel</button></div></div>';
+  document.body.appendChild(wrap);
+  function close(){ if(wrap.parentNode) document.body.removeChild(wrap); }
+  wrap.querySelectorAll("[data-cand]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var it=items[Number(b.getAttribute("data-cand"))];
+      close();
+      it._fromPhoto=true; it._photoFields=fields;
+      openDetail(it);
+    });
+  });
+  wrap.querySelector("[data-cancel]").addEventListener("click",close);
+  wrap.querySelector("[data-none]").addEventListener("click",function(){
+    close(); showTab("search"); $("searchInput").value=fields.name||"";
+    if(fields.name) doSearch(fields.name);
+  });
+  wrap.addEventListener("click",function(e){ if(e.target===wrap) close(); });
+}
+
+/* ---------- One-click add (photo-identified cards) ----------
+   Rendered at the top of the detail sheet when the card was reached
+   from a photo: banner with the fields OCR read, the condition row
+   inline (Raw default), and — when the printing has edition variants —
+   an edition switch that defaults to Unlimited, because a photo
+   cannot prove a 1st Edition stamp. One tap on Add files the copy;
+   the confirmation (with Undo) replaces the form in place. */
+function photoAddSlotHTML(item){ return item && item._fromPhoto ? '<div id="photoAddWrap"></div>' : ""; }
+function renderPhotoAdd(item){
+  var wrap=$("photoAddWrap"); if(!wrap) return;
+  if(!item._pa) item._pa={cond:"raw", grader:"PSA", grade:10, edition:"unlimited"};
+  var pa=item._pa;
+  var f=item._photoFields||{};
+  var readBits=[];
+  if(f.name) readBits.push("name “"+escHtml(f.name)+"”");
+  if(f.num) readBits.push("number "+f.num+(f.den?"/"+f.den:""));
+  if(f.hp) readBits.push(f.hp+" HP");
+  var es=editionSummary(item);
+  var hasEditions=!!(es.hasFirst||es.variantFirst||es.needsSeparateFirstEntry);
+  var gradeOpts=""; for(var gv=10; gv>=1; gv-=0.5){ var gvv=Math.round(gv*10)/10; gradeOpts+='<option value="'+gvv+'"'+(Number(pa.grade)===gvv?' selected':'')+'>'+(gvv%1===0?gvv.toFixed(0):gvv)+'</option>'; }
+  var graderOpts=GRADERS.map(function(g){ return '<option value="'+g+'"'+(pa.grader===g?' selected':'')+'>'+GRADER_LABEL[g]+'</option>'; }).join("");
+  function segBtn(attr,val,label){ return '<button data-'+attr+'="'+val+'" aria-pressed="false">'+label+'</button>'; }
+  wrap.innerHTML='<div class="quickadd">'+
+    '<div class="id-banner"><b>Identified from your photo</b><span>'+(readBits.length?("Read: "+readBits.join(" · ")+" — sanity-check it against your card before adding."):"Matched from your photo — sanity-check the printing before adding.")+'</span></div>'+
+    (hasEditions?'<div class="picker-field"><label>Edition — a photo can\'t prove a 1st Edition stamp, so this defaults to Unlimited</label><div class="picker-seg" id="paEdition">'+segBtn("ed","unlimited","Unlimited")+segBtn("ed","first","1st Edition")+'</div></div>':"")+
+    '<div class="picker-field"><label>Your copy — condition</label><div class="picker-seg" id="paCond">'+segBtn("cond","raw","Raw")+segBtn("cond","damaged","Damaged")+segBtn("cond","graded","Graded")+'</div></div>'+
+    '<div id="paGraded" style="display:none"><div class="picker-field"><label>Grading service</label><select id="paGrader">'+graderOpts+'</select></div><div class="picker-field"><label>Grade (1–10, 0.5 steps)</label><select id="paGrade">'+gradeOpts+'</select></div></div>'+
+    '<button class="btn primary" id="paAdd" style="width:100%;justify-content:center;font-size:16px;padding:14px 18px">Add to collection</button>'+
+    '<p class="note" style="margin:8px 0 0">One tap adds it with the state above — Raw unless you change it. Its value follows that state, same as everywhere else in the demo.</p>'+
+  '</div>';
+  function syncSegs(){
+    wrap.querySelectorAll("[data-ed]").forEach(function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-ed")===pa.edition?"true":"false"); });
+    wrap.querySelectorAll("[data-cond]").forEach(function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-cond")===pa.cond?"true":"false"); });
+    var gf=wrap.querySelector("#paGraded"); if(gf) gf.style.display=pa.cond==="graded"?"block":"none";
+  }
+  wrap.querySelectorAll("[data-ed]").forEach(function(b){ b.addEventListener("click",function(){ pa.edition=b.getAttribute("data-ed"); syncSegs(); }); });
+  wrap.querySelectorAll("[data-cond]").forEach(function(b){ b.addEventListener("click",function(){ pa.cond=b.getAttribute("data-cond"); syncSegs(); }); });
+  var gr=wrap.querySelector("#paGrader"); if(gr) gr.addEventListener("change",function(){ pa.grader=gr.value; });
+  var gd=wrap.querySelector("#paGrade"); if(gd) gd.addEventListener("change",function(){ pa.grade=parseFloat(gd.value); });
+  syncSegs();
+  wrap.querySelector("#paAdd").addEventListener("click",function(){
+    if(item.game==="Pokémon" && item.rawState!=="ok" && item.rawState!=="none") ensureValue(item, function(){ updateDetailValue(item); });
+    var src={rawValue:(item.rawValue!=null?item.rawValue:null), ladder:item.ladder||null, price:item.price};
+    var calc=collectionValueFor(src, pa.cond, pa.grader, pa.grade);
+    var basis=calc.basis;
+    if(hasEditions && pa.edition==="first") basis=(basis?basis+" · ":"")+"copy marked 1st Edition on the photo sheet (a photo can't verify the stamp)";
+    var col={id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,game:item.game,conditionState:pa.cond,grader:pa.cond==="graded"?pa.grader:null,grade:pa.cond==="graded"?pa.grade:null,edition:hasEditions?pa.edition:null,rawValue:src.rawValue,ladder:src.ladder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:basis};
+    state.collection.unshift(col); refreshStats();
+    toast("Added to collection — "+conditionBadgeText(col)+" ✓");
+    wrap.innerHTML='<div class="quickadd"><div class="id-banner"><b>Added · '+escHtml(conditionBadgeText(col))+(col.edition==="first"?' · 1st Edition':"")+'</b><span>'+escHtml(item.name)+(item.set?" · "+escHtml(item.set):"")+' is in your collection'+(calc.value!=null?(" — valued at "+money(calc.value)+" ("+escHtml(calc.label)+")"):"")+'.</span></div><div class="btnrow" style="margin-top:12px"><button class="btn" id="paUndo">Undo</button><button class="btn" id="paAgain">Add another copy</button><button class="btn primary" id="paView">View collection</button></div></div>';
+    wrap.querySelector("#paUndo").addEventListener("click",function(){
+      var ix=state.collection.indexOf(col); if(ix>=0) state.collection.splice(ix,1);
+      refreshStats(); toast("Add undone — removed from collection");
+      renderPhotoAdd(item);
+    });
+    wrap.querySelector("#paAgain").addEventListener("click",function(){ renderPhotoAdd(item); });
+    wrap.querySelector("#paView").addEventListener("click",function(){ closeModal(); showTab("collection"); });
+  });
 }
 
 /* ---------- Detail modal ---------- */
@@ -1094,13 +1685,16 @@ function openDetail(item, keepEbayFilters){
   $("modalBody").innerHTML=
     '<div class="sheetgrid"><div><img class="big" id="modalImg" alt=""></div><div>'+
     '<h2 style="margin-top:2px" id="modalName"></h2>'+
-    '<p class="sub" id="modalSub" style="margin-bottom:4px"></p>'+
+    '<p class="sub" id="modalSub" style="margin-bottom:4px"></p><div id="modalEditions"></div>'+
     '<div class="kv"><div><span>Set</span><b id="kvSet"></b></div><div><span>Number</span><b id="kvNum"></b></div><div><span>Rarity</span><b id="kvRar"></b></div><div><span id="kvPriceLabel">Market price</span><b id="kvPrice"></b></div></div>'+
     '<div class="pricegrid" id="priceGrid">'+priceRowsHTML(item)+'</div>'+
-    '<div class="btnrow"><button class="btn primary" id="mAddCol">'+(inCol?"✓ In your collection":"Add to collection")+'</button><button class="btn" id="mAddWish">'+(inWish?"✓ On wishlist":"Add to wishlist")+'</button></div>'+
-    '<div class="btnrow"><a class="btn dark" target="_blank" rel="noopener" href="'+urls.tcg+'">Buy on TCGplayer ↗</a></div>'+
+    photoAddSlotHTML(item)+
+    gradedSectionHTML(item)+
+    '<div class="btnrow"><button class="btn primary" id="mAddCol">'+(inCol?"Add another copy — choose condition":"Add to collection — choose condition")+'</button><button class="btn" id="mAddWish">'+(inWish?"✓ On wishlist":"Add to wishlist")+'</button>'+(inCol?'<button class="btn" id="mRemoveCol">Remove a copy</button>':'')+'</div>'+
+    '<p class="note" style="margin:6px 0 0">Adding asks for the copy you own: <b>Damaged</b>, <b>Raw</b>, or <b>Graded</b> (PSA / CGC / BGS / SGC / TAG, 1–10). Value follows that state — Damaged is labelled “Damaged est. (½ ungraded)”, Graded uses the matching ladder row.</p>'+
+    '<div class="btnrow"><a class="btn dark" target="_blank" rel="noopener" href="'+urls.tcg+'">Buy Unlimited on TCGplayer ↗</a><a class="btn" target="_blank" rel="noopener" href="'+tcgPrintingSearchUrl(item,"1st Edition Holofoil")+'">Buy 1st Edition on TCGplayer ↗</a></div>'+
     '<div class="tcg-live"><div class="tcg-live-head"><h3>For sale on TCGplayer</h3><span class="count" id="tcgCount"></span></div>'+
-    '<p class="note" style="margin:6px 0 0">TCGplayer product pages for this exact printing — photo, live lowest ask and market price per finish. Tap a finish to see every seller for it on TCGplayer and buy.</p>'+
+    '<p class="note" style="margin:6px 0 0">Editions are separated below: <b>Unlimited</b> finishes link to their TCGplayer product page with the product photo. <b>1st Edition</b> has no separate TCGplayer product — its entries use the catalog image and link to a TCGplayer search filtered to 1st Edition for this card. Prices are never shared between editions.</p>'+
     '<div id="tcgFiltersWrap">'+tcgFiltersHTML(item)+'</div>'+
     '<div class="tcg-list" id="tcgListings" aria-live="polite"></div>'+
     '</div>'+
@@ -1114,12 +1708,20 @@ function openDetail(item, keepEbayFilters){
     '</div></div>';
   $("modalImg").src=item.image;
   $("modalName").textContent=item.name;
-  $("modalSub").textContent=item.game+" · For sale on TCGplayer + live on eBay for this printing";
+  $("modalSub").textContent=item.game+" · Unlimited headline (PriceCharting) · 1st Edition priced separately where the feed has it";
+  var edEl=$("modalEditions"); if(edEl) edEl.innerHTML=editionBadgesHTML(item)+(inCol?'<div style="margin-top:6px">'+state.collection.filter(function(c){return c.id===item.id;}).map(function(c){return conditionBadgeHTML(c);}).join(" ")+'</div>':"");
   $("kvSet").textContent=item.set||"—"; $("kvNum").textContent=item.number?("#"+item.number):"—"; $("kvRar").textContent=item.rarity||"—"; $("kvPrice").innerHTML=kvPriceHTML(head0);
   $("kvPriceLabel").textContent=head0.label||"Market price";
   $("modal").classList.add("open"); document.body.style.overflow="hidden";
-  $("mAddCol").addEventListener("click",function(){ toggleCollection(item); openDetail(item, true); });
+  $("mAddCol").addEventListener("click",function(){
+    openConditionPicker(item, null, function(){ openDetail(item, true); });
+  });
+  var rmBtn=$("mRemoveCol"); if(rmBtn) rmBtn.addEventListener("click",function(){ toggleCollection(item); openDetail(item, true); });
   $("mAddWish").addEventListener("click",function(){ toggleWishlist(item); openDetail(item, true); });
+  if(item._fromPhoto) renderPhotoAdd(item);
+  document.querySelectorAll("#modalBody [data-ggrade]").forEach(function(b){
+    b.addEventListener("click",function(){ state.gradedGrade=b.getAttribute("data-ggrade"); document.querySelectorAll("#modalBody [data-ggrade]").forEach(function(x){x.setAttribute("aria-pressed",x.getAttribute("data-ggrade")===state.gradedGrade?"true":"false");}); loadGradedComparison(item); });
+  });
   document.querySelectorAll("#modalBody [data-fgroup]").forEach(function(b){
     b.addEventListener("click",function(){
       var g=b.getAttribute("data-fgroup"), v=b.getAttribute("data-fval");
@@ -1139,9 +1741,8 @@ function openDetail(item, keepEbayFilters){
   });
   renderTcgProducts(item);
   loadEbayListings(item);
-  // Resolve (or re-apply) this printing's raw headline value and refresh
-  // the value block in place when it lands.
-  if(item.game==="Pokémon") ensureValue(item, function(){ updateDetailValue(item); updateTilePrice(item); });
+  loadGradedComparison(item);
+  if(item.game==="Pokémon") ensureValue(item, function(){ updateDetailValue(item); updateTilePrice(item); var ga=$("gradedAnchors"); if(ga) ga.innerHTML=gradedAnchorsHTML(item); });
 }
 function closeModal(){ $("modal").classList.remove("open"); document.body.style.overflow=""; }
 $("modalClose").addEventListener("click",closeModal);
@@ -1149,9 +1750,15 @@ $("modalScrim").addEventListener("click",closeModal);
 document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeModal(); });
 
 function toggleCollection(item){
-  var i=state.collection.findIndex(function(c){return c.id===item.id});
-  if(i>=0){ state.collection.splice(i,1); toast("Removed from collection"); }
-  else { var hv=headlineOf(item); state.collection.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:(hv.v!=null?hv.v:item.price),priceLabel:(hv.v!=null?hv.label:(item.priceLabel||"TCGplayer")),game:item.game}); toast("Added to collection ✓"); }
+  // Prefer exact object (a specific owned copy) so duplicate printings with different grades remove correctly
+  var i=state.collection.findIndex(function(c){return c===item;});
+  if(i<0) i=state.collection.findIndex(function(c){return c.id===item.id});
+  if(i>=0){ state.collection.splice(i,1); toast("Removed from collection"); refreshStats(); return; }
+  // Fallback direct add (legacy paths) defaults to Raw via picker logic
+  var src={rawValue:item.rawValue!=null?item.rawValue:null,ladder:item.ladder||null,price:item.price};
+  var calc=collectionValueFor(src,"raw",null,null);
+  state.collection.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis,game:item.game,conditionState:"raw",grader:null,grade:null,rawValue:src.rawValue,ladder:src.ladder,_basePrice:item.price});
+  toast("Added to collection — Raw ✓");
   refreshStats();
 }
 function toggleWishlist(item){
@@ -1164,16 +1771,27 @@ function toggleWishlist(item){
 /* ---------- Collection / wishlist render ---------- */
 function rowHTML(item, isWish){
   var hit = isWish && item.target!=null && item.price!=null && item.price<=item.target;
-  return '<img alt="" src="'+item.image+'"><div class="info"><b></b><span>'+(item.set||"")+(item.number?" · #"+item.number:"")+'</span>'+(isWish?'<span style="display:block;margin-top:3px">Target: <b style="display:inline;font-size:13px">'+money(item.target)+'</b>'+(hit?' · <b style="display:inline;color:var(--accent);font-size:13px">TARGET HIT ✓</b>':'')+'</span>':"")+'</div><div class="val">'+money(item.price)+'<small>'+(item.priceLabel||"market")+'</small></div>';
+  var badge = isWish ? "" : '<span style="display:block;margin-top:4px">'+conditionBadgeHTML(item)+(item.edition==="first"?' <span class="ed-badge first">1st Edition</span>':(item.edition==="unlimited"?' <span class="ed-badge unlimited">Unlimited</span>':""))+(item.valueBasis?' <span style="font-size:12px;color:var(--muted)">'+escHtml(item.valueBasis)+'</span>':"")+'</span>';
+  return '<img alt="" src="'+item.image+'"><div class="info"><b></b><span>'+(item.set||"")+(item.number?" · #"+item.number:"")+'</span>'+badge+(isWish?'<span style="display:block;margin-top:3px">Target: <b style="display:inline;font-size:13px">'+money(item.target)+'</b>'+(hit?' · <b style="display:inline;color:var(--accent);font-size:13px">TARGET HIT ✓</b>':'')+'</span>':"")+'</div><div class="val">'+money(item.price)+'<small>'+(item.priceLabel||"market")+'</small></div>';
 }
 function renderCollection(){
   var el=$("collectionList");
-  if(!state.collection.length){ el.innerHTML='<div class="empty"><b>Nothing here yet.</b><br>Search for a card, open it, and tap <b>Add to collection</b> — its market value lands in the portfolio total above.</div>'; return; }
+  if(!state.collection.length){ el.innerHTML='<div class="empty"><b>Nothing here yet.</b><br>Search for a card, open it, and tap <b>Add to collection — choose condition</b> to add it as Damaged, Raw, or Graded (PSA / CGC / BGS / SGC / TAG).</div>'; return; }
   el.innerHTML="";
   state.collection.forEach(function(item){
-    var d=document.createElement("div"); d.className="crow"; d.innerHTML=rowHTML(item,false)+'<button class="iconbtn" aria-label="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6"/></svg></button>';
+    var d=document.createElement("div"); d.className="crow"; d.innerHTML=rowHTML(item,false);
     d.querySelector(".info b").textContent=item.name;
-    d.querySelector(".iconbtn").addEventListener("click",function(){ toggleCollection(item); if($("modal").classList.contains("open")&&state.current&&state.current.id===item.id) openDetail(state.current); });
+    var editBtn=document.createElement("button"); editBtn.className="btn small"; editBtn.textContent="Edit condition";
+    editBtn.addEventListener("click",function(){
+      // Build a source-like object from the owned copy + current catalogue item if open
+      var src=(state.current&&state.current.id===item.id)?state.current:item;
+      var sourceItem={id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,game:item.game,rawValue:(src.rawValue!=null?src.rawValue:item.rawValue),ladder:(src.ladder||item.ladder||null),price:(item._basePrice!=null?item._basePrice:(src!==item?src.price:null)),rawState:src.rawState,priceLabel:item.priceLabel};
+      openConditionPicker(sourceItem, item, function(){ refreshStats(); });
+    });
+    var rm=document.createElement("button"); rm.className="iconbtn"; rm.setAttribute("aria-label","Remove");
+    rm.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6"/></svg>';
+    rm.addEventListener("click",function(){ toggleCollection(item); if($("modal").classList.contains("open")&&state.current&&state.current.id===item.id) openDetail(state.current,true); });
+    d.appendChild(editBtn); d.appendChild(rm);
     el.appendChild(d);
   });
 }
