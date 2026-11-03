@@ -134,6 +134,30 @@
   .listing .lprice small{font-weight:600;font-size:12px;color:var(--muted)}
   .listing .lbadge{display:inline-flex;font-size:11px;font-weight:800;letter-spacing:.02em;padding:3px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-right:5px;vertical-align:1px}
   .listing .lbadge.auction{background:var(--amber-soft);color:var(--amber)}
+  /* One-click buy flow (Buy It Now listings only) */
+  .listing .buy-actions{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+  .btn-buy{border:0;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:11px 16px;font-weight:900;font-size:15px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+  .btn-buy:active{transform:scale(.985)}
+  .btn-viewlink{font-size:12.5px;font-weight:800;color:var(--accent);text-decoration:none;text-align:center;padding:2px}
+  .btn-viewlink:hover{text-decoration:underline}
+  .checkout-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;border-radius:999px;padding:5px 9px;background:var(--amber-soft);color:var(--amber);margin-top:7px;line-height:1.3}
+  .listing.is-auction .lcta{font-size:12.5px;font-weight:800;color:var(--amber);margin-top:2px}
+  /* Buy confirm sheet */
+  .buy-sheet-img{width:100%;max-height:220px;object-fit:contain;border-radius:12px;background:var(--surface2);border:1px solid var(--line);display:block}
+  .buy-rows{margin:14px 0;display:grid;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .buy-row{display:flex;justify-content:space-between;gap:14px;padding:10px 13px;background:var(--surface);font-size:14px}
+  .buy-row+.buy-row{border-top:1px solid var(--line)}
+  .buy-row span{color:var(--muted);font-weight:700}
+  .buy-row b{font-variant-numeric:tabular-nums;text-align:right}
+  .buy-row.total{background:var(--accent-soft)}
+  .buy-row.total span{color:var(--ink)}
+  .buy-row.total b{font-size:17px}
+  /* Purchases started record */
+  .purch-row{display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;flex-wrap:wrap}
+  .purch-row img{width:44px;height:44px;object-fit:cover;border-radius:8px;background:var(--surface2);flex:none}
+  .purch-row .p-info{flex:1;min-width:180px}
+  .purch-row .p-info b{display:block;font-size:14px;line-height:1.3}
+  .purch-row .p-info span{font-size:12.5px;color:var(--muted)}
   .ebay-note{font-size:13.5px;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:12px 14px;line-height:1.5}
   /* For sale on TCGplayer */
   .tcg-live{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
@@ -173,10 +197,23 @@
   .modal.open{display:block}
   .modal .scrim{position:absolute;inset:0;background:rgba(5,10,8,.62);backdrop-filter:blur(3px)}
   .modal .sheet{position:absolute;inset:auto 0 0 0;max-height:92dvh;overflow:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
-  @media(min-width:760px){.modal .sheet{inset:50% auto auto 50%;transform:translate(-50%,-50%);width:min(880px,94vw);border-radius:22px;max-height:88dvh}}
+  @media(min-width:760px){.modal .sheet{inset:50% auto auto 50%;transform:translate(-50%,-50%);width:min(1040px,96vw);border-radius:22px;max-height:88dvh}}
+  @media(max-width:480px){.modal .sheet{padding-left:12px;padding-right:12px}}
   .sheetgrid{display:grid;grid-template-columns:280px 1fr;gap:22px}
   @media(max-width:700px){.sheetgrid{grid-template-columns:1fr}.sheetgrid img.big{max-width:250px;margin:0 auto}}
   .sheetgrid img.big{width:100%;border-radius:12px;box-shadow:var(--shadow);display:block}
+  /* Card data side by side at EVERY width, phones included: the data
+     sections split into two columns — values & graded data on the
+     left, live marketplace listings (eBay, TCGplayer) on the right,
+     one type of data per side — so the sheet needs far less scrolling.
+     There is deliberately no breakpoint here: the columns never
+     dissolve or stack, down to a 320px viewport. Inside each column
+     everything goes single-file and wraps/shrinks to fit a
+     ~160–190px column (see the .dcol rules further down). */
+  .datacols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start;margin-top:22px}
+  .dcol{display:flex;flex-direction:column;min-width:0}
+  .dcol-values>.pricegrid{margin-top:0}
+  .dcol-live>.ebay-live{margin-top:0;border-top:none;padding-top:0}
   .kv{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0}
   .kv div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
   .kv span{display:block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:800}
@@ -185,20 +222,21 @@
   .price-group{display:grid;gap:6px}
   .price-group-title{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:800;margin:2px 0 0}
   /* Simple label→price lists (the PriceCharting ladder, TCGplayer and
-     Cardmarket rows, compare-by-source rows, graded anchors) render as a
-     2-column grid of compact tiles — label stacked over price, whole tile
-     tappable, equal heights per row — so the sheet needs far less
-     scrolling. Section titles, notes and footnotes span both columns;
-     listing sections with titles/conditions/dates stay full-width rows. */
-  .pricegrid .price-group{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+     Cardmarket rows, compare-by-source rows, graded anchors) render as
+     compact tiles — label stacked over price, whole tile tappable.
+     Inside the side-by-side data columns the tiles go single-file, one
+     per row, so each tile gets the column's full ~160–190px on a phone
+     and no label or price is squeezed or clipped. Section titles,
+     notes and footnotes span the tile grid's single column. */
+  .pricegrid .price-group{grid-template-columns:minmax(0,1fr);gap:8px}
   .pricegrid .price-group-title,.pricegrid .price-group>.note{grid-column:1/-1}
   .pricegrid .prow,#morePrices .prow,#gradedAnchors .prow{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px}
   .pricegrid .prow>span,#morePrices .prow>span,#gradedAnchors .prow>span{font-size:12.5px;font-weight:700;color:var(--muted);line-height:1.3;min-width:0}
   .pricegrid .prow b,#gradedAnchors .prow b{font-size:16px;line-height:1.25;font-variant-numeric:tabular-nums}
   #morePrices .prow b{font-size:15px;line-height:1.25;font-variant-numeric:tabular-nums}
-  #morePrices .more-prices{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #morePrices .more-prices{grid-template-columns:minmax(0,1fr)}
   #morePrices .mp-title,#morePrices .cm-sub,#morePrices .more-prices>.note{grid-column:1/-1}
-  #gradedAnchors{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #gradedAnchors{grid-template-columns:minmax(0,1fr)}
   #gradedAnchors .ebay-note{grid-column:1/-1}
   a.prow{text-decoration:none;color:inherit}
   a.prow:hover{border-color:var(--accent)}
@@ -220,6 +258,20 @@
   .cond-chip{display:inline-flex;font-size:12px;font-weight:800;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);text-decoration:none}
   .cond-chip:hover{border-color:var(--accent);color:var(--accent)}
   .cond-chip.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  /* Fit inside a data column (~160–190px on a phone): tiles and
+     listing cards go single-file, text wraps instead of clipping,
+     prices step down a size, and nothing forces sideways scrolling. */
+  .datacols .prow{padding:9px 10px}
+  .datacols .prow b{font-size:15px}
+  .dcol-live .ebay-list{grid-template-columns:minmax(0,1fr)}
+  .dcol-live .ebay-list .listing .ltitle{display:block;-webkit-line-clamp:none;overflow:visible}
+  .dcol-live .ebay-filters,.dcol-live .tcg-filters{flex-direction:column}
+  .dcol-live .tcg-prod{flex-direction:column;gap:8px}
+  .dcol-live .btnrow .btn{flex:1 1 100%;justify-content:center;text-align:center}
+  .dcol .service-row{flex-wrap:wrap}
+  .dcol .more-prices .prow.has-thumb{flex-wrap:wrap}
+  .dcol .src-price{text-align:left;white-space:normal}
+  .dcol .src-unconf{white-space:normal}
   .closex{position:absolute;top:12px;right:12px;z-index:2}
   .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);border-radius:999px;padding:12px 20px;font-weight:800;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:80;box-shadow:var(--shadow);max-width:92vw;text-align:center}
   .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -390,6 +442,9 @@
     <p class="sub">Cards you add during this visit. Each copy is stored as <b>Damaged, Raw, or Graded</b> (PSA / CGC / BGS / SGC / TAG, grades 1–10) and valued by that state: Raw = PriceCharting ungraded for the exact printing, Damaged = ½ ungraded (labelled estimate), Graded = the matching PriceCharting ladder row. Tap <b>Edit condition</b> on any card to change it. This demo keeps everything in the page only.</p>
     <div class="totalbar"><div><p>Portfolio value · by condition / grade</p><div class="big" id="colTotal">$0.00</div></div><button class="btn small" id="btnGoSearch1" style="background:transparent;color:inherit;border-color:currentColor">+ Add cards from Search</button></div>
     <div id="collectionList"></div>
+    <h3 style="margin:26px 0 4px;font-size:19px">Purchases started</h3>
+    <p class="sub" style="margin-bottom:12px">Checkouts you started on eBay from a card page during this visit. Payment finishes on eBay's own checkout, so every entry stays <b>Checkout opened on eBay</b> — this app can't see whether a payment completed, and never marks one as bought.</p>
+    <div id="purchasesList"></div>
   </section>
 
   <!-- WISHLIST -->
@@ -406,7 +461,7 @@
     <div class="aboutgrid">
       <div class="cardbox"><h3>What it is</h3><p>A trading card companion: photograph or search any Pokémon or Magic card, see what it's worth right now, track a collection's total value, and keep a wishlist with target prices — all in one place, on phone or desktop.</p></div>
       <div class="cardbox"><h3>Data sources</h3><p>Headline values are the <b>raw (ungraded) price for the exact printing</b> — name, set and collector number — from <a href="https://www.pricecharting.com" target="_blank" rel="noopener">PriceCharting</a>, fetched per card: a Base Set Raichu, a Fossil Raichu and a 1st Edition printing each carry their own value. Pokémon card images, sets and TCGplayer market prices come live from <a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex</a>, with the <a href="https://pokemontcg.io" target="_blank" rel="noopener">Pokémon TCG API</a> as backup; those TCGplayer figures are near-mint market prices, shown as labelled per-finish rows (1st Edition and Unlimited separately), never as the headline. That TCGplayer pricing is the same catalogue <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors as daily price files — each card page also resolves the printing through the TCGCSV feed directly, shown as its own labelled row. Cardmarket figures on the card page come from Cardmarket's official daily catalogue + price-guide exports, staged as compact per-letter index files the page fetches on demand when a card page opens: EUR guide values (not live listings), one row per edition/printing — the export carries no set-name or language field, so editions are never labelled by language. Identity and value stay separate on purpose: catalogues establish which card it is, pricing sources establish what it's worth, and no source silently overrides another. Magic data and prices come from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Prices are fetched fresh each time you search.</p></div>
-      <div class="cardbox"><h3>Buying</h3><p>Japanese printings also get a <b>Buyee</b> search link-out (Mercari JP + Yahoo! Auctions JP) — link-out only, because Buyee sits behind bot protection, so no Buyee listings are fetched in-app. Every card page shows two ways to buy that exact printing. <b>For sale on TCGplayer:</b> one product card per finish (Holofoil, Normal, Reverse Holofoil…) with the TCGplayer product photo, “from” lowest current ask, market price and TCGplayer Direct price when available — filter by finish and sort by lowest ask or market price, then tap through to that finish's <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> product page with every seller. <b>Live on eBay:</b> thumbnail, price + shipping and all-in total, bids and end time on auctions, seller and condition — fetched live via the eBay search proxy, with filters for Auction / Buy It Now and sorting by best match, price, or ending soonest. Purchases happen on the marketplace — this demo never handles payment.</p></div>
+      <div class="cardbox"><h3>Buying</h3><p>Japanese printings also get a <b>Buyee</b> search link-out (Mercari JP + Yahoo! Auctions JP) — link-out only, because Buyee sits behind bot protection, so no Buyee listings are fetched in-app. Every card page shows two ways to buy that exact printing. <b>For sale on TCGplayer:</b> one product card per finish (Holofoil, Normal, Reverse Holofoil…) with the TCGplayer product photo, “from” lowest current ask, market price and TCGplayer Direct price when available — filter by finish and sort by lowest ask or market price, then tap through to that finish's <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> product page with every seller. <b>Live on eBay:</b> thumbnail, price + shipping and all-in total, bids and end time on auctions, seller and condition — fetched live via the eBay search proxy, with filters for Auction / Buy It Now and sorting by best match, price, or ending soonest. Buy It Now listings carry a <b>Buy</b> button: confirm the sticker price, shipping and labelled all-in total in the app, and the item's checkout opens on eBay in a new tab — you sign in and pay on eBay, and the app records it only as “Checkout opened on eBay” (see Purchases started, under Collection). Auctions have no buy flow; their cards link out to bid on eBay. This app never collects or sends card numbers — payment happens entirely in eBay's own checkout.</p></div>
       <div class="cardbox"><h3>For partners</h3><p>Built by Muse Enterprise Solutions as a working product exhibit for marketplace and data partnership conversations — including TCGplayer affiliate (Impact) and partner data access. Photo identification (an AI read of the printed name, HP, attacks, collector number, illustrator, finish, edition stamp, set symbol and © year line — plus grading-slab labels: company, grade and cert — scored across every printing of the name, with an on-device OCR fallback) and graded-card states are live in this demo; the full version adds population data and daily price alerts.</p></div>
     </div>
   </section>
@@ -431,7 +486,7 @@
 "use strict";
 var $=function(id){return document.getElementById(id)};
 var money=function(n){ if(n==null||isNaN(n)) return "—"; return "$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); };
-var state={ game:"pokemon", collection:[], wishlist:[], current:null, stream:null, facing:"environment", captured:false, ebayType:"all", ebaySort:"best", ebayReq:0, tcgFinish:"all", tcgSort:"low", gradedGrade:"10", gradedReq:0, ocrBusy:false, cardBox:null, captureSource:null };
+var state={ game:"pokemon", collection:[], wishlist:[], purchases:[], checkoutOpened:{}, _ebayCache:null, current:null, stream:null, facing:"environment", captured:false, ebayType:"all", ebaySort:"best", ebayReq:0, tcgFinish:"all", tcgSort:"low", gradedGrade:"10", gradedReq:0, ocrBusy:false, cardBox:null, captureSource:null };
 var GRADERS=["PSA","CGC","BGS","SGC","TAG"];
 var GRADER_LABEL={PSA:"PSA",CGC:"CGC",BGS:"BGS (Beckett)",SGC:"SGC",TAG:"TAG"};
 var toastTimer=null;
@@ -459,7 +514,7 @@ function refreshStats(){
   var cc=$("tabCountCol"), cw=$("tabCountWish");
   cc.hidden=state.collection.length===0; cc.textContent=state.collection.length;
   cw.hidden=state.wishlist.length===0; cw.textContent=state.wishlist.length;
-  renderCollection(); renderWishlist();
+  renderCollection(); renderWishlist(); renderPurchases();
 }
 
 /* ---------- Camera ---------- */
@@ -1768,9 +1823,142 @@ function isAuctionListing(it){
   if(Array.isArray(o)) return o.some(function(x){return /AUCTION/i.test(String(x));});
   return /AUCTION/i.test(String(o||""));
 }
+/* ---------- Purchase execution layer ----------
+   ONE call site for every purchase: openBuyConfirm() collects the
+   buyer's confirmation, then executePurchase(listing, rail) runs it.
+   The rail is the only thing that changes when a real purchase API
+   arrives:
+     · "checkout-link" (today) — opens the item's eBay checkout path
+       in a new tab. The buyer signs in and enters card details in
+       eBay's own hosted checkout; this app NEVER collects, displays
+       fields for, or transmits card numbers. When an eBay Partner
+       Network campid is configured below, the link carries the EPN
+       affiliate parameters.
+     · "order-api" (future) — eBay's Buy Order API, once access is
+       granted. Same confirm sheet, same call site; until the API is
+       live this branch falls back to "checkout-link" rather than
+       faking a completed in-app purchase.
+   To switch rails, change PURCHASE_CONFIG.rail — nothing else.
+   State honesty: a handed-off checkout is recorded as
+   "Checkout opened on eBay", never "Purchased" / "Bought", because
+   completion happens on eBay's side and is not visible to the app. */
+var PURCHASE_CONFIG={
+  rail:"checkout-link",
+  epn:{ campid:"", mkrid:"711-53200-19255-0", customid:"trading-card-collection-demo" }
+};
+function listingKey(it){ return String((it&&it.url)||((it&&it.title)||"")); }
+function listingAllIn(it){
+  if(!it) return null;
+  if(it.allIn!=null && !isNaN(Number(it.allIn))) return Number(it.allIn);
+  if(it.price!=null && !isNaN(Number(it.price))){ return Number(it.price)+(it.shipping!=null && !isNaN(Number(it.shipping))?Number(it.shipping):0); }
+  return null;
+}
+function ebayCheckoutUrl(listing){
+  var base=(listing&&listing.url)||"#";
+  var campid=PURCHASE_CONFIG.epn && PURCHASE_CONFIG.epn.campid;
+  if(!campid || base==="#") return base;
+  try{
+    var u=new URL(base);
+    u.searchParams.set("mkcid","1");
+    u.searchParams.set("mkrid",PURCHASE_CONFIG.epn.mkrid||"711-53200-19255-0");
+    u.searchParams.set("siteid","0");
+    u.searchParams.set("campid",campid);
+    u.searchParams.set("customid",PURCHASE_CONFIG.epn.customid||"");
+    u.searchParams.set("toolid","10001");
+    u.searchParams.set("mkevt","1");
+    return u.toString();
+  }catch(e){
+    var sep=base.indexOf("?")>=0?"&":"?";
+    return base+sep+"mkcid=1&mkrid="+encodeURIComponent(PURCHASE_CONFIG.epn.mkrid||"711-53200-19255-0")+"&siteid=0&campid="+encodeURIComponent(campid)+"&customid="+encodeURIComponent(PURCHASE_CONFIG.epn.customid||"")+"&toolid=10001&mkevt=1";
+  }
+}
+function executePurchase(listing, rail){
+  rail=rail||PURCHASE_CONFIG.rail;
+  if(rail==="order-api"){
+    // Buy Order API access is not granted yet: never pretend an
+    // in-app order happened — hand off through the checkout link
+    // rail instead, exactly as the buyer confirmed.
+    toast("In-app ordering isn't live yet — opening eBay checkout instead");
+    return executePurchase(listing, "checkout-link");
+  }
+  // rail === "checkout-link"
+  var url=ebayCheckoutUrl(listing);
+  window.open(url, "_blank", "noopener");
+  var rec={
+    title:listing.title||"eBay listing",
+    image:listing.image||"",
+    seller:listing.seller||"",
+    price:(listing.price!=null?Number(listing.price):null),
+    shipping:(listing.shipping!=null?Number(listing.shipping):null),
+    allIn:listingAllIn(listing),
+    url:listing.url||url,
+    time:Date.now(),
+    status:"Checkout opened on eBay",
+    rail:"checkout-link"
+  };
+  state.purchases.unshift(rec);
+  state.checkoutOpened[listingKey(listing)]=true;
+  renderPurchases();
+  if(state._ebayCache) renderEbayListings(state._ebayCache.data, state._ebayCache.query, state._ebayCache.item);
+  toast("Checkout opened on eBay — sign in and finish payment there");
+  return { ok:true, status:rec.status, rail:rec.rail };
+}
+function openBuyConfirm(listing){
+  var allIn=listingAllIn(listing);
+  var shipTxt= listing.shipping==null ? "Calculated on eBay" : (Number(listing.shipping)===0 ? "Free shipping" : money(listing.shipping));
+  var sellerTxt= listing.seller ? (listing.seller+(listing.sellerFeedbackPct!=null?" · "+listing.sellerFeedbackPct+"% positive":"")) : "—";
+  var already=!!state.checkoutOpened[listingKey(listing)];
+  var wrap=document.createElement("div"); wrap.className="picker-overlay";
+  wrap.innerHTML='<div class="picker-box" role="dialog" aria-modal="true" aria-label="Confirm purchase">'+
+    '<h3>Confirm purchase</h3>'+
+    '<p class="note" style="margin:0 0 12px">Buy It Now on eBay</p>'+
+    (listing.image?'<img class="buy-sheet-img" alt="">':"")+
+    '<b class="buy-title" style="display:block;font-size:15.5px;line-height:1.35;margin-top:12px"></b>'+
+    (already?'<span class="checkout-status">Checkout opened on eBay</span>':"")+
+    '<div class="buy-rows">'+
+      '<div class="buy-row"><span>Seller</span><b class="buy-seller"></b></div>'+
+      (listing.condition?'<div class="buy-row"><span>Condition</span><b class="buy-cond"></b></div>':"")+
+      '<div class="buy-row"><span>Sticker price</span><b>'+money(listing.price)+'</b></div>'+
+      '<div class="buy-row"><span>Shipping</span><b>'+escHtml(shipTxt)+'</b></div>'+
+      '<div class="buy-row total"><span>ALL-IN total</span><b>'+(allIn!=null?money(allIn):money(listing.price))+'</b></div>'+
+    '</div>'+
+    '<p class="note" style="margin:0 0 4px">Confirming opens this item\'s checkout on eBay in a new tab — you sign in and pay there. This app never asks for, sees, or sends your card number.</p>'+
+    '<div class="btnrow"><button class="btn primary" data-confirm="1" style="flex:1;justify-content:center">Confirm purchase</button><button class="btn" data-cancel="1">Cancel</button></div>'+
+  '</div>';
+  if(listing.image){ var im=wrap.querySelector(".buy-sheet-img"); im.src=listing.image; im.alt=listing.title||"eBay listing photo"; im.onerror=function(){ im.style.display="none"; }; }
+  wrap.querySelector(".buy-title").textContent=listing.title||"eBay listing";
+  wrap.querySelector(".buy-seller").textContent=sellerTxt;
+  if(listing.condition) wrap.querySelector(".buy-cond").textContent=String(listing.condition);
+  document.body.appendChild(wrap);
+  wrap.querySelector("[data-cancel]").addEventListener("click",function(){ if(wrap.parentNode) document.body.removeChild(wrap); });
+  wrap.addEventListener("click",function(e){ if(e.target===wrap && wrap.parentNode) document.body.removeChild(wrap); });
+  wrap.querySelector("[data-confirm]").addEventListener("click",function(){
+    if(wrap.parentNode) document.body.removeChild(wrap);
+    executePurchase(listing, PURCHASE_CONFIG.rail);
+  });
+}
+function renderPurchases(){
+  var el=$("purchasesList"); if(!el) return;
+  if(!state.purchases.length){
+    el.innerHTML='<div class="empty"><b>No purchases started yet.</b><br>Open a card, tap <b>Buy</b> on a Buy It Now listing, and confirm — the checkout you start will be recorded here.</div>';
+    return;
+  }
+  el.innerHTML="";
+  state.purchases.forEach(function(rec){
+    var d=document.createElement("div"); d.className="purch-row";
+    d.innerHTML=(rec.image?'<img alt="">':"")+'<div class="p-info"><b></b><span class="p-meta"></span></div><div style="text-align:right"><b class="p-amt"></b><br><span class="checkout-status">Checkout opened on eBay</span></div>';
+    if(rec.image){ var im=d.querySelector("img"); im.src=rec.image; im.onerror=function(){ im.style.display="none"; }; }
+    d.querySelector(".p-info b").textContent=rec.title;
+    var when=new Date(rec.time).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+    d.querySelector(".p-meta").textContent=(rec.seller?("Seller "+rec.seller+" · "):"")+when+" · Status: "+rec.status;
+    d.querySelector(".p-amt").textContent=rec.allIn!=null?(money(rec.allIn)+" all-in"):money(rec.price);
+    el.appendChild(d);
+  });
+}
 function renderEbayListings(data, query, item){
   var box=$("ebayListings"); var countEl=$("ebayCount");
   if(!box) return;
+  state._ebayCache={data:data, query:query, item:item};
   var rawItems=(data&&data.items)||[];
   // Holo / non-holo separation: drop listings that clearly belong to
   // the sibling printing (opposite finish, or the sibling's number).
@@ -1787,9 +1975,13 @@ function renderEbayListings(data, query, item){
   }
   box.innerHTML="";
   items.forEach(function(it){
-    var a=document.createElement("a");
-    a.className="listing"; a.href=it.url||"#"; a.target="_blank"; a.rel="noopener";
     var auction=isAuctionListing(it);
+    // Auctions stay a plain link-out card (no buy flow — no API
+    // bidding access). Buy It Now listings become a card with a Buy
+    // button that opens the in-app confirm sheet instead of a link.
+    var a=document.createElement(auction?"a":"div");
+    a.className="listing"+(auction?" is-auction":"");
+    if(auction){ a.href=it.url||"#"; a.target="_blank"; a.rel="noopener"; }
     var priceTxt=money(it.price);
     var shipTxt= it.shipping==null ? "" : (Number(it.shipping)===0 ? "Free shipping" : "+ "+money(it.shipping)+" shipping");
     var allInTxt= (it.allIn!=null && it.shipping!=null && Number(it.shipping)>0) ? money(it.allIn)+" all-in" : "";
@@ -1823,10 +2015,23 @@ function renderEbayListings(data, query, item){
     var small=document.createElement("small");
     small.textContent=[shipTxt,allInTxt].filter(Boolean).join(" · ");
     priceEl.appendChild(small);
-    var cta=document.createElement("div");
-    cta.style.cssText="font-size:12.5px;font-weight:800;color:var(--accent);margin-top:2px";
-    cta.textContent= auction ? "View & bid on eBay ↗" : "Buy on eBay ↗";
-    a.querySelector(".lmain").appendChild(cta);
+    if(auction){
+      var cta=document.createElement("div");
+      cta.className="lcta";
+      cta.textContent="Bid on eBay ↗";
+      a.querySelector(".lmain").appendChild(cta);
+    } else {
+      var actions=document.createElement("div"); actions.className="buy-actions";
+      var buyBtn=document.createElement("button"); buyBtn.type="button"; buyBtn.className="btn-buy"; buyBtn.textContent="Buy";
+      (function(listing){ buyBtn.addEventListener("click",function(){ openBuyConfirm(listing); }); })(it);
+      var viewLink=document.createElement("a"); viewLink.className="btn-viewlink"; viewLink.href=it.url||"#"; viewLink.target="_blank"; viewLink.rel="noopener"; viewLink.textContent="View on eBay ↗";
+      actions.appendChild(buyBtn); actions.appendChild(viewLink);
+      a.querySelector(".lmain").appendChild(actions);
+      if(state.checkoutOpened[listingKey(it)]){
+        var st=document.createElement("span"); st.className="checkout-status"; st.textContent="Checkout opened on eBay";
+        a.querySelector(".lmain").appendChild(st);
+      }
+    }
     box.appendChild(a);
   });
 }
@@ -2032,7 +2237,7 @@ function gradedSectionHTML(item){
   function gbtn(val,label){ return '<button data-ggrade="'+val+'" aria-pressed="'+(state.gradedGrade===val?"true":"false")+'">'+label+'</button>'; }
   var gradeBtns="";
   for(var gv=10; gv>=1; gv-=0.5){ var g2=Math.round(gv*10)/10; gradeBtns+=gbtn(String(g2), "Grade "+(g2%1===0?g2.toFixed(0):g2)); }
-  return '<div class="graded-live"><div class="ebay-live-head"><h3>Graded values — by service</h3><span class="count">Same card · same grade · different services</span></div>'+
+  return '<div class="graded-live sec-graded"><div class="ebay-live-head"><h3>Graded values — by service</h3><span class="count">Same card · same grade · different services</span></div>'+
   '<p class="note" style="margin:6px 0 0">Where PriceCharting\'s full-prices table carries a row for a service + grade, that row is the value shown — per-company at grade 10, the generic Grade N row (based on PSA/BGS graded sales) below it. The lowest live Buy It Now ask on eBay for that grader + grade rides underneath as a supplement, never instead of a PriceCharting row. No PriceCharting row and no listings = “no live asks” — never an invented number.</p>'+
   '<div class="price-group" style="margin-top:10px"><div class="price-group-title">Anchors · PriceCharting company 10s</div><div id="gradedAnchors" style="display:grid;gap:6px">'+gradedAnchorsHTML(item)+'</div></div>'+
   '<div class="filter-group" style="margin-top:12px"><label>Compare grade</label><div class="fseg" role="group" aria-label="Grade to compare">'+gradeBtns+'</div></div>'+
@@ -2109,7 +2314,7 @@ function openConditionPicker(sourceItem, existingCol, onDone){
   '<div class="picker-seg" role="group" aria-label="State"><button data-state="damaged">Damaged</button><button data-state="raw">Raw (ungraded)</button><button data-state="graded">Graded</button></div>'+
   '<div class="graded-fields"><div class="picker-field"><label>Grading service</label><select id="pkGrader">'+graderOpts+'</select></div><div class="picker-field"><label>Grade (1–10, 0.5 steps)</label><select id="pkGrade">'+gradeOpts+'</select></div></div>'+
   '<div class="picker-preview" id="pkPreview"></div>'+
-  '<div class="btnrow"><button class="btn primary" data-save="1">'+(existingCol?'Save changes':'Add to collection')+'</button><button class="btn" data-cancel="1">Cancel</button>'+(existingCol?'<button class="btn" data-remove="1">Remove from collection</button>':'')+'</div></div>';
+  '<div class="btnrow"><button class="btn primary" data-save="1">'+(existingCol?'Save changes':'Add this copy')+'</button><button class="btn" data-cancel="1">Cancel</button>'+(existingCol?'<button class="btn" data-remove="1">Remove from collection</button>':'')+'</div></div>';
   wrap.querySelector("p.note").textContent=sourceItem.name+(sourceItem.set?" · "+sourceItem.set:"")+(sourceItem.number?" · #"+sourceItem.number:"");
   if(slabSrc) wrap.querySelector("p.note").textContent+=" · Graded slab read from your photo: "+(slabSrc.company||"")+(slabSrc.grade?" "+slabSrc.grade:"")+(slabSrc.cert?" · Cert #"+slabSrc.cert:"")+" — preselected below.";
   document.body.appendChild(wrap);
@@ -4125,27 +4330,38 @@ function openDetail(item, keepEbayFilters){
     '<div class="sheetgrid"><div><img class="big" id="modalImg" alt=""></div><div>'+
     '<h2 style="margin-top:2px" id="modalName"></h2>'+
     '<p class="sub" id="modalSub" style="margin-bottom:4px"></p><div id="modalEditions"></div><div id="modalSlab"></div>'+
+    // The one Add to collection sits at the very top of the sheet,
+    // directly under the title — the photo quick-add (one tap,
+    // condition inline) for photo-identified cards, the
+    // condition-picker button for every other card — never both,
+    // and the picker's own confirm is labelled "Add this copy" so
+    // the sheet carries exactly one "Add to collection".
+    photoAddSlotHTML(item)+
+    '<div class="btnrow" style="margin-top:10px">'+(item._fromPhoto?"":'<button class="btn primary" id="mAddCol">'+(inCol?"Add another copy":"Add to collection")+'</button>')+'<button class="btn" id="mAddWish">'+(inWish?"✓ On wishlist":"Add to wishlist")+'</button>'+(inCol?'<button class="btn" id="mRemoveCol">Remove a copy</button>':'')+'</div>'+
+    (item._fromPhoto?"":'<p class="note" style="margin:6px 0 0">Adding asks for the copy you own: <b>Damaged</b>, <b>Raw</b>, or <b>Graded</b> (PSA / CGC / BGS / SGC / TAG, 1–10). Value follows that state — Damaged is labelled “Damaged est. (½ ungraded)”, Graded uses the matching ladder row.</p>')+
     '<div class="kv"><div><span>Set</span><b id="kvSet"></b></div><div><span>Number</span><b id="kvNum"></b></div><div><span>Rarity</span><b id="kvRar"></b></div><div><span id="kvPriceLabel">Market price</span><b id="kvPrice"></b></div></div>'+
-    '<div class="pricegrid" id="priceGrid">'+priceRowsHTML(item)+'</div>'+
-    '<div class="ebay-live"><div class="ebay-live-head"><h3 id="ebayHead">Live on eBay</h3><span class="count" id="ebayCount"></span></div>'+
-    '<p class="note" id="ebayNote" style="margin:6px 0 0">Real items for sale for this exact printing, fetched live. Tap any listing to open it on eBay and buy.</p>'+
+    '</div></div>'+
+    // Data sections side by side at every width: values & graded data
+    // in the left column, live marketplace listings in the right.
+    '<div class="datacols"><div class="dcol dcol-values">'+
+    '<div class="pricegrid sec-values" id="priceGrid">'+priceRowsHTML(item)+'</div>'+
+    gradedSectionHTML(item)+
+    '<div id="morePrices" class="sec-more" aria-live="polite"></div>'+
+    '<div id="extraSources" class="sec-extra"><div id="xsSold"></div><div id="xsMandarake"></div><div id="xsComc"></div><div id="xsSurugaya"></div></div>'+
+    '</div><div class="dcol dcol-live">'+
+    '<div class="ebay-live sec-ebay"><div class="ebay-live-head"><h3 id="ebayHead">Live on eBay</h3><span class="count" id="ebayCount"></span></div>'+
+    '<p class="note" id="ebayNote" style="margin:6px 0 0">Real items for sale for this exact printing, fetched live. Tap <b>Buy</b> on a Buy It Now listing to confirm the all-in total here, then finish checkout on eBay. Auctions link out to bid on eBay.</p>'+
     ebayFiltersHTML()+
     '<div class="ebay-list" id="ebayListings" aria-live="polite"></div>'+
     '<div class="btnrow" style="margin-top:12px"><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayBin+'">All Buy It Now on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayAuction+'">All auctions on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebay+'">Browse all eBay results ↗</a></div>'+
     '</div>'+
-    '<div id="morePrices" aria-live="polite"></div>'+
-    '<div id="extraSources"><div id="xsSold"></div><div id="xsMandarake"></div><div id="xsComc"></div><div id="xsSurugaya"></div></div>'+
-    photoAddSlotHTML(item)+
-    gradedSectionHTML(item)+
-    '<div class="btnrow"><button class="btn primary" id="mAddCol">'+(inCol?"Add another copy — choose condition":"Add to collection — choose condition")+'</button><button class="btn" id="mAddWish">'+(inWish?"✓ On wishlist":"Add to wishlist")+'</button>'+(inCol?'<button class="btn" id="mRemoveCol">Remove a copy</button>':'')+'</div>'+
-    '<p class="note" style="margin:6px 0 0">Adding asks for the copy you own: <b>Damaged</b>, <b>Raw</b>, or <b>Graded</b> (PSA / CGC / BGS / SGC / TAG, 1–10). Value follows that state — Damaged is labelled “Damaged est. (½ ungraded)”, Graded uses the matching ladder row.</p>'+
-    '<div class="btnrow"><a class="btn dark" target="_blank" rel="noopener" href="'+urls.tcg+'">Buy Unlimited on TCGplayer ↗</a><a class="btn" target="_blank" rel="noopener" href="'+tcgPrintingSearchUrl(item,"1st Edition Holofoil")+'">Buy 1st Edition on TCGplayer ↗</a></div>'+
-    '<div class="tcg-live"><div class="tcg-live-head"><h3>For sale on TCGplayer</h3><span class="count" id="tcgCount"></span></div>'+
+    '<div class="btnrow sec-buy"><a class="btn dark" target="_blank" rel="noopener" href="'+urls.tcg+'">Buy Unlimited on TCGplayer ↗</a><a class="btn" target="_blank" rel="noopener" href="'+tcgPrintingSearchUrl(item,"1st Edition Holofoil")+'">Buy 1st Edition on TCGplayer ↗</a></div>'+
+    '<div class="tcg-live sec-tcg"><div class="tcg-live-head"><h3>For sale on TCGplayer</h3><span class="count" id="tcgCount"></span></div>'+
     '<p class="note" style="margin:6px 0 0">Editions are separated below: <b>Unlimited</b> finishes link to their TCGplayer product page with the product photo. <b>1st Edition</b> has no separate TCGplayer product — its entries use the catalog image and link to a TCGplayer search filtered to 1st Edition for this card. Prices are never shared between editions.</p>'+
     '<div id="tcgFiltersWrap">'+tcgFiltersHTML(item)+'</div>'+
     '<div class="tcg-list" id="tcgListings" aria-live="polite"></div>'+
     '</div>'+
-    '<p class="note" style="margin-top:12px">The headline value is the raw (ungraded) PriceCharting price for this exact printing — what a typical ungraded copy is worth. TCGplayer figures are near-mint market prices and lowest asks per finish (1st Edition and Unlimited are separate printings with separate prices), and eBay prices are the live asks/bids on each listing, plus shipping where shown.</p>'+
+    '<p class="note sec-foot" style="margin-top:12px">The headline value is the raw (ungraded) PriceCharting price for this exact printing — what a typical ungraded copy is worth. TCGplayer figures are near-mint market prices and lowest asks per finish (1st Edition and Unlimited are separate printings with separate prices), and eBay prices are the live asks/bids on each listing, plus shipping where shown.</p>'+
     '</div></div>';
   $("modalImg").src=item.image;
   $("modalName").textContent=item.name;
@@ -4155,11 +4371,11 @@ function openDetail(item, keepEbayFilters){
   var msb=$("modalSlab"); if(msb) msb.innerHTML=item._photoFields?slabBannerHTML(item._photoFields):"";
   var fin0=printingFinish(item);
   var eh=$("ebayHead"); if(eh) eh.textContent="Live on eBay"+(fin0.label?(" — "+fin0.label+" printing"):"");
-  var en=$("ebayNote"); if(en && fin0.kind) en.textContent="Real items for sale for this exact printing, fetched live. This card also exists as a "+(fin0.kind==="holo"?"non-holo":"holo")+" printing under a different collector number — listings that clearly belong to that sibling are filtered out here. Tap any listing to open it on eBay and buy.";
+  var en=$("ebayNote"); if(en && fin0.kind) en.textContent="Real items for sale for this exact printing, fetched live. This card also exists as a "+(fin0.kind==="holo"?"non-holo":"holo")+" printing under a different collector number — listings that clearly belong to that sibling are filtered out here. Tap Buy on a Buy It Now listing to confirm the all-in total here, then finish checkout on eBay; auctions link out to bid on eBay.";
   $("kvSet").textContent=(item.promoLabel||item.set)||"—"; $("kvNum").textContent=item.number?("#"+item.number):"—"; $("kvRar").textContent=item.rarity||"—"; $("kvPrice").innerHTML=kvPriceHTML(head0);
   $("kvPriceLabel").textContent=head0.label||"Market price";
   $("modal").classList.add("open"); document.body.style.overflow="hidden";
-  $("mAddCol").addEventListener("click",function(){
+  var addColBtn=$("mAddCol"); if(addColBtn) addColBtn.addEventListener("click",function(){
     openConditionPicker(item, null, function(){ openDetail(item, true); });
   });
   var rmBtn=$("mRemoveCol"); if(rmBtn) rmBtn.addEventListener("click",function(){ toggleCollection(item); openDetail(item, true); });
@@ -4224,7 +4440,7 @@ function rowHTML(item, isWish){
 }
 function renderCollection(){
   var el=$("collectionList");
-  if(!state.collection.length){ el.innerHTML='<div class="empty"><b>Nothing here yet.</b><br>Search for a card, open it, and tap <b>Add to collection — choose condition</b> to add it as Damaged, Raw, or Graded (PSA / CGC / BGS / SGC / TAG).</div>'; return; }
+  if(!state.collection.length){ el.innerHTML='<div class="empty"><b>Nothing here yet.</b><br>Search for a card, open it, and tap <b>Add to collection</b> at the top of its page to add it as Damaged, Raw, or Graded (PSA / CGC / BGS / SGC / TAG).</div>'; return; }
   el.innerHTML="";
   state.collection.forEach(function(item){
     var d=document.createElement("div"); d.className="crow"; d.innerHTML=rowHTML(item,false);
