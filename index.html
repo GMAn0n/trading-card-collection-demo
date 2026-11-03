@@ -322,6 +322,23 @@
   .cand-nm{font-weight:800;font-size:13px;line-height:1.3}
   .cand-st{font-size:12px;color:var(--muted);line-height:1.35}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  /* Account panel (Collection tab) */
+  .acct{margin:0 0 18px}
+  .acct-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+  .acct-head h3{margin:0;font-size:17px}
+  .acct-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 22px;margin-top:6px}
+  @media(max-width:640px){.acct-grid{grid-template-columns:1fr}}
+  .acct-form h4{margin:12px 0 2px;font-size:14.5px}
+  .acct-form label{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:800;margin:10px 0 6px}
+  .acct-form input{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:16px}
+  .acct-form input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+  .acct-sso{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;border-top:1px solid var(--line);padding-top:16px}
+  .btn.sso-apple{background:#000;border-color:#000;color:#fff}
+  @media (prefers-color-scheme: dark){.btn.sso-apple{background:#fff;border-color:#fff;color:#000}}
+  .acct-msg{margin:12px 0 0;font-size:14px;line-height:1.5;border-radius:12px;padding:11px 13px;background:var(--surface2);border:1px solid var(--line)}
+  .acct-msg.is-err{background:#fdecea;border-color:#f3b8b1;color:#7a271a}
+  @media (prefers-color-scheme: dark){.acct-msg.is-err{background:#331714;border-color:#6b2d24;color:#ffb4a6}}
+  .acct-msg.is-ok{background:var(--accent-soft);border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -439,11 +456,45 @@
   <!-- COLLECTION -->
   <section class="panel" id="panel-collection" role="tabpanel">
     <h2>Your collection</h2>
-    <p class="sub">Cards you add during this visit. Each copy is stored as <b>Damaged, Raw, or Graded</b> (PSA / CGC / BGS / SGC / TAG, grades 1–10) and valued by that state: Raw = PriceCharting ungraded for the exact printing, Damaged = ½ ungraded (labelled estimate), Graded = the matching PriceCharting ladder row. Tap <b>Edit condition</b> on any card to change it. This demo keeps everything in the page only.</p>
+    <p class="sub">Cards you add are saved on this device and synced, so the same collection is waiting when you come back — and on any other device where you sign in. Each copy is stored as <b>Damaged, Raw, or Graded</b> (PSA / CGC / BGS / SGC / TAG, grades 1–10) and valued by that state: Raw = PriceCharting ungraded for the exact printing, Damaged = ½ ungraded (labelled estimate), Graded = the matching PriceCharting ladder row. Tap <b>Edit condition</b> on any card to change it.</p>
+    <div class="cardbox acct" id="accountPanel">
+      <div class="acct-head"><h3>Account</h3><span class="badge" id="acctBadge">Connecting…</span></div>
+      <p class="note" id="acctStatus" style="margin:0">Setting up your saved collection…</p>
+      <div id="acctSignedIn" hidden>
+        <p class="note" style="margin:10px 0 0">Signed in as <b id="acctName" style="color:var(--ink)"></b></p>
+        <p class="note" id="acctLinks" style="margin:4px 0 0"></p>
+        <div class="btnrow"><button class="btn small" id="btnSignOut" type="button">Sign out</button></div>
+      </div>
+      <div id="acctForms">
+        <div class="acct-grid">
+          <form class="acct-form" id="formRegister">
+            <h4>Create an account</h4>
+            <label for="regUser">Username</label>
+            <input type="text" id="regUser" autocomplete="username" autocapitalize="none" spellcheck="false">
+            <label for="regPass">Password</label>
+            <input type="password" id="regPass" autocomplete="new-password">
+            <div class="btnrow"><button class="btn primary small" type="submit">Register</button></div>
+          </form>
+          <form class="acct-form" id="formLogin">
+            <h4>Sign in</h4>
+            <label for="logUser">Username</label>
+            <input type="text" id="logUser" autocomplete="username" autocapitalize="none" spellcheck="false">
+            <label for="logPass">Password</label>
+            <input type="password" id="logPass" autocomplete="current-password">
+            <div class="btnrow"><button class="btn small" type="submit">Sign in</button></div>
+          </form>
+        </div>
+      </div>
+      <div class="acct-sso">
+        <button class="btn sso-apple" id="btnApple" type="button">Continue with Apple</button>
+        <button class="btn sso-google" id="btnGoogle" type="button">Continue with Google</button>
+      </div>
+      <p class="acct-msg" id="acctMsg" role="status" hidden></p>
+    </div>
     <div class="totalbar"><div><p>Portfolio value · by condition / grade</p><div class="big" id="colTotal">$0.00</div></div><button class="btn small" id="btnGoSearch1" style="background:transparent;color:inherit;border-color:currentColor">+ Add cards from Search</button></div>
     <div id="collectionList"></div>
     <h3 style="margin:26px 0 4px;font-size:19px">Purchases started</h3>
-    <p class="sub" style="margin-bottom:12px">Checkouts you started on eBay from a card page during this visit. Payment finishes on eBay's own checkout, so every entry stays <b>Checkout opened on eBay</b> — this app can't see whether a payment completed, and never marks one as bought.</p>
+    <p class="sub" style="margin-bottom:12px">Checkouts you started on eBay from a card page — saved on this device and synced with the rest of your collection. Payment finishes on eBay's own checkout, so every entry stays <b>Checkout opened on eBay</b> — this app can't see whether a payment completed, and never marks one as bought.</p>
     <div id="purchasesList"></div>
   </section>
 
@@ -467,7 +518,7 @@
   </section>
 
   <footer>
-    Demo build — collection and wishlist live for this visit only and reset when the page closes. Card data © their respective publishers; headline values are raw (ungraded) prices per exact printing via PriceCharting; Pokémon catalogue and TCGplayer market prices via TCGdex (mirrored daily by TCGCSV) with Pokémon TCG API backup; Magic prices via Scryfall. Card pages show a source-labelled More prices comparison (PriceCharting · TCGplayer via TCGCSV daily feed · Cardmarket EUR price guide by edition, from its official daily exports), TCGplayer product cards per finish (photo, lowest ask + market, direct link to the product page) plus live eBay listings in-app (via the eBay search proxy) for the exact card shown, and a Buyee link-out for Japanese printings.
+    Demo build — collection, wishlist and purchases are saved on this device and synced to your guest session or signed-in account, so they survive closing the page. Card data © their respective publishers; headline values are raw (ungraded) prices per exact printing via PriceCharting; Pokémon catalogue and TCGplayer market prices via TCGdex (mirrored daily by TCGCSV) with Pokémon TCG API backup; Magic prices via Scryfall. Card pages show a source-labelled More prices comparison (PriceCharting · TCGplayer via TCGCSV daily feed · Cardmarket EUR price guide by edition, from its official daily exports), TCGplayer product cards per finish (photo, lowest ask + market, direct link to the product page) plus live eBay listings in-app (via the eBay search proxy) for the exact card shown, and a Buyee link-out for Japanese printings.
   </footer>
 </div>
 
@@ -1897,6 +1948,7 @@ function executePurchase(listing, rail){
     rail:"checkout-link"
   };
   state.purchases.unshift(rec);
+  touchItem("purchases",rec);
   state.checkoutOpened[listingKey(listing)]=true;
   renderPurchases();
   if(state._ebayCache) renderEbayListings(state._ebayCache.data, state._ebayCache.query, state._ebayCache.item);
@@ -2339,7 +2391,7 @@ function openConditionPicker(sourceItem, existingCol, onDone){
   sync();
   wrap.querySelector("[data-cancel]").addEventListener("click",function(){ document.body.removeChild(wrap); });
   wrap.addEventListener("click",function(e){ if(e.target===wrap) document.body.removeChild(wrap); });
-  var removeBtn=wrap.querySelector("[data-remove]"); if(removeBtn) removeBtn.addEventListener("click",function(){ document.body.removeChild(wrap); if(existingCol){ var ix=state.collection.findIndex(function(c){return c===existingCol||c.id===existingCol.id;}); if(ix>=0) state.collection.splice(ix,1); refreshStats(); toast("Removed from collection"); if(onDone) onDone(null); } });
+  var removeBtn=wrap.querySelector("[data-remove]"); if(removeBtn) removeBtn.addEventListener("click",function(){ document.body.removeChild(wrap); if(existingCol){ var ix=state.collection.findIndex(function(c){return c===existingCol||c.id===existingCol.id;}); if(ix>=0){ var removedEl=state.collection[ix]; state.collection.splice(ix,1); untouchItem("collection",removedEl); } refreshStats(); toast("Removed from collection"); if(onDone) onDone(null); } });
   wrap.querySelector("[data-save]").addEventListener("click",function(){
     sel.grader=wrap.querySelector("#pkGrader").value; sel.grade=parseFloat(wrap.querySelector("#pkGrade").value);
     var src=sourceForValue(); var calc=collectionValueFor(src, sel.conditionState, sel.grader, sel.grade);
@@ -2348,13 +2400,14 @@ function openConditionPicker(sourceItem, existingCol, onDone){
       existingCol.conditionState=sel.conditionState; existingCol.grader=sel.conditionState==="graded"?sel.grader:null; existingCol.grade=sel.conditionState==="graded"?sel.grade:null;
       existingCol.rawValue=src.rawValue; existingCol.ladder=src.ladder; existingCol.fullLadder=src.fullLadder; existingCol._basePrice=src.price;
       existingCol.price=calc.value; existingCol.priceLabel=calc.label; existingCol.valueBasis=calc.basis;
+      touchItem("collection",existingCol);
       refreshStats(); toast("Updated — "+conditionBadgeText(existingCol)+" · "+money(calc.value));
       if(onDone) onDone(existingCol);
     } else {
       var hv=headlineOf(sourceItem);
       var col={id:sourceItem.id,name:sourceItem.name,set:sourceItem.set,promoLabel:sourceItem.promoLabel||null,supplemental:!!sourceItem.supplemental,number:sourceItem.number,image:sourceItem.image,game:sourceItem.game,conditionState:sel.conditionState,grader:sel.conditionState==="graded"?sel.grader:null,grade:sel.conditionState==="graded"?sel.grade:null,cert:(sel.conditionState==="graded" && slabSrc && slabSrc.cert)?String(slabSrc.cert):null,language:langOf(sourceItem),rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis};
       // Avoid duplicate id entries stacking silently: replace existing copy of same printing+condition? Keep separate copies allowed only if condition differs — simplest: if same id+condition+grader+grade exists, toast instead
-      state.collection.unshift(col); refreshStats(); toast("Added to collection — "+conditionBadgeText(col)+" ✓");
+      state.collection.unshift(col); touchItem("collection",col); refreshStats(); toast("Added to collection — "+conditionBadgeText(col)+" ✓");
       if(onDone) onDone(col);
     }
   });
@@ -4305,11 +4358,11 @@ function renderPhotoAdd(item){
     var basis=calc.basis;
     if(hasEditions && pa.edition==="first") basis=(basis?basis+" · ":"")+"copy marked 1st Edition on the photo sheet (a photo can't verify the stamp)";
     var col={id:item.id,name:item.name,set:item.set,promoLabel:item.promoLabel||null,supplemental:!!item.supplemental,number:item.number,image:item.image,game:item.game,conditionState:pa.cond,grader:pa.cond==="graded"?pa.grader:null,grade:pa.cond==="graded"?pa.grade:null,cert:(pa.cond==="graded" && f.slab && f.slab.cert)?String(f.slab.cert):null,language:langOf(item),edition:hasEditions?pa.edition:null,rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:basis};
-    state.collection.unshift(col); refreshStats();
+    state.collection.unshift(col); touchItem("collection",col); refreshStats();
     toast("Added to collection — "+conditionBadgeText(col)+" ✓");
     wrap.innerHTML='<div class="quickadd"><div class="id-banner"><b>Added · '+escHtml(conditionBadgeText(col))+(col.edition==="first"?' · 1st Edition':"")+'</b><span>'+escHtml(item.name)+(item.set?" · "+escHtml(item.set):"")+' is in your collection'+(calc.value!=null?(" — valued at "+money(calc.value)+" ("+escHtml(calc.label)+")"):"")+'.</span></div><div class="btnrow" style="margin-top:12px"><button class="btn" id="paUndo">Undo</button><button class="btn" id="paAgain">Add another copy</button><button class="btn primary" id="paView">View collection</button></div></div>';
     wrap.querySelector("#paUndo").addEventListener("click",function(){
-      var ix=state.collection.indexOf(col); if(ix>=0) state.collection.splice(ix,1);
+      var ix=state.collection.indexOf(col); if(ix>=0){ state.collection.splice(ix,1); untouchItem("collection",col); }
       refreshStats(); toast("Add undone — removed from collection");
       renderPhotoAdd(item);
     });
@@ -4417,18 +4470,19 @@ function toggleCollection(item){
   // Prefer exact object (a specific owned copy) so duplicate printings with different grades remove correctly
   var i=state.collection.findIndex(function(c){return c===item;});
   if(i<0) i=state.collection.findIndex(function(c){return c.id===item.id});
-  if(i>=0){ state.collection.splice(i,1); toast("Removed from collection"); refreshStats(); return; }
+  if(i>=0){ var removedCol=state.collection[i]; state.collection.splice(i,1); untouchItem("collection",removedCol); toast("Removed from collection"); refreshStats(); return; }
   // Fallback direct add (legacy paths) defaults to Raw via picker logic
   var src={rawValue:item.rawValue!=null?item.rawValue:null,ladder:item.ladder||null,fullLadder:item.fullLadder||null,price:item.price};
   var calc=collectionValueFor(src,"raw",null,null);
-  state.collection.unshift({id:item.id,name:item.name,set:item.set,promoLabel:item.promoLabel||null,supplemental:!!item.supplemental,number:item.number,image:item.image,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis,game:item.game,conditionState:"raw",grader:null,grade:null,language:langOf(item),rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:item.price});
+  var newCol={id:item.id,name:item.name,set:item.set,promoLabel:item.promoLabel||null,supplemental:!!item.supplemental,number:item.number,image:item.image,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis,game:item.game,conditionState:"raw",grader:null,grade:null,language:langOf(item),rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:item.price};
+  state.collection.unshift(newCol); touchItem("collection",newCol);
   toast("Added to collection — Raw ✓");
   refreshStats();
 }
 function toggleWishlist(item){
   var i=state.wishlist.findIndex(function(c){return c.id===item.id});
-  if(i>=0){ state.wishlist.splice(i,1); toast("Removed from wishlist"); }
-  else { var hv2=headlineOf(item); var sp=(hv2.v!=null?hv2.v:item.price); state.wishlist.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:sp,priceLabel:(hv2.v!=null?hv2.label:(item.priceLabel||"TCGplayer")),game:item.game,target:sp!=null?Math.round(sp*0.85*100)/100:null}); toast("Added to wishlist ✓"); }
+  if(i>=0){ var removedWish=state.wishlist[i]; state.wishlist.splice(i,1); untouchItem("wishlist",removedWish); toast("Removed from wishlist"); }
+  else { var hv2=headlineOf(item); var sp=(hv2.v!=null?hv2.v:item.price); var wishItem={id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:sp,priceLabel:(hv2.v!=null?hv2.label:(item.priceLabel||"TCGplayer")),game:item.game,target:sp!=null?Math.round(sp*0.85*100)/100:null}; state.wishlist.unshift(wishItem); touchItem("wishlist",wishItem); toast("Added to wishlist ✓"); }
   refreshStats();
 }
 
@@ -4483,13 +4537,353 @@ function prompt2(item){
   wrap.querySelector("b").textContent=item.name;
   var input=wrap.querySelector("input"); input.value=cur;
   document.body.appendChild(wrap); input.focus();
-  wrap.querySelector("[data-ok]").addEventListener("click",function(){ var v=parseFloat(input.value); document.body.removeChild(wrap); if(!isNaN(v)&&v>=0){ item.target=v; refreshStats(); toast("Target set to "+money(v)); } });
+  wrap.querySelector("[data-ok]").addEventListener("click",function(){ var v=parseFloat(input.value); document.body.removeChild(wrap); if(!isNaN(v)&&v>=0){ item.target=v; touchItem("wishlist",item); refreshStats(); toast("Target set to "+money(v)); } });
   wrap.querySelector("[data-cancel]").addEventListener("click",function(){ document.body.removeChild(wrap); });
   wrap.addEventListener("click",function(e){ if(e.target===wrap) document.body.removeChild(wrap); });
   return null;
 };
 
-refreshStats();
+/* ---------- Accounts, guest identity & server sync ----------
+   Identity is a server-issued random token from the accounts API —
+   never an IP address, device fingerprint, or anything derived from
+   the visitor's hardware or browser. The token is kept in THREE
+   stores (a first-party cookie, localStorage, and IndexedDB): on
+   load it is read from whichever store still has it and re-written
+   to any store missing it, so clearing one store doesn't orphan the
+   collection. Collection, wishlist and purchases are mirrored in
+   localStorage AND synced to the server; on load the two are merged
+   per item by updatedAt (newer wins, server tombstones delete), and
+   every change updates the mirror immediately, then PUTs just that
+   item. A failed PUT never blocks the UI — the mirror is retried on
+   the next load's merge. */
+var API_BASE="https://card-app-api.369samclarkisfine.workers.dev";
+var TOKEN_COOKIE="tcc_token", TOKEN_LS="tcc_token", MIRROR_LS="tcc_mirror_v1", PROFILE_LS="tcc_profile";
+var acct={ token:null, userId:null, kind:null, username:null, identities:[] };
+var mirror={ collection:{}, wishlist:{}, purchases:{} };
+var acctMsg="", acctMsgKind="";
+
+/* Small promise-based IndexedDB key/value wrapper */
+function idbOpen(){
+  return new Promise(function(res,rej){
+    try{
+      var r=indexedDB.open("tcc-store",1);
+      r.onupgradeneeded=function(){ r.result.createObjectStore("kv"); };
+      r.onsuccess=function(){ res(r.result); };
+      r.onerror=function(){ rej(r.error); };
+    }catch(e){ rej(e); }
+  });
+}
+function idbGet(k){
+  return idbOpen().then(function(db){
+    return new Promise(function(res,rej){
+      var rq=db.transaction("kv","readonly").objectStore("kv").get(k);
+      rq.onsuccess=function(){ res(rq.result||null); };
+      rq.onerror=function(){ rej(rq.error); };
+    });
+  }).catch(function(){ return null; });
+}
+function idbSet(k,v){
+  return idbOpen().then(function(db){
+    return new Promise(function(res,rej){
+      var rq=db.transaction("kv","readwrite").objectStore("kv").put(v,k);
+      rq.onsuccess=function(){ res(); };
+      rq.onerror=function(){ rej(rq.error); };
+    });
+  }).catch(function(){});
+}
+function idbDel(k){
+  return idbOpen().then(function(db){
+    return new Promise(function(res,rej){
+      var rq=db.transaction("kv","readwrite").objectStore("kv").delete(k);
+      rq.onsuccess=function(){ res(); };
+      rq.onerror=function(){ rej(rq.error); };
+    });
+  }).catch(function(){});
+}
+
+/* Cookie store */
+function cookieGet(name){
+  try{ var m=document.cookie.match(new RegExp("(?:^|; )"+name+"=([^;]*)")); return m?decodeURIComponent(m[1]):null; }catch(e){ return null; }
+}
+function cookieSet(name,val){
+  try{ document.cookie=name+"="+encodeURIComponent(val)+"; path=/; max-age=31536000; SameSite=Lax"; }catch(e){}
+}
+function cookieDel(name){
+  try{ document.cookie=name+"=; path=/; max-age=0; SameSite=Lax"; }catch(e){}
+}
+
+/* Token: read from any store, heal the others */
+function storeTokenAll(tok){
+  acct.token=tok;
+  try{ localStorage.setItem(TOKEN_LS,tok); }catch(e){}
+  cookieSet(TOKEN_COOKIE,tok);
+  idbSet("token",tok);
+}
+function clearTokenAll(){
+  acct.token=null;
+  try{ localStorage.removeItem(TOKEN_LS); }catch(e){}
+  cookieDel(TOKEN_COOKIE);
+  idbDel("token");
+}
+function findToken(){
+  var fromCk=cookieGet(TOKEN_COOKIE), fromLs=null;
+  try{ fromLs=localStorage.getItem(TOKEN_LS); }catch(e){}
+  return idbGet("token").then(function(fromIdb){
+    var tok=fromLs||fromCk||fromIdb||null;
+    if(tok){
+      acct.token=tok;
+      if(fromLs!==tok){ try{ localStorage.setItem(TOKEN_LS,tok); }catch(e){} }
+      if(fromCk!==tok) cookieSet(TOKEN_COOKIE,tok);
+      if(fromIdb!==tok) idbSet("token",tok);
+    }
+    return tok;
+  });
+}
+function saveProfileCache(){
+  try{ localStorage.setItem(PROFILE_LS, JSON.stringify({kind:acct.kind,username:acct.username})); }catch(e){}
+}
+function loadProfileCache(){
+  try{ var p=JSON.parse(localStorage.getItem(PROFILE_LS)||"null"); if(p){ if(p.kind) acct.kind=p.kind; if(p.username) acct.username=p.username; } }catch(e){}
+}
+
+/* API helper — JSON in/out, bearer token when we have one */
+function api(path, opts){
+  opts=opts||{};
+  var headers={ "Content-Type":"application/json" };
+  if(acct.token) headers["Authorization"]="Bearer "+acct.token;
+  return fetch(API_BASE+path,{ method:opts.method||"GET", headers:headers, body:opts.body!=null?JSON.stringify(opts.body):undefined })
+    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return { status:r.status, body:j }; }); });
+}
+
+/* Stable per-item keys, derived from each entry's own identifying
+   fields so the same card + condition merges across devices instead
+   of duplicating:
+   · collection — catalogue id + language + condition state +
+     grader + grade + cert + edition (two copies of one printing in
+     different states are different entries; same state merges)
+   · wishlist — catalogue id
+   · purchases — the listing's URL (or title) + the start time */
+function keyPart(s){ return String(s==null?"":s).replace(/\|/g,"/"); }
+function collectionKey(c){ return "col|"+[c.id||"",c.language||"en",c.conditionState||"raw",c.grader||"",c.grade==null?"":c.grade,c.cert||"",c.edition||""].map(keyPart).join("|"); }
+function wishlistKey(w){ return "wish|"+keyPart(w.id||""); }
+function purchaseKey(p){ return "pur|"+keyPart(listingKey(p))+"|"+(p.time||0); }
+function itemKey(list,item){ return list==="collection"?collectionKey(item):(list==="wishlist"?wishlistKey(item):purchaseKey(item)); }
+
+/* Local mirror (localStorage) */
+function saveMirror(){ try{ localStorage.setItem(MIRROR_LS, JSON.stringify(mirror)); }catch(e){} }
+function loadMirror(){
+  try{
+    var raw=localStorage.getItem(MIRROR_LS); if(!raw) return;
+    var m=JSON.parse(raw); if(!m||typeof m!=="object") return;
+    ["collection","wishlist","purchases"].forEach(function(l){ if(m[l]&&typeof m[l]==="object") mirror[l]=m[l]; });
+  }catch(e){}
+}
+function applyMirrorToState(){
+  ["collection","wishlist","purchases"].forEach(function(l){
+    var rows=Object.keys(mirror[l]).map(function(k){ return mirror[l][k]; }).filter(function(e){ return e && !e.deleted && e.payload; });
+    rows.sort(function(a,b){ return (b.updatedAt||0)-(a.updatedAt||0); });
+    state[l]=rows.map(function(e){ return e.payload; });
+  });
+  state.checkoutOpened={};
+  state.purchases.forEach(function(p){ state.checkoutOpened[listingKey(p)]=true; });
+}
+
+/* Change push: mirror first (synchronous), then a fire-and-forget
+   PUT of just the changed item. Offline failures are fine — the
+   next load's merge re-uploads anything the server is missing. */
+function pushChange(list, entry){
+  if(!acct.token) return;
+  var body={}; body[list]=[entry];
+  api("/sync",{method:"PUT",body:body}).catch(function(){});
+}
+function touchItem(list, item){
+  var k=itemKey(list,item), now=Date.now();
+  mirror[list][k]={ payload:item, updatedAt:now };
+  saveMirror();
+  pushChange(list,{ key:k, payload:item, updatedAt:now });
+}
+function untouchItem(list, item){
+  var k=itemKey(list,item), now=Date.now();
+  mirror[list][k]={ payload:item, updatedAt:now, deleted:true };
+  saveMirror();
+  pushChange(list,{ key:k, payload:item, updatedAt:now, deleted:true });
+}
+
+/* Load-time merge: server state vs local mirror, per item key.
+   Newer updatedAt wins; a winning tombstone removes the item
+   locally. Local winners (newer or server-missing) are PUT back. */
+function runSyncMerge(){
+  if(!acct.token) return Promise.resolve();
+  return api("/sync").then(function(res){
+    if(res.status!==200||!res.body) return;
+    var push={ collection:[], wishlist:[], purchases:[] };
+    ["collection","wishlist","purchases"].forEach(function(l){
+      var sMap={};
+      (res.body[l]||[]).forEach(function(e){ if(e&&e.key) sMap[e.key]=e; });
+      var keys={};
+      Object.keys(mirror[l]).forEach(function(k){ keys[k]=1; });
+      Object.keys(sMap).forEach(function(k){ keys[k]=1; });
+      Object.keys(keys).forEach(function(k){
+        var loc=mirror[l][k], srv=sMap[k];
+        if(srv && (!loc || (srv.updatedAt||0)>=(loc.updatedAt||0))){
+          if(srv.deleted) mirror[l][k]={ payload:srv.payload||(loc&&loc.payload)||null, updatedAt:srv.updatedAt||0, deleted:true };
+          else mirror[l][k]={ payload:srv.payload, updatedAt:srv.updatedAt||0 };
+        } else if(loc){
+          var e={ key:k, updatedAt:loc.updatedAt||0 };
+          if(loc.payload) e.payload=loc.payload;
+          if(loc.deleted) e.deleted=true;
+          push[l].push(e);
+        }
+      });
+    });
+    saveMirror();
+    applyMirrorToState();
+    refreshStats();
+    if(push.collection.length||push.wishlist.length||push.purchases.length){
+      api("/sync",{method:"PUT",body:push}).catch(function(){});
+    }
+  }).catch(function(){ /* offline: the local mirror stands */ });
+}
+
+/* Identity lifecycle */
+function mintGuest(){
+  return api("/guest",{method:"POST",body:{}}).then(function(res){
+    if(res.body&&res.body.token){
+      storeTokenAll(res.body.token);
+      acct.userId=res.body.userId; acct.kind="guest"; acct.username=null; acct.identities=[];
+      saveProfileCache();
+    }
+  }).catch(function(){});
+}
+function refreshMe(){
+  if(!acct.token) return Promise.resolve();
+  return api("/me").then(function(res){
+    if(res.status===200&&res.body){
+      acct.userId=res.body.userId; acct.kind=res.body.kind; acct.identities=res.body.identities||[];
+      if(res.body.username) acct.username=res.body.username;
+      else { var pw=acct.identities.filter(function(i){ return i.provider==="password"; })[0]; if(pw&&pw.subject) acct.username=pw.subject; }
+      saveProfileCache();
+    } else if(res.status===401){
+      // Stored token no longer valid anywhere — start a fresh guest.
+      clearTokenAll(); acct.kind=null; acct.username=null; acct.identities=[];
+      return mintGuest();
+    }
+  }).catch(function(){ /* offline: keep the token and cached profile */ });
+}
+
+/* Account panel */
+function providerLabel(p){ return p==="password"?"Username & password":(p==="google"?"Google":(p==="apple"?"Apple":String(p))); }
+function setAcctMsg(t,k){ acctMsg=t||""; acctMsgKind=k||""; }
+function renderAccountPanel(){
+  var statusEl=$("acctStatus"); if(!statusEl) return;
+  var badge=$("acctBadge");
+  if(acct.kind==="registered"||acct.username){
+    badge.textContent="Account"; badge.className="badge ok";
+    statusEl.textContent="Signed in — your collection, wishlist and purchases sync to every device on this account.";
+    $("acctSignedIn").hidden=false; $("acctForms").hidden=true;
+    $("acctName").textContent=acct.username||"your account";
+    $("acctLinks").textContent="Sign-in methods linked: "+(acct.identities.length?acct.identities.map(function(i){ return providerLabel(i.provider); }).join(" · "):"Username & password")+".";
+  } else {
+    badge.textContent=acct.token?"Guest":"Connecting…"; badge.className="badge";
+    statusEl.textContent="Browsing as guest — your collection is saved on this device and synced.";
+    $("acctSignedIn").hidden=true; $("acctForms").hidden=false;
+  }
+  var m=$("acctMsg");
+  if(acctMsg){ m.hidden=false; m.textContent=acctMsg; m.className="acct-msg"+(acctMsgKind==="err"?" is-err":(acctMsgKind==="ok"?" is-ok":"")); }
+  else { m.hidden=true; m.textContent=""; }
+}
+function authErrorText(res, mode){
+  var e=res.body&&res.body.error;
+  if(e==="username_taken") return "That username is already taken — try another.";
+  if(e==="invalid_username") return "That username isn't allowed — use letters, numbers or underscores.";
+  if(e==="weak_password") return "That password is too weak — pick a longer one.";
+  if(e==="invalid_credentials") return "That username and password don't match an account.";
+  return mode==="register" ? "Couldn't create the account — try again." : "Couldn't sign you in — try again.";
+}
+function onRegister(e){
+  e.preventDefault();
+  var u=$("regUser").value.trim(), p=$("regPass").value;
+  if(!u||!p){ setAcctMsg("Enter a username and a password to create your account.","err"); renderAccountPanel(); return; }
+  // The current (guest) token rides along automatically, so the
+  // server upgrades this guest in place — same user, same data.
+  api("/auth/register",{method:"POST",body:{username:u,password:p}}).then(function(res){
+    if((res.status===200||res.status===201)&&res.body&&res.body.token){
+      storeTokenAll(res.body.token);
+      acct.userId=res.body.userId; acct.kind="registered"; acct.username=res.body.username||u;
+      saveProfileCache();
+      setAcctMsg("Account created — this device's collection is now on your account and syncs to any device you sign in on.","ok");
+      return refreshMe().then(function(){ renderAccountPanel(); return runSyncMerge(); });
+    }
+    setAcctMsg(authErrorText(res,"register"),"err");
+  }).catch(function(){ setAcctMsg("Couldn't reach the account server — check your connection and try again.","err"); })
+  .then(function(){ renderAccountPanel(); });
+}
+function onLogin(e){
+  e.preventDefault();
+  var u=$("logUser").value.trim(), p=$("logPass").value;
+  if(!u||!p){ setAcctMsg("Enter your username and password to sign in.","err"); renderAccountPanel(); return; }
+  api("/auth/login",{method:"POST",body:{username:u,password:p}}).then(function(res){
+    if(res.status===200&&res.body&&res.body.token){
+      // Replace the local identity everywhere, then merge this
+      // device's saved items with the account's.
+      storeTokenAll(res.body.token);
+      acct.userId=res.body.userId; acct.kind=res.body.kind||"registered"; acct.username=res.body.username||u;
+      saveProfileCache();
+      setAcctMsg("Signed in — your saved collection is syncing.","ok");
+      return refreshMe().then(function(){ renderAccountPanel(); return runSyncMerge(); });
+    }
+    setAcctMsg(authErrorText(res,"login"),"err");
+  }).catch(function(){ setAcctMsg("Couldn't reach the account server — check your connection and try again.","err"); })
+  .then(function(){ renderAccountPanel(); });
+}
+function onSignOut(){
+  api("/auth/logout",{method:"POST",body:{}}).catch(function(){}).then(function(){
+    clearTokenAll();
+    acct.userId=null; acct.kind=null; acct.username=null; acct.identities=[];
+    saveProfileCache();
+    return mintGuest();
+  }).then(function(){
+    setAcctMsg("Signed out. You're browsing as a fresh guest — what you've saved stays on this device and keeps syncing.","ok");
+    renderAccountPanel();
+    return runSyncMerge();
+  }).then(function(){ renderAccountPanel(); });
+}
+function onSso(provider){
+  api("/auth/"+provider+"/start").then(function(res){
+    if(res.body&&res.body.url){ window.location.href=res.body.url; return; }
+    if(res.status===501||(res.body&&res.body.error==="sso_not_configured")){
+      setAcctMsg(provider==="apple" ? "Apple sign-in activates once the Apple developer account is connected" : "Google sign-in activates once Google sign-in is connected","note");
+    } else {
+      setAcctMsg((provider==="apple"?"Apple":"Google")+" sign-in isn't available right now.","err");
+    }
+  }).catch(function(){ setAcctMsg("Couldn't reach the account server — check your connection and try again.","err"); })
+  .then(function(){ renderAccountPanel(); });
+}
+$("formRegister").addEventListener("submit",onRegister);
+$("formLogin").addEventListener("submit",onLogin);
+$("btnSignOut").addEventListener("click",onSignOut);
+$("btnApple").addEventListener("click",function(){ onSso("apple"); });
+$("btnGoogle").addEventListener("click",function(){ onSso("google"); });
+
+/* Boot: paint the local mirror immediately, then resolve identity
+   (existing token from any store, else a fresh guest) and merge
+   with the server. Nothing here blocks the page. */
+function initAccount(){
+  loadMirror();
+  applyMirrorToState();
+  refreshStats();
+  renderAccountPanel();
+  findToken().then(function(tok){
+    if(tok){ loadProfileCache(); renderAccountPanel(); return refreshMe(); }
+    return mintGuest();
+  }).then(function(){
+    renderAccountPanel();
+    return runSyncMerge();
+  }).then(function(){ renderAccountPanel(); })
+  .catch(function(){ renderAccountPanel(); });
+}
+
+initAccount();
 })();
 </script>
 </body>
