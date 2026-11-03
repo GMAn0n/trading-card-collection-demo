@@ -319,7 +319,7 @@
         <ol class="steps">
           <li><span class="n">1</span><span><b>Turn on the camera</b> and allow access when your browser asks — on a phone it uses the rear camera automatically. Rather not use the live view? <b>Upload a photo</b> instead: on a phone the picker offers your camera or your library.</span></li>
           <li><span class="n">2</span><span><b>Fill the card-shaped guide</b> with the card, edge to edge — including its <b>bottom edge</b>, where the collector number sits — in good light, and tap <b>Take photo</b>. The preview shows the camera's full field (nothing is cropped away) and the photo is kept at full resolution. A graded card can stay in its case — photograph the whole slab and the label is read too.</span></li>
-          <li><span class="n">3</span><span><b>Let it identify the card.</b> First, AI reads the photo (sent to our card-data proxy) and returns the card's name, HP, attacks, collector number, illustrator, finish (holo, reverse holo or non-holo), 1st Edition stamp, set symbol and © year line — and, when the card sits in a grading slab, the label's company, grade and cert number. The read also reports the card's language and its name exactly as printed: printings in other languages are different cards with their own values, so a non-English read is matched only within that language's printings — a Japanese card is never swapped for the English printing. If that can't read it, the on-device fallback takes over: it finds the card's edges in the photo, squares it up, and reads the <b>name in the top band</b> (HP beside it as a cross-check) and the <b>collector number in the bottom-right</b>. Either way, <b>every printing of that name is then scored on the combination</b> — number, HP, each attack (name first, damage only as a bonus), the illustrator, the finish, the edition stamp, the set symbol and the © years — which is what separates look-alike reprints like Base Set from Base Set 2, since they share name, HP and attacks. Illustrator and finish reads are noisy, so they only ever add points when they agree — a mismatch never counts against a printing. A read number that no printing of that name carries is treated as a misread and ignored, never shown as fact. A printing opens automatically only on a clear win — a strong score with a clear margin, or at least three independent signal types agreeing; name and HP alone never auto-pick. Anything close goes to a picker where each printing lists the signals that matched it, so your tap is an informed one. If nothing reads clearly, it says so and asks for a retake instead of guessing. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings.</span></li>
+          <li><span class="n">3</span><span><b>Let it identify the card.</b> First, AI reads the photo (sent to our card-data proxy) and returns the card's name, HP, attacks, collector number, illustrator, finish (holo, reverse holo or non-holo), 1st Edition stamp, set symbol and © year line — and, when the card sits in a grading slab, the label's company, grade and cert number. The read also reports the card's language and its name exactly as printed: printings in other languages are different cards with their own values, so a non-English read is matched only within that language's printings — a Japanese card is never swapped for the English printing. If that can't read it, the on-device fallback takes over: it finds the card's edges in the photo, squares it up, and reads the <b>name in the top band</b> (HP beside it as a cross-check) and the <b>collector number in the bottom-right</b>. Either way, <b>every printing of that name is then scored on the combination</b> — number, HP, each attack (name first, damage only as a bonus), the illustrator, the finish, the edition stamp, the set symbol and the © years — which is what separates look-alike reprints like Base Set from Base Set 2, since they share name, HP and attacks. Illustrator and finish reads are noisy, so they only ever add points when they agree — a mismatch never counts against a printing. A read number that no printing of that name carries is treated as a misread and ignored, never shown as fact. A printing opens automatically only on a clear win — a strong score with a clear margin, or at least three independent signal types agreeing; name and HP alone never auto-pick. Anything close goes to a picker where each printing lists the signals that matched it, so your tap is an informed one. If nothing reads clearly, it says so and asks for a retake instead of guessing. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings. Identity is cross-checked across multiple card databases and prices come from a separate pricing source, which is why a printing missing from one catalogue can still be identified and valued.</span></li>
           <li><span class="n">4</span><span><b>Add it in one tap.</b> From a photo, the card page leads with a one-tap <b>Add to collection</b> — Raw by default, with Damaged and Graded (PSA / CGC / BGS / SGC / TAG) right there on the same sheet. If the photo showed a grading slab, that sheet opens with <b>Graded</b> already selected — company and grade filled in from the label, cert number included — and the copy is valued from that grader's ladder row. A photo can't prove a 1st Edition stamp, so photo adds default to Unlimited unless you switch.</span></li>
         </ol>
         <p class="note" style="margin-top:16px">Live camera not prompting? Use <b>Upload a photo</b> instead — or open this page directly in Safari or Chrome (not inside another app's preview) and set Camera to <b>Allow</b> in site settings, then reload and tap “Turn on camera” again.</p>
@@ -1026,13 +1026,29 @@ function fetchPokeFallback(query){
    TCGplayer figures stay as clearly-labelled secondary rows only. */
 var VALUE_EP="https://ebay-search-proxy.369samclarkisfine.workers.dev/value";
 var valueCache={}, valueQueue=[], valueActive=0;
-function valueKey(item){ return (item.name+"|"+item.set+"|"+item.number).toLowerCase(); }
+/* IDENTITY vs VALUE stay separate, always: a catalogue (TCGdex, or the
+   built-in Japanese promo catalogue below) establishes WHAT a card is —
+   name, set, number, HP, attacks, illustrator. PriceCharting alone
+   establishes what it is WORTH. A printing whose PriceCharting product
+   name differs from its catalogue name ("Mew [CoroCoro]" is the Lily Pad
+   Mew) carries priceName/priceSet/priceNumber for the value lookup only;
+   those fields never change the card's identity, and a catalogue's own
+   price fields (TCGplayer via TCGdex) never override the PriceCharting
+   headline value. */
+function valueIdentity(item){ return { name:(item.priceName||item.name), set:(item.priceSet||item.set), number:(item.priceNumber||item.number) }; }
+function valueKey(item){ var v=valueIdentity(item); return (v.name+"|"+v.set+"|"+v.number).toLowerCase(); }
 function applyValueEntry(item, entry){
   if(entry.found){ item.rawValue=entry.ungraded; item.rawUrl=entry.url||null; item.grade9=(entry.grade9!=null?entry.grade9:null); item.psa10=(entry.psa10!=null?entry.psa10:null); item.ladder=(entry.ladder&&entry.ladder.length?entry.ladder:null); item.fullLadder=(entry.fullLadder&&entry.fullLadder.length?entry.fullLadder:null); item.rawState="ok"; }
   else { item.rawState="none"; item.ladder=null; item.fullLadder=null; }
 }
 function ensureValue(item, cb){
-  if(!item || item.game!=="Pokémon" || !item.set || !item.number){ if(item && !item.rawState) item.rawState="skip"; if(cb)cb(item); return; }
+  if(!item || item.game!=="Pokémon"){ if(item && !item.rawState) item.rawState="skip"; if(cb)cb(item); return; }
+  // A supplemental-catalogue printing with no verified PriceCharting
+  // product (priceName null) has no value row to fetch — say so honestly
+  // instead of borrowing another printing's price.
+  if(item.supplemental && !item.priceName){ item.rawState="none"; if(cb)cb(item); return; }
+  var vi=valueIdentity(item);
+  if(!vi.set || !vi.number){ if(!item.rawState) item.rawState="skip"; if(cb)cb(item); return; }
   if(item.rawState==="ok"||item.rawState==="none"){ if(cb)cb(item); return; }
   item.rawState="pending";
   var key=valueKey(item);
@@ -1040,7 +1056,7 @@ function ensureValue(item, cb){
   if(entry && entry.done){ applyValueEntry(item, entry); if(cb)cb(item); return; }
   if(!entry){
     entry=valueCache[key]={done:false,found:false,ungraded:null,grade9:null,psa10:null,url:null,ladder:null,fullLadder:null,cbs:[]};
-    valueQueue.push({entry:entry,name:item.name,set:item.set,number:item.number});
+    valueQueue.push({entry:entry,name:vi.name,set:vi.set,number:vi.number});
     pumpValues();
   }
   entry.cbs.push(function(){ applyValueEntry(item, entry); if(cb)cb(item); });
@@ -1700,7 +1716,7 @@ function openConditionPicker(sourceItem, existingCol, onDone){
       if(onDone) onDone(existingCol);
     } else {
       var hv=headlineOf(sourceItem);
-      var col={id:sourceItem.id,name:sourceItem.name,set:sourceItem.set,number:sourceItem.number,image:sourceItem.image,game:sourceItem.game,conditionState:sel.conditionState,grader:sel.conditionState==="graded"?sel.grader:null,grade:sel.conditionState==="graded"?sel.grade:null,cert:(sel.conditionState==="graded" && slabSrc && slabSrc.cert)?String(slabSrc.cert):null,language:langOf(sourceItem),rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis};
+      var col={id:sourceItem.id,name:sourceItem.name,set:sourceItem.set,promoLabel:sourceItem.promoLabel||null,supplemental:!!sourceItem.supplemental,number:sourceItem.number,image:sourceItem.image,game:sourceItem.game,conditionState:sel.conditionState,grader:sel.conditionState==="graded"?sel.grader:null,grade:sel.conditionState==="graded"?sel.grade:null,cert:(sel.conditionState==="graded" && slabSrc && slabSrc.cert)?String(slabSrc.cert):null,language:langOf(sourceItem),rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis};
       // Avoid duplicate id entries stacking silently: replace existing copy of same printing+condition? Keep separate copies allowed only if condition differs — simplest: if same id+condition+grader+grade exists, toast instead
       state.collection.unshift(col); refreshStats(); toast("Added to collection — "+conditionBadgeText(col)+" ✓");
       if(onDone) onDone(col);
@@ -2528,6 +2544,15 @@ function scoreCandidate(it, f){
     if(ch!=null && parseInt(ch,10)===parseInt(f.hp,10)){ score+=25; ev.push("HP ✓"); types.push("hp"); }
     else if(ch!=null) gaps.push("HP differs");
   }
+  // Pokédex number — vintage Japanese promos are unnumbered, so the
+  // "No. 151" on the data strip IS their number evidence. Only
+  // candidates that carry a verified dex number can score it (the
+  // built-in promo catalogue does; a TCGdex candidate without one
+  // simply scores nothing here — never a penalty).
+  if(f.dexNo){
+    var cdx=(it.dexNo!=null?it.dexNo:((it.raw&&it.raw.dexNo!=null)?it.raw.dexNo:null));
+    if(cdx!=null && String(cdx)===String(f.dexNo)){ score+=15; ev.push("Pokédex № "+f.dexNo+" ✓"); types.push("dexNo"); }
+  }
   // Attacks: +20 per matched name, +10 more when its damage also
   // matches. Attacks the reader didn't return score nothing and
   // count against nobody.
@@ -2622,6 +2647,81 @@ function fetchNamePool(name){
     return poke();
   }).catch(function(){ return poke(); });
 }
+/* --- Built-in supplemental Japanese promo catalogue ---
+   TCGdex's Japanese catalogue (184 sets) covers the main expansions
+   but has NO Japanese Southern Islands set and NO CoroCoro / CD /
+   movie promo sets at all — the vintage Japanese PROMOS are missing,
+   which is exactly the class Sam collects. This small built-in
+   catalogue covers those Mew promos and is consulted by the Japanese
+   resolution path BEFORE a Japanese printing is declared uncovered.
+
+   MULTI-SOURCE RULE (standing direction): every entry below was
+   cross-verified against at least TWO independent sources before it
+   was included — Bulbapedia for identity (HP, attacks in EN + JP,
+   illustrator, release) AND the card's PriceCharting page / the
+   pricing proxy for set/number/pricing existence. Where the sources
+   disagreed on a field, the field was left OUT rather than picked
+   silently (Ancient Mew's illustrator is unknown per Bulbapedia, so
+   it carries none). Identity comes from this catalogue; VALUE comes
+   only from PriceCharting via priceName/priceSet/priceNumber, wired
+   only where the proxy returned found:true at build time — Ancient
+   Mew's PriceCharting page exists but the proxy cannot address an
+   unnumbered promo, so it carries priceName:null and honestly shows
+   "not available for the Japanese printing".
+
+   Verified entries (Bulbapedia + PriceCharting):
+   1. Southern Islands Mew — HP30, Rainbow Wave (レインボーウェーブ),
+      Illus. Keiko Fukuyama, reverse holo. Proxy: Mew / "Japanese
+      Southern Islands" / 151 → found (ungraded present).
+   2. Lily Pad Mew — CoroCoro Comic Feb 1997 glossy promo, HP40,
+      Neutral Shield (ニュートラルシールド) + Psyshock (ねんりき, 10),
+      Illus. Ken Sugimori. Proxy: "Mew [CoroCoro]" / "Japanese
+      Promo" / 151 → found.
+   3. CD Promo Mew — Pokémon Song Best Collection CD glossy reprint
+      of the WHF sheet Mew, HP50, Pound (はたく, 10) + Psydupe
+      (サイコデュープ), Illus. Ken Sugimori. Proxy: "Mew [Glossy]" /
+      "Japanese CD Promo" / 151 → found. (Psywave / Devolution Beam
+      belong to a DIFFERENT Mew — the Fossil / Wizards 8–9 line —
+      and are deliberately NOT used here; Bulbapedia and the CD
+      reprint's listings agree on Pound / Psydupe.)
+   4. Shining Mew — CoroCoro Comic May 2001 promo, HP50, Flash
+      Search (フラッシュサーチ) + Mystic Fire (ふしぎなほのお, 20),
+      Illus. Hironobu Yoshida, Cosmos holo. Proxy: "Shining Mew
+      [CoroCoro]" / "Japanese Promo" / 151 → found.
+   5. Ancient Mew — 1999 movie promo (The Power of One), HP30,
+      Psyche (サイコキネシス, 40), illustrator unknown (omitted),
+      holo. No proxy pricing — see above. */
+var JP_PROMO_CATALOGUE=[
+  { id:"supp-ja-si-mew", name:"Mew", namePrinted:"ミュウ", set:"Japanese Southern Islands", promoLabel:"Southern Islands · Japanese promo", promoShort:"Southern Islands · JP promo", rarity:"Promo", number:"151", dexNo:"151", hp:30, attacks:[{name:"Rainbow Wave",damage:""}], illustrator:"Keiko Fukuyama", variants:{reverse:true}, priceName:"Mew", priceSet:"Japanese Southern Islands", priceNumber:"151" },
+  { id:"supp-ja-lilypad-mew", name:"Mew", namePrinted:"ミュウ", set:"Japanese Promo", promoLabel:"Lily Pad Mew · CoroCoro Comic Feb 1997 promo (glossy)", promoShort:"Lily Pad Mew · CoroCoro 1997", rarity:"Promo", number:"151", dexNo:"151", hp:40, attacks:[{name:"Neutral Shield",damage:""},{name:"Psyshock",damage:"10"}], illustrator:"Ken Sugimori", variants:{normal:true}, priceName:"Mew [CoroCoro]", priceSet:"Japanese Promo", priceNumber:"151" },
+  { id:"supp-ja-cd-mew", name:"Mew", namePrinted:"ミュウ", set:"Japanese CD Promo", promoLabel:"CD Promo Mew · Pokémon Song Best Collection CD (glossy)", promoShort:"CD Promo Mew · glossy", rarity:"Promo", number:"151", dexNo:"151", hp:50, attacks:[{name:"Pound",damage:"10"},{name:"Psydupe",damage:""}], illustrator:"Ken Sugimori", variants:{normal:true}, priceName:"Mew [Glossy]", priceSet:"Japanese CD Promo", priceNumber:"151" },
+  { id:"supp-ja-shining-mew", name:"Shining Mew", namePrinted:"ひかるミュウ", set:"Japanese Promo", promoLabel:"Shining Mew · CoroCoro Comic May 2001 promo", promoShort:"Shining Mew · CoroCoro 2001", rarity:"Promo", number:"151", dexNo:"151", hp:50, attacks:[{name:"Flash Search",damage:""},{name:"Mystic Fire",damage:"20"}], illustrator:"Hironobu Yoshida", variants:{holo:true}, priceName:"Shining Mew [CoroCoro]", priceSet:"Japanese Promo", priceNumber:"151" },
+  { id:"supp-ja-ancient-mew", name:"Ancient Mew", namePrinted:"ミュウ", set:"Japanese Promo", promoLabel:"Ancient Mew · 1999 movie promo — The Power of One", promoShort:"Ancient Mew · 1999 movie promo", rarity:"Promo", number:"151", dexNo:"151", hp:30, attacks:[{name:"Psyche",damage:"40"}], illustrator:null, variants:{holo:true}, priceName:null, priceSet:null, priceNumber:null }
+];
+function xmlEsc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+/* These promos have no TCGdex image — a clean labelled placeholder
+   tile with the card's own name, never another card's image. */
+function suppPlaceholder(title, sub){
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="480" height="672" viewBox="0 0 480 672"><rect width="480" height="672" rx="24" fill="#1d2a24"/><rect x="18" y="18" width="444" height="636" rx="18" fill="none" stroke="#d7ebe6" stroke-width="2" opacity="0.45"/><text x="240" y="296" font-family="Georgia,serif" font-size="42" font-weight="700" fill="#e8f0ea" text-anchor="middle">'+xmlEsc(title)+'</text><text x="240" y="342" font-family="sans-serif" font-size="20" fill="#9db0a5" text-anchor="middle">'+xmlEsc(sub)+'</text><text x="240" y="382" font-family="sans-serif" font-size="16" fill="#9db0a5" text-anchor="middle">Japanese promo · no catalogue image</text></svg>';
+  return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+}
+function suppItem(e){
+  return { id:e.id, game:"Pokémon", name:e.name, set:e.set, promoLabel:e.promoLabel, number:e.number, rarity:e.rarity, setTotal:null, image:suppPlaceholder(e.name, e.promoShort), price:null, priceLabel:"", lowPrice:null, prices:[], tcgUrl:null, tcgFinishes:[], language:"ja", supplemental:true, dexNo:e.dexNo, priceName:e.priceName||null, priceSet:e.priceSet||null, priceNumber:e.priceNumber||null, rawState:(e.priceName?undefined:"none"), raw:{ hp:e.hp, attacks:e.attacks, illustrator:e.illustrator||null, variants:e.variants } };
+}
+/* The supplemental catalogue currently covers the Mew promos (Sam's
+   collecting targets), so it is species-gated: its entries are
+   candidates only for a Mew read (by English name, by the printed
+   katakana name, or by Pokédex № 151 alone). Scoring — HP, attacks,
+   illustrator, finish, dex number — then picks the exact promo,
+   exactly as it scores catalogue candidates. */
+function supplementalJaPool(fields){
+  if(!fields) return [];
+  var nm=normKeyText(fields.name||"");
+  var printed=String(fields.namePrinted||"");
+  var isMew = nm==="mew" || nm==="shining mew" || nm==="ancient mew" || printed.indexOf("ミュウ")>=0 || (!nm && String(fields.dexNo||"")==="151");
+  if(!isMew) return [];
+  return JP_PROMO_CATALOGUE.map(suppItem);
+}
 /* Printings in the read's OWN language. LANGUAGE IS A HARD
    PARTITION, not points: non-English printings share art, HP,
    attacks and illustrator with the English printing by design, so
@@ -2648,6 +2748,10 @@ function fetchLangPool(fields){
   return Promise.all(jobs).then(function(lists){
     var seen={}, out=[];
     lists.forEach(function(l){ (l||[]).forEach(function(it){ if(it && !seen[it.id]){ seen[it.id]=true; out.push(it); } }); });
+    // Built-in Japanese promo catalogue: consulted BEFORE a Japanese
+    // printing may be declared uncovered (TCGdex carries no vintage
+    // Japanese promos). Supplemental entries join the same scored pool.
+    supplementalJaPool(fields).forEach(function(it){ if(!seen[it.id]){ seen[it.id]=true; out.push(it); } });
     return out;
   });
 }
@@ -2688,7 +2792,7 @@ function resolvePhotoFields(fields){
 }
 function langNoCatalogue(fields){
   $("idFields").innerHTML=fieldsChipsHTML(fields);
-  setOcrStatus('<p class="note"><b>This looks like a '+escHtml(langNameOf(fields.language))+' printing, which the catalogue doesn\'t cover — nothing was auto-picked.</b> The English printing is a different card with a different value, so it is never substituted for it. The name is in the box below — search by name to browse the catalogue yourself.</p>');
+  setOcrStatus('<p class="note"><b>This looks like a '+escHtml(langNameOf(fields.language))+' printing, which isn\'t in the Japanese catalogue or the built-in Japanese promo catalogue — nothing was auto-picked.</b> The English printing is a different card with a different value, so it is never substituted for it. The name is in the box below — search by name to browse the catalogue yourself.</p>');
   $("identifyInput").value=fields.name||"";
 }
 function resolvePhotoFieldsLang(fields){
@@ -2699,6 +2803,8 @@ function resolvePhotoFieldsLang(fields){
     if(fields.num){
       fetchDexByLocalId(fields.num, fields.language).then(function(items){
         if(items && items.length){ finishScoredResolve(fields, items); return; }
+        var supp=supplementalJaPool({name:fields.name, namePrinted:fields.namePrinted, dexNo:fields.dexNo||fields.num});
+        if(supp.length){ finishScoredResolve(fields, supp); return; }
         langNoCatalogue(fields);
       }).catch(function(){ langNoCatalogue(fields); });
       return;
@@ -2759,7 +2865,7 @@ function showScoredPicker(scored, fields, altScored){
     if(!fields.num) annParts.push(fields.numDiscarded?"number read matches no printing":"number not read");
     s.gaps.forEach(function(g){ annParts.push(g); });
     var ann=annParts.length?annParts.join(" · "):"no signal matched";
-    return '<button class="cand-card" '+attr+'="'+i+'"><img alt="" src="'+escAttr(it.image)+'"><span class="cand-nm">'+escHtml(it.name)+(it.number?" · #"+escHtml(it.number):"")+'</span><span class="cand-st">'+escHtml(it.set||"")+(candSetTotal(it)?" · set of "+candSetTotal(it):"")+(it.rarity?" · "+escHtml(it.rarity):"")+'</span><span class="cand-st" style="color:var(--accent);font-weight:700">'+escHtml(ann)+'</span></button>';
+    return '<button class="cand-card" '+attr+'="'+i+'"><img alt="" src="'+escAttr(it.image)+'"><span class="cand-nm">'+escHtml(it.name)+(it.number?" · #"+escHtml(it.number):"")+'</span><span class="cand-st">'+escHtml(it.promoLabel||it.set||"")+(candSetTotal(it)?" · set of "+candSetTotal(it):"")+(it.rarity?" · "+escHtml(it.rarity):"")+'</span>'+(it.supplemental?'<span class="cand-st" style="font-weight:800;color:var(--ink)">Japanese promo · built-in promo catalogue — TCGdex doesn\'t carry this printing</span>':"")+'<span class="cand-st" style="color:var(--accent);font-weight:700">'+escHtml(ann)+'</span></button>';
   }
   var cards=scored.map(function(s,i){ return cardHTML(s, "data-cand", i); }).join("");
   var readBits=[];
@@ -2871,7 +2977,7 @@ function renderPhotoAdd(item){
     var calc=collectionValueFor(src, pa.cond, pa.grader, pa.grade);
     var basis=calc.basis;
     if(hasEditions && pa.edition==="first") basis=(basis?basis+" · ":"")+"copy marked 1st Edition on the photo sheet (a photo can't verify the stamp)";
-    var col={id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,game:item.game,conditionState:pa.cond,grader:pa.cond==="graded"?pa.grader:null,grade:pa.cond==="graded"?pa.grade:null,cert:(pa.cond==="graded" && f.slab && f.slab.cert)?String(f.slab.cert):null,language:langOf(item),edition:hasEditions?pa.edition:null,rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:basis};
+    var col={id:item.id,name:item.name,set:item.set,promoLabel:item.promoLabel||null,supplemental:!!item.supplemental,number:item.number,image:item.image,game:item.game,conditionState:pa.cond,grader:pa.cond==="graded"?pa.grader:null,grade:pa.cond==="graded"?pa.grade:null,cert:(pa.cond==="graded" && f.slab && f.slab.cert)?String(f.slab.cert):null,language:langOf(item),edition:hasEditions?pa.edition:null,rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:basis};
     state.collection.unshift(col); refreshStats();
     toast("Added to collection — "+conditionBadgeText(col)+" ✓");
     wrap.innerHTML='<div class="quickadd"><div class="id-banner"><b>Added · '+escHtml(conditionBadgeText(col))+(col.edition==="first"?' · 1st Edition':"")+'</b><span>'+escHtml(item.name)+(item.set?" · "+escHtml(item.set):"")+' is in your collection'+(calc.value!=null?(" — valued at "+money(calc.value)+" ("+escHtml(calc.label)+")"):"")+'.</span></div><div class="btnrow" style="margin-top:12px"><button class="btn" id="paUndo">Undo</button><button class="btn" id="paAgain">Add another copy</button><button class="btn primary" id="paView">View collection</button></div></div>';
@@ -2921,11 +3027,12 @@ function openDetail(item, keepEbayFilters){
   $("modalName").textContent=item.name;
   $("modalSub").textContent=item.game+" · Unlimited headline (PriceCharting) · 1st Edition priced separately where the feed has it";
   var edEl=$("modalEditions"); if(edEl) edEl.innerHTML=editionBadgesHTML(item)+((item.language&&item.language!=="en")?'<div class="ed-badges" style="margin-top:6px"><span class="ed-badge unlimited">'+escHtml(langNameOf(item.language))+' printing</span></div>':"")+(inCol?'<div style="margin-top:6px">'+state.collection.filter(function(c){return c.id===item.id;}).map(function(c){return conditionBadgeHTML(c);}).join(" ")+'</div>':"");
+  if(edEl && item.supplemental) edEl.innerHTML+='<p class="note" style="margin:8px 0 0">Built-in Japanese promo catalogue entry — TCGdex doesn\'t carry this printing. Identity cross-checked against Bulbapedia and PriceCharting; the value, where shown, comes from PriceCharting alone.</p>';
   var msb=$("modalSlab"); if(msb) msb.innerHTML=item._photoFields?slabBannerHTML(item._photoFields):"";
   var fin0=printingFinish(item);
   var eh=$("ebayHead"); if(eh) eh.textContent="Live on eBay"+(fin0.label?(" — "+fin0.label+" printing"):"");
   var en=$("ebayNote"); if(en && fin0.kind) en.textContent="Real items for sale for this exact printing, fetched live. This card also exists as a "+(fin0.kind==="holo"?"non-holo":"holo")+" printing under a different collector number — listings that clearly belong to that sibling are filtered out here. Tap any listing to open it on eBay and buy.";
-  $("kvSet").textContent=item.set||"—"; $("kvNum").textContent=item.number?("#"+item.number):"—"; $("kvRar").textContent=item.rarity||"—"; $("kvPrice").innerHTML=kvPriceHTML(head0);
+  $("kvSet").textContent=(item.promoLabel||item.set)||"—"; $("kvNum").textContent=item.number?("#"+item.number):"—"; $("kvRar").textContent=item.rarity||"—"; $("kvPrice").innerHTML=kvPriceHTML(head0);
   $("kvPriceLabel").textContent=head0.label||"Market price";
   $("modal").classList.add("open"); document.body.style.overflow="hidden";
   $("mAddCol").addEventListener("click",function(){
@@ -2972,7 +3079,7 @@ function toggleCollection(item){
   // Fallback direct add (legacy paths) defaults to Raw via picker logic
   var src={rawValue:item.rawValue!=null?item.rawValue:null,ladder:item.ladder||null,fullLadder:item.fullLadder||null,price:item.price};
   var calc=collectionValueFor(src,"raw",null,null);
-  state.collection.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis,game:item.game,conditionState:"raw",grader:null,grade:null,language:langOf(item),rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:item.price});
+  state.collection.unshift({id:item.id,name:item.name,set:item.set,promoLabel:item.promoLabel||null,supplemental:!!item.supplemental,number:item.number,image:item.image,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis,game:item.game,conditionState:"raw",grader:null,grade:null,language:langOf(item),rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:item.price});
   toast("Added to collection — Raw ✓");
   refreshStats();
 }
@@ -2987,7 +3094,7 @@ function toggleWishlist(item){
 function rowHTML(item, isWish){
   var hit = isWish && item.target!=null && item.price!=null && item.price<=item.target;
   var badge = isWish ? "" : '<span style="display:block;margin-top:4px">'+conditionBadgeHTML(item)+(item.edition==="first"?' <span class="ed-badge first">1st Edition</span>':(item.edition==="unlimited"?' <span class="ed-badge unlimited">Unlimited</span>':""))+(item.cert?' <span style="font-size:12px;color:var(--muted)">Cert #'+escHtml(String(item.cert))+'</span>':"")+(item.valueBasis?' <span style="font-size:12px;color:var(--muted)">'+escHtml(item.valueBasis)+'</span>':"")+'</span>';
-  return '<img alt="" src="'+item.image+'"><div class="info"><b></b><span>'+(item.set||"")+(item.number?" · #"+item.number:"")+((item.language&&item.language!=="en")?" · "+escHtml(langNameOf(item.language)):"")+'</span>'+badge+(isWish?'<span style="display:block;margin-top:3px">Target: <b style="display:inline;font-size:13px">'+money(item.target)+'</b>'+(hit?' · <b style="display:inline;color:var(--accent);font-size:13px">TARGET HIT ✓</b>':'')+'</span>':"")+'</div><div class="val">'+money(item.price)+'<small>'+(item.priceLabel||"market")+'</small></div>';
+  return '<img alt="" src="'+item.image+'"><div class="info"><b></b><span>'+(item.promoLabel||item.set||"")+(item.number?" · #"+item.number:"")+((item.language&&item.language!=="en")?" · "+escHtml(langNameOf(item.language)):"")+'</span>'+badge+(isWish?'<span style="display:block;margin-top:3px">Target: <b style="display:inline;font-size:13px">'+money(item.target)+'</b>'+(hit?' · <b style="display:inline;color:var(--accent);font-size:13px">TARGET HIT ✓</b>':'')+'</span>':"")+'</div><div class="val">'+money(item.price)+'<small>'+(item.priceLabel||"market")+'</small></div>';
 }
 function renderCollection(){
   var el=$("collectionList");
