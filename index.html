@@ -656,6 +656,33 @@ function finishLabel(key){
   var s=String(key).replace(/-/g," ").replace(/([a-z0-9])([A-Z])/g,"$1 $2").toLowerCase().replace(/\s+/g," ").trim();
   return s.replace(/(^|\s)(\S)/g,function(m,pre,c){ return pre+c.toUpperCase(); });
 }
+function finishKindOf(key){ var k=String(key||"").toLowerCase(); if(/reverse/.test(k)) return "reverse"; if(/holo/.test(k)) return "holo"; return "normal"; }
+/* This printing's own finish, from its variant flags: "holo" when the
+   printing is holo-only, "normal" when it is non-holo-only, null when
+   the printing legitimately spans finishes (or flags are unknown) —
+   sibling holo/non-holo printings are different collector numbers, so
+   a single-flag printing must never absorb the sibling's listings. */
+function printingFinish(item){
+  var v=cardVariants(item);
+  if(v && typeof v==="object" && !Array.isArray(v) && (v.holo!=null || v.normal!=null || v.reverse!=null)){
+    var kinds=[];
+    if(v.holo===true) kinds.push("holo");
+    if(v.normal===true) kinds.push("normal");
+    if(v.reverse===true) kinds.push("reverse");
+    if(kinds.length===1 && kinds[0]==="holo") return {kind:"holo", label:"Holo"};
+    if(kinds.length===1 && kinds[0]==="normal") return {kind:"normal", label:"Non-holo"};
+    return {kind:null, label:null};
+  }
+  var fins=getTcgFinishesSafe(item);
+  if(fins.length){
+    var ks={};
+    fins.forEach(function(f){ if(!isFirstFinish(f)) ks[finishKindOf(f.key)]=true; });
+    var kk=Object.keys(ks);
+    if(kk.length===1 && kk[0]==="holo") return {kind:"holo", label:"Holo"};
+    if(kk.length===1 && kk[0]==="normal") return {kind:"normal", label:"Non-holo"};
+  }
+  return {kind:null, label:null};
+}
 function isFirstEditionKey(keyOrLabel){ return /1st[\s-]?edition/i.test(String(keyOrLabel||"")) || /1stEdition/.test(String(keyOrLabel||"")); }
 function isFirstFinish(f){ return isFirstEditionKey(f&&(f.key||f.label)); }
 function editionOfFinish(f){ return isFirstFinish(f)?"first":"unlimited"; }
@@ -698,6 +725,9 @@ function editionBadgesHTML(item){
 function ladderThreshold(label){
   var l=String(label||"").toLowerCase();
   if(/psa\s*10/.test(l)) return 10;
+  // Company 10s from PriceCharting's full-prices table (BGS 10, CGC 10,
+  // CGC 10 Pristine, BGS 10 Black, SGC 10, TAG 10, ACE 10) are grade 10.
+  if(/\b10\b/.test(l) && /(bgs|cgc|sgc|tag|ace|pristine|black)/.test(l)) return 10;
   if(/9\.5/.test(l)) return 9.5;
   if(/grade\s*9(?!.)|grade 9$/.test(l)||l==="grade 9") return 9;
   if(/grade\s*8/.test(l)) return 8;
@@ -715,6 +745,48 @@ function ladderLookup(ladder, grade){
   if(!pick) pick=rows[0];
   return pick;
 }
+/* Merged ladder rows from the /value payload: `fullLadder` (PriceCharting's
+   full-prices table — every grade from 1 up, plus the per-company 10s)
+   first, in its own order, then any `ladder` rows it doesn't already
+   carry. `full:true` marks rows that came from the full-prices table so
+   basis labels can say so honestly. */
+function normLadderLabel(label){ return String(label||"").toLowerCase().replace(/\(generic\)/g,"").replace(/\s+/g," ").trim(); }
+function isGenericGradeLabel(label){ return /^grade\s/i.test(String(label||"")); }
+function mergedLadderRows(source){
+  var out=[], seen={};
+  function push(e, full){
+    if(!e || e.price==null || !e.label) return;
+    if(/ungraded|raw/i.test(e.label)) return;
+    var k=normLadderLabel(e.label);
+    if(seen[k]) return; seen[k]=true;
+    out.push({label:e.label, price:e.price, thr:ladderThreshold(e.label), full:!!full});
+  }
+  ((source&&source.fullLadder)||[]).forEach(function(e){ push(e,true); });
+  ((source&&source.ladder)||[]).forEach(function(e){ push(e,false); });
+  return out;
+}
+/* The per-company grade-10 row for a grader (PSA 10, BGS 10, CGC 10,
+   SGC 10, TAG 10). Pristine / Black Label rows are used only when the
+   plain company row is absent — and the basis label names the row that
+   was actually used, so nothing is passed off as something it isn't. */
+function companyRowFor(rows, grader){
+  var want={ PSA:["PSA 10"], BGS:["BGS 10","BGS 10 Black"], CGC:["CGC 10","CGC 10 Pristine"], SGC:["SGC 10"], TAG:["TAG 10"] }[String(grader||"PSA").toUpperCase()]||["PSA 10"];
+  for(var i=0;i<want.length;i++){
+    var hit=rows.filter(function(r){ return normLadderLabel(r.label)===want[i].toLowerCase(); })[0];
+    if(hit) return hit;
+  }
+  return null;
+}
+/* Highest generic "Grade N" row at or below grade g (generic rows are
+   PriceCharting's generic grade values, based on PSA/BGS graded sales). */
+function genericRowAtOrBelow(rows, g){
+  var pick=null;
+  rows.forEach(function(r){
+    if(!isGenericGradeLabel(r.label) || r.thr==null || r.thr>g) return;
+    if(!pick || r.thr>pick.thr || (r.thr===pick.thr && r.full && !pick.full)) pick=r;
+  });
+  return pick;
+}
 function collectionValueFor(source, condState, grader, grade){
   // source: {rawValue, ladder, price, priceLabel}
   var ungraded=(source.rawValue!=null?source.rawValue:(source.price!=null?source.price:null));
@@ -725,9 +797,20 @@ function collectionValueFor(source, condState, grader, grade){
   }
   if(condState==="graded"){
     var g=parseFloat(grade)||10;
+    var merged=mergedLadderRows(source);
+    if(merged.length){
+      // Grade 10 values from the grader's own company row when the
+      // full-prices table carries one; everything else from the generic
+      // "Grade N" row at or below the grade (that is how grades below 7
+      // now value — the short ladder never carried them).
+      var hit=null;
+      if(g>=10){ hit=companyRowFor(merged, grader) || genericRowAtOrBelow(merged, g); }
+      else { hit=genericRowAtOrBelow(merged, g); }
+      if(hit) return {value:hit.price,label:(grader||"PSA")+" "+(g%1===0?g.toFixed(0):g)+" · valued at "+hit.label+" row",basis:"valued at "+hit.label+" row · PriceCharting"+(hit.full?" full prices":"")};
+    }
     if(source.ladder&&source.ladder.length){
-      var hit=ladderLookup(source.ladder,g);
-      if(hit) return {value:hit.price,label:(grader||"PSA")+" "+(g%1===0?g.toFixed(0):g)+" · valued at "+hit.label+" row",basis:"valued at "+hit.label+" row · PriceCharting"};
+      var hit2=ladderLookup(source.ladder,g);
+      if(hit2) return {value:hit2.price,label:(grader||"PSA")+" "+(g%1===0?g.toFixed(0):g)+" · valued at "+hit2.label+" row",basis:"valued at "+hit2.label+" row · PriceCharting"};
     }
     if(ungraded!=null) return {value:ungraded,label:(grader||"PSA")+" "+g+" · valued at Ungraded row (no ladder)",basis:"valued at Ungraded row · PriceCharting"};
     return {value:null,label:(grader||"PSA")+" "+g,basis:"No ladder data for this printing"};
@@ -757,6 +840,40 @@ function dexPrice(detail){
       finishes.push({ key:k, label:finishLabel(k), productId:(v.productId!=null?v.productId:null), lowPrice:(v.lowPrice!=null?v.lowPrice:null), midPrice:(v.midPrice!=null?v.midPrice:null), highPrice:(v.highPrice!=null?v.highPrice:null), marketPrice:(v.marketPrice!=null?v.marketPrice:null), directLowPrice:(v.directLowPrice!=null?v.directLowPrice:null) });
     });
   }
+  /* Holo / non-holo sibling printings (same name, same art, different
+     collector numbers — Mew #9 holo vs Mew #8 non-holo in Wizards Black
+     Star Promos, Fossil Raichu #14 holo vs #29 non-holo) are SEPARATE
+     printings with separate TCGplayer products. Some carry no pricing
+     block at all (the promos: pricing.tcgplayer is null) — but each
+     variant in variants_detailed carries its OWN product id (Mew #9
+     holo = 87395, Mew #8 normal = 87394). Supplement finishes from
+     there so the card page shows this printing's own product, photo
+     and prices — never the sibling's. */
+  (function(){
+    var seen={};
+    finishes.forEach(function(f){ if(f.productId!=null) seen[f.productId+"|"+finishKindOf(f.key)]=true; });
+    (detail.variants_detailed||[]).forEach(function(en){
+      if(!en) return;
+      var tp=en.thirdParty && en.thirdParty.tcgplayer;
+      if(tp==null) return;
+      var kind= en.type==="holo" ? "holo" : (en.type==="reverse" ? "reverse" : "normal");
+      if(seen[tp+"|"+kind]) return; seen[tp+"|"+kind]=true;
+      var key= kind==="holo" ? "holofoil" : (kind==="reverse" ? "reverseHolofoil" : "normal");
+      if(en.subtype) key+="-"+String(en.subtype).toLowerCase().replace(/[^a-z0-9]+/g,"-");
+      var low=null, mid=null, high=null, mkt=null, dir=null;
+      var vpr=en.pricing && en.pricing.tcgplayer;
+      if(vpr){ Object.keys(vpr).forEach(function(k){ if(k==="unit"||k==="updated") return; var sv=vpr[k]; if(sv && sv.productId===tp){ low=(sv.lowPrice!=null?sv.lowPrice:null); mid=(sv.midPrice!=null?sv.midPrice:null); high=(sv.highPrice!=null?sv.highPrice:null); mkt=(sv.marketPrice!=null?sv.marketPrice:null); dir=(sv.directLowPrice!=null?sv.directLowPrice:null); } }); }
+      finishes.push({ key:key, label:finishLabel(key), productId:tp, lowPrice:low, midPrice:mid, highPrice:high, marketPrice:mkt, directLowPrice:dir });
+    });
+    /* Variant-flag guard: a printing only ever shows finishes its own
+       variant flags allow — a holo printing never grows a Normal row,
+       a non-holo printing never grows a Holofoil row. */
+    var v=detail.variants||{}, allow={}, any=false;
+    if(v.holo===true){ allow.holo=true; any=true; }
+    if(v.normal===true){ allow.normal=true; any=true; }
+    if(v.reverse===true){ allow.reverse=true; any=true; }
+    if(any) finishes=finishes.filter(function(f){ return !!allow[finishKindOf(f.key)]; });
+  })();
   /* Headline price = the market price of the finish that matches THIS
      printing: the unlimited finish, never a 1st Edition finish, and
      holofoil only when the printing itself is holo (per the card's own
@@ -811,6 +928,24 @@ function normalizeDex(detail, brief){
   var firstTcgUrl = unlimFinish ? ("https://www.tcgplayer.com/product/"+unlimFinish.productId) : null;
   return { id:"dex-"+detail.id, game:"Pokémon", name:detail.name, set:detail.set?detail.set.name:"", number:detail.localId||(brief&&brief.localId)||"", rarity:detail.rarity||"", setTotal:setTotal, image:imgBase?imgBase+"/high.webp":"", price:p.price, priceLabel:p.label||"TCGdex", lowPrice:(p.lowPrice!=null?p.lowPrice:null), prices:p.rows, tcgUrl:firstTcgUrl, tcgFinishes:p.finishes||[], raw:detail };
 }
+function dexBriefsToItems(list, preferNameLc){
+  if(!Array.isArray(list)) return Promise.resolve([]);
+  list=list.filter(function(b){ return b.image; });
+  if(preferNameLc){
+    list.sort(function(a,b){
+      var ae=a.name.toLowerCase()===preferNameLc?0:1, be=b.name.toLowerCase()===preferNameLc?0:1;
+      return ae-be;
+    });
+  }
+  return Promise.all(list.slice(0,24).map(function(b){
+    return fetch("https://api.tcgdex.net/v2/en/cards/"+encodeURIComponent(b.id),{headers:{"Accept":"application/json"}}).then(function(r){
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.json();
+    }).then(function(d){ return normalizeDex(d,b); }).catch(function(){
+      return { id:"dex-"+b.id, game:"Pokémon", name:b.name, set:"", number:b.localId||"", rarity:"", image:b.image+"/high.webp", price:null, priceLabel:"TCGdex", prices:[], tcgUrl:null, tcgFinishes:[], raw:b };
+    });
+  }));
+}
 function fetchDex(query){
   var pq=parseQuery(query);
   var url="https://api.tcgdex.net/v2/en/cards?name="+encodeURIComponent(pq.name);
@@ -819,21 +954,31 @@ function fetchDex(query){
     if(!r.ok) throw new Error("HTTP "+r.status);
     return r.json();
   }).then(function(list){
-    if(!Array.isArray(list)) return [];
-    var nameLc=pq.name.toLowerCase();
-    list=list.filter(function(b){ return b.image; });
-    list.sort(function(a,b){
-      var ae=a.name.toLowerCase()===nameLc?0:1, be=b.name.toLowerCase()===nameLc?0:1;
-      return ae-be;
-    });
-    return Promise.all(list.slice(0,24).map(function(b){
-      return fetch("https://api.tcgdex.net/v2/en/cards/"+encodeURIComponent(b.id),{headers:{"Accept":"application/json"}}).then(function(r){
-        if(!r.ok) throw new Error("HTTP "+r.status);
-        return r.json();
-      }).then(function(d){ return normalizeDex(d,b); }).catch(function(){
-        return { id:"dex-"+b.id, game:"Pokémon", name:b.name, set:"", number:b.localId||"", rarity:"", image:b.image+"/high.webp", price:null, priceLabel:"TCGdex", prices:[], tcgUrl:null, tcgFinishes:[], raw:b };
-      });
-    }));
+    return dexBriefsToItems(list, pq.name.toLowerCase());
+  });
+}
+/* Contains-match on a letter run — how an apostrophe name survives OCR.
+   "Farfetchd", "Farfetch d" and "Farfetch'd" all contain the run
+   "farfetch", and TCGdex's *run* pattern finds Farfetch'd from it,
+   while the plain name search returns [] for the apostrophe-less read. */
+function fetchDexContains(run){
+  var url="https://api.tcgdex.net/v2/en/cards?name=*"+encodeURIComponent(String(run||"").toLowerCase())+"*";
+  return fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(list){
+    return dexBriefsToItems(list, null);
+  });
+}
+/* Every printing with this collector number, across sets — the resolver
+   narrows it by set size (and HP) when the name couldn't be read. */
+function fetchDexByLocalId(num){
+  var url="https://api.tcgdex.net/v2/en/cards?localId="+encodeURIComponent(String(num||""));
+  return fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(list){
+    return dexBriefsToItems(list, null);
   });
 }
 /* --- Pokémon via Pokémon TCG API (fallback) ---
@@ -865,8 +1010,8 @@ var VALUE_EP="https://ebay-search-proxy.369samclarkisfine.workers.dev/value";
 var valueCache={}, valueQueue=[], valueActive=0;
 function valueKey(item){ return (item.name+"|"+item.set+"|"+item.number).toLowerCase(); }
 function applyValueEntry(item, entry){
-  if(entry.found){ item.rawValue=entry.ungraded; item.rawUrl=entry.url||null; item.grade9=(entry.grade9!=null?entry.grade9:null); item.psa10=(entry.psa10!=null?entry.psa10:null); item.ladder=(entry.ladder&&entry.ladder.length?entry.ladder:null); item.rawState="ok"; }
-  else { item.rawState="none"; item.ladder=null; }
+  if(entry.found){ item.rawValue=entry.ungraded; item.rawUrl=entry.url||null; item.grade9=(entry.grade9!=null?entry.grade9:null); item.psa10=(entry.psa10!=null?entry.psa10:null); item.ladder=(entry.ladder&&entry.ladder.length?entry.ladder:null); item.fullLadder=(entry.fullLadder&&entry.fullLadder.length?entry.fullLadder:null); item.rawState="ok"; }
+  else { item.rawState="none"; item.ladder=null; item.fullLadder=null; }
 }
 function ensureValue(item, cb){
   if(!item || item.game!=="Pokémon" || !item.set || !item.number){ if(item && !item.rawState) item.rawState="skip"; if(cb)cb(item); return; }
@@ -876,7 +1021,7 @@ function ensureValue(item, cb){
   var entry=valueCache[key];
   if(entry && entry.done){ applyValueEntry(item, entry); if(cb)cb(item); return; }
   if(!entry){
-    entry=valueCache[key]={done:false,found:false,ungraded:null,grade9:null,psa10:null,url:null,ladder:null,cbs:[]};
+    entry=valueCache[key]={done:false,found:false,ungraded:null,grade9:null,psa10:null,url:null,ladder:null,fullLadder:null,cbs:[]};
     valueQueue.push({entry:entry,name:item.name,set:item.set,number:item.number});
     pumpValues();
   }
@@ -891,7 +1036,7 @@ function pumpValues(){
       return r.json();
     }).then(function(d){
       job.entry.found=!!(d && d.found && d.ungraded!=null);
-      if(d){ job.entry.ungraded=(d.ungraded!=null?d.ungraded:null); job.entry.grade9=(d.grade9!=null?d.grade9:null); job.entry.psa10=(d.psa10!=null?d.psa10:null); job.entry.url=d.url||null; job.entry.ladder=(Array.isArray(d.ladder)?d.ladder.filter(function(e){return e&&e.label&&e.price!=null;}).map(function(e){return {label:String(e.label),price:e.price};}):null); if(job.entry.ladder && !job.entry.ladder.length) job.entry.ladder=null; }
+      if(d){ job.entry.ungraded=(d.ungraded!=null?d.ungraded:null); job.entry.grade9=(d.grade9!=null?d.grade9:null); job.entry.psa10=(d.psa10!=null?d.psa10:null); job.entry.url=d.url||null; job.entry.ladder=(Array.isArray(d.ladder)?d.ladder.filter(function(e){return e&&e.label&&e.price!=null;}).map(function(e){return {label:String(e.label),price:e.price};}):null); if(job.entry.ladder && !job.entry.ladder.length) job.entry.ladder=null; job.entry.fullLadder=(Array.isArray(d.fullLadder)?d.fullLadder.filter(function(e){return e&&e.label&&e.price!=null;}).map(function(e){return {label:String(e.label),price:e.price};}):null); if(job.entry.fullLadder && !job.entry.fullLadder.length) job.entry.fullLadder=null; }
     }).catch(function(){ job.entry.found=false; }).then(function(){
       job.entry.done=true; valueActive--;
       var cbs=job.entry.cbs.slice(); job.entry.cbs=[];
@@ -942,10 +1087,17 @@ function rowLinkHTML(r){
 function priceRowsHTML(item){
   var h=headlineOf(item);
   var groups=[];
-  // PriceCharting ladder — only rows the endpoint actually returned
-  if(item.rawValue!=null && item.ladder && item.ladder.length){
-    var pcRows=item.ladder.map(function(e){ return {label:e.label, value:e.price, url:item.rawUrl}; });
-    groups.push({title:"Values · PriceCharting", rows:pcRows});
+  // PriceCharting — the FULL merged ladder: Ungraded first, then every
+  // row of the full-prices table (Grade 1 … 9.5, then the per-company
+  // 10s), then any short-ladder rows the full table didn't carry. Only
+  // rows the endpoint actually returned are ever shown.
+  if(item.rawValue!=null && ((item.ladder && item.ladder.length) || (item.fullLadder && item.fullLadder.length))){
+    var pcUrl=item.fullLadder && item.rawUrl ? item.rawUrl+"#full-prices" : item.rawUrl;
+    var pcRows=[{label:"Ungraded", value:item.rawValue, url:item.rawUrl}];
+    mergedLadderRows(item).forEach(function(r){
+      pcRows.push({label: isGenericGradeLabel(r.label) ? r.label+" (generic)" : r.label, value:r.price, url:pcUrl});
+    });
+    groups.push({title: item.fullLadder ? "Values · PriceCharting full prices" : "Values · PriceCharting", rows:pcRows, footnote: item.fullLadder ? "“Grade N (generic)” rows are PriceCharting's generic grade values, based on PSA/BGS graded sales. Company-named rows (PSA 10, BGS 10, CGC 10 Pristine…) are per-service." : null});
   } else if(item.rawValue!=null){
     // /value found but no ladder array in the response — keep single rows, no duplication beyond what we have
     var pcFallback=[{label:"Ungraded", value:item.rawValue, url:item.rawUrl}];
@@ -985,7 +1137,7 @@ function priceRowsHTML(item){
   if(otherRows.length) groups.push({title:"More prices", rows:otherRows});
   if(!groups.length) return '<div class="prow"><span>Market price</span><b>Not listed — check listings below</b></div>';
   return groups.map(function(g){
-    return '<div class="price-group"><div class="price-group-title">'+escHtml(g.title)+'</div>'+g.rows.map(rowLinkHTML).join("")+'</div>';
+    return '<div class="price-group"><div class="price-group-title">'+escHtml(g.title)+'</div>'+g.rows.map(rowLinkHTML).join("")+(g.footnote?'<p class="note" style="margin:2px 0 0">'+escHtml(g.footnote)+'</p>':"")+'</div>';
   }).join("");
 }
 function kvPriceHTML(h){
@@ -1001,6 +1153,7 @@ function updateDetailValue(item){
   if(kl) kl.textContent=h.label||"Market price";
   if(pg) pg.innerHTML=priceRowsHTML(item);
   var ga=$("gradedAnchors"); if(ga) ga.innerHTML=gradedAnchorsHTML(item);
+  if($("gradedServices")) renderGradedServices(item);
   var edEl=$("modalEditions"); if(edEl && !edEl.innerHTML) edEl.innerHTML=editionBadgesHTML(item);
 }
 function renderResults(list, query, sourceNote){
@@ -1078,8 +1231,54 @@ function ebayQueryFor(item){
   var parts=[item.name];
   if(item.number) parts.push(item.number);
   if(item.set) parts.push(item.set);
+  // Finish is part of the query build for holo printings (their sibling
+  // is the non-holo printing of the same art); the post-filter below
+  // does the rest for both directions.
+  var fin=printingFinish(item);
+  if(fin.kind==="holo" && !/holo/i.test(parts.join(" "))) parts.push("holo");
   if(item.game==="Pokémon" && !/pokemon/i.test(item.name)) parts.push("pokemon");
   return parts.join(" ").replace(/\s+/g," ").trim();
+}
+/* True when an eBay listing title clearly belongs to the OTHER printing
+   of a holo/non-holo sibling pair: it says the opposite finish, or it
+   references the sibling's collector number ("Mew 8", "#8", "(8)",
+   "8/53", "Promo 8") instead of this printing's. Titles that don't
+   specify a conflicting finish or number are kept. */
+function ebayListingConflicts(title, item){
+  var fin=printingFinish(item);
+  if(!fin.kind) return false;
+  var t=" "+String(title||"").toLowerCase().replace(/[()]/g," $& ").replace(/[^a-z0-9/# ]/g," ").replace(/\s+/g," ")+" ";
+  var saysNonHolo=/non[\s-]?holo/.test(t);
+  var saysHolo=/\bholo\b|\bholographic\b|\bholofoil\b/.test(t);
+  if(fin.kind==="holo" && saysNonHolo) return true;
+  if(fin.kind==="normal" && saysHolo && !saysNonHolo) return true;
+  var num=parseInt(item.number,10);
+  if(isNaN(num)) return false;
+  var total=item.setTotal?parseInt(item.setTotal,10):null;
+  function otherNum(n){ return n!==num && n>=1 && (!total || n<=total); }
+  // A number immediately followed by "HP" is the card's hit points,
+  // never a collector number ("Promo 40 HP" is not promo #40).
+  function followedByHp(m){ return /^\s*hp\b/.test(t.slice(m.index+m[0].length, m.index+m[0].length+5)); }
+  function anyHit(re, group, extra){
+    var m; re.lastIndex=0;
+    while((m=re.exec(t))){
+      if(followedByHp(m)) continue;
+      var n=parseInt(m[group||1],10);
+      if(otherNum(n) && (!extra || extra(m))) return true;
+    }
+    return false;
+  }
+  // "8/53" fractions against this set's own total
+  if(total && anyHit(/(\d{1,3})\s*\/\s*(\d{2,3})/g, 1, function(m){ return parseInt(m[2],10)===total; })) return true;
+  // "#8" and "( 8 )" collector-number references
+  if(anyHit(/#\s*(\d{1,3})\b/g, 1)) return true;
+  if(anyHit(/\(\s*(\d{1,3})\s*\)/g, 1)) return true;
+  // "Mew 8" — the number immediately after the card's name
+  var firstName=String(item.name||"").toLowerCase().replace(/[^a-z0-9 ]/g," ").trim().split(/\s+/)[0];
+  if(firstName && anyHit(new RegExp("\\b"+firstName+"\\s+#?(\\d{1,3})\\b","g"), 1)) return true;
+  // "Promo 8" in promo sets
+  if(/promo/i.test(item.set||"") && anyHit(/\bpromo\s+#?(\d{1,3})\b/g, 1)) return true;
+  return false;
 }
 function fmtEndTime(iso){
   if(!iso) return "";
@@ -1098,14 +1297,21 @@ function isAuctionListing(it){
   if(Array.isArray(o)) return o.some(function(x){return /AUCTION/i.test(String(x));});
   return /AUCTION/i.test(String(o||""));
 }
-function renderEbayListings(data, query){
+function renderEbayListings(data, query, item){
   var box=$("ebayListings"); var countEl=$("ebayCount");
   if(!box) return;
-  var items=(data&&data.items)||[];
-  var total=(data&&typeof data.total==="number")?data.total:items.length;
-  if(countEl) countEl.textContent= total? (total.toLocaleString()+" found") : "";
+  var rawItems=(data&&data.items)||[];
+  // Holo / non-holo separation: drop listings that clearly belong to
+  // the sibling printing (opposite finish, or the sibling's number).
+  var hidden=0;
+  var items=rawItems.filter(function(it){
+    if(item && ebayListingConflicts(it.title, item)){ hidden++; return false; }
+    return true;
+  });
+  var fin=item?printingFinish(item):{kind:null,label:null};
+  if(countEl) countEl.textContent= items.length? (items.length+" shown"+(hidden?(" · "+hidden+" hidden — "+(fin.kind==="holo"?"non-holo":"holo")+" printing"):"")) : (hidden?("0 shown · "+hidden+" hidden — other printing"):"");
   if(!items.length){
-    box.innerHTML='<div class="ebay-note">No live eBay listings matched this filter for this printing right now. Try <b>All</b> types or <b>Best match</b>, or use the eBay links below to browse the full results.</div>';
+    box.innerHTML= hidden? '<div class="ebay-note">Every live listing in this result set is for the <b>other printing</b> of this card (the '+(fin.kind==="holo"?"non-holo":"holo")+' sibling) — none for this '+(fin.label||"")+' printing right now. Use the eBay links below to browse the full results.</div>' : '<div class="ebay-note">No live eBay listings matched this filter for this printing right now. Try <b>All</b> types or <b>Best match</b>, or use the eBay links below to browse the full results.</div>';
     return;
   }
   box.innerHTML="";
@@ -1165,7 +1371,7 @@ function loadEbayListings(item){
     return r.json();
   }).then(function(data){
     if(req!==state.ebayReq) return;
-    renderEbayListings(data,q);
+    renderEbayListings(data,q,item);
   }).catch(function(){
     if(req!==state.ebayReq) return;
     if(countEl) countEl.textContent="";
@@ -1181,8 +1387,22 @@ function ebayFiltersHTML(){
 }
 
 /* ---------- For sale on TCGplayer ---------- */
+/* Defensive twin of the dexPrice guard: whatever path built a finish
+   list, it may only contain finishes this printing's own variant flags
+   allow (holo-only printings never list the non-holo sibling's product). */
+function filterFinishesForPrinting(item, list){
+  if(!list || !list.length) return list||[];
+  var v=cardVariants(item);
+  if(!v || typeof v!=="object" || Array.isArray(v)) return list;
+  var allow={}, any=false;
+  if(v.holo===true){ allow.holo=true; any=true; }
+  if(v.normal===true){ allow.normal=true; any=true; }
+  if(v.reverse===true){ allow.reverse=true; any=true; }
+  if(!any) return list;
+  return list.filter(function(f){ return !!allow[finishKindOf(f.key)]; });
+}
 function getTcgFinishes(item){
-  if(item.tcgFinishes && item.tcgFinishes.length) return item.tcgFinishes;
+  if(item.tcgFinishes && item.tcgFinishes.length) return filterFinishesForPrinting(item, item.tcgFinishes);
   // Derive on the fly from raw TCGdex payload if the normalized field is missing (e.g. older in-memory item)
   try{
     var pr=item.raw && item.raw.pricing && item.raw.pricing.tcgplayer;
@@ -1193,7 +1413,7 @@ function getTcgFinishes(item){
         var v=pr[k]; if(!v||v.productId==null) return;
         out.push({ key:k, label:finishLabel(k), productId:v.productId, lowPrice:(v.lowPrice!=null?v.lowPrice:null), midPrice:(v.midPrice!=null?v.midPrice:null), highPrice:(v.highPrice!=null?v.highPrice:null), marketPrice:(v.marketPrice!=null?v.marketPrice:null), directLowPrice:(v.directLowPrice!=null?v.directLowPrice:null) });
       });
-      if(out.length) return out;
+      if(out.length) return filterFinishesForPrinting(item, out);
     }
   }catch(e){}
   return [];
@@ -1318,7 +1538,14 @@ function renderTcgProducts(item){
 /* ---------- Graded comparison (per service, live eBay asks) ---------- */
 function gradedAnchorsHTML(item){
   var rows=[];
-  if(item.ladder&&item.ladder.length){
+  // Company 10s from the full-prices table, in the table's own order —
+  // these are per-service values, shown exactly as returned.
+  var merged=mergedLadderRows(item);
+  var company=merged.filter(function(r){ return !isGenericGradeLabel(r.label); });
+  if(company.length){
+    var pcUrl=item.fullLadder && item.rawUrl ? item.rawUrl+"#full-prices" : item.rawUrl;
+    company.forEach(function(r){ rows.push({label:"PriceCharting — "+r.label, value:r.price, url:pcUrl}); });
+  } else if(item.ladder&&item.ladder.length){
     ["PSA 10","Grade 9.5","Grade 9"].forEach(function(lbl){
       var hit=item.ladder.filter(function(e){return e.label===lbl;})[0];
       if(hit) rows.push({label:"PriceCharting — "+lbl,value:hit.price,url:item.rawUrl});
@@ -1332,12 +1559,14 @@ function gradedAnchorsHTML(item){
 }
 function gradedSectionHTML(item){
   function gbtn(val,label){ return '<button data-ggrade="'+val+'" aria-pressed="'+(state.gradedGrade===val?"true":"false")+'">'+label+'</button>'; }
+  var gradeBtns="";
+  for(var gv=10; gv>=1; gv-=0.5){ var g2=Math.round(gv*10)/10; gradeBtns+=gbtn(String(g2), "Grade "+(g2%1===0?g2.toFixed(0):g2)); }
   return '<div class="graded-live"><div class="ebay-live-head"><h3>Graded values — by service</h3><span class="count">Same card · same grade · different services</span></div>'+
-  '<p class="note" style="margin:6px 0 0">PriceCharting anchors are one blended ladder. The per-service rows underneath are different: the lowest live Buy It Now ask on eBay right now for that exact grader + grade of this printing. No listings = “no live asks” — never an invented number.</p>'+
-  '<div class="price-group" style="margin-top:10px"><div class="price-group-title">Anchors · PriceCharting</div><div id="gradedAnchors" style="display:grid;gap:6px">'+gradedAnchorsHTML(item)+'</div></div>'+
-  '<div class="filter-group" style="margin-top:12px"><label>Compare grade</label><div class="fseg" role="group" aria-label="Grade to compare">'+gbtn("10","Grade 10")+gbtn("9.5","Grade 9.5")+gbtn("9","Grade 9")+'</div></div>'+
+  '<p class="note" style="margin:6px 0 0">Where PriceCharting\'s full-prices table carries a row for a service + grade, that row is the value shown — per-company at grade 10, the generic Grade N row (based on PSA/BGS graded sales) below it. The lowest live Buy It Now ask on eBay for that grader + grade rides underneath as a supplement, never instead of a PriceCharting row. No PriceCharting row and no listings = “no live asks” — never an invented number.</p>'+
+  '<div class="price-group" style="margin-top:10px"><div class="price-group-title">Anchors · PriceCharting company 10s</div><div id="gradedAnchors" style="display:grid;gap:6px">'+gradedAnchorsHTML(item)+'</div></div>'+
+  '<div class="filter-group" style="margin-top:12px"><label>Compare grade</label><div class="fseg" role="group" aria-label="Grade to compare">'+gradeBtns+'</div></div>'+
   '<div id="gradedServices" style="display:grid;gap:6px;margin-top:10px" aria-live="polite"><p class="sub" style="margin:4px 0"><span class="spinner"></span>Fetching live asks per grading service…</p></div>'+
-  '<p class="note" style="margin-top:8px">Tap a service row to open its live eBay listings. BGS is Beckett.</p></div>';
+  '<p class="note" style="margin-top:8px">Tap a service row to open its PriceCharting page or live eBay listings. BGS is Beckett.</p></div>';
 }
 function loadGradedComparison(item){
   var box=$("gradedServices"); if(!box) return;
@@ -1362,18 +1591,36 @@ function loadGradedComparison(item){
 }
 function renderGradedServices(item){
   var box=$("gradedServices"); if(!box) return;
-  var grade=state.gradedGrade; var cache=item._gradedCache||{};
-  var allDone=GRADERS.every(function(g){return cache[g+" "+grade];});
-  if(!allDone && !GRADERS.some(function(g){return cache[g+" "+grade];})){
-    box.innerHTML='<p class="sub" style="margin:4px 0"><span class="spinner"></span>Fetching live asks per grading service…</p>'; return;
+  var grade=state.gradedGrade; var gNum=parseFloat(grade);
+  var cache=item._gradedCache||{};
+  var merged=mergedLadderRows(item);
+  function pcFor(grader){ if(!merged.length) return null; return gNum>=10 ? companyRowFor(merged, grader) : genericRowAtOrBelow(merged, gNum); }
+  var anyPc=GRADERS.some(function(g){ return !!pcFor(g); });
+  var anyCache=GRADERS.some(function(g){return cache[g+" "+grade];});
+  if(!anyPc && !anyCache){
+    box.innerHTML='<p class="sub" style="margin:4px 0"><span class="spinner"></span>Fetching live asks per grading service…</p>';
+    var anchors0=$("gradedAnchors"); if(anchors0) anchors0.innerHTML=gradedAnchorsHTML(item);
+    return;
   }
+  var pcUrl=item.fullLadder && item.rawUrl ? item.rawUrl+"#full-prices" : item.rawUrl;
   box.innerHTML="";
   GRADERS.forEach(function(grader){
     var e=cache[grader+" "+grade];
+    var pc=pcFor(grader);
     var a=document.createElement("a"); a.className="service-row"; a.target="_blank"; a.rel="noopener";
-    if(!e){ a.href=ebayURL([item.name,item.set,item.number,grader,grade].filter(Boolean).join(" "),"bin"); a.innerHTML='<span>'+escHtml(GRADER_LABEL[grader])+' '+escHtml(grade)+'</span><b>Fetching…</b>'; }
-    else if(e.low!=null){ a.href=e.url; a.innerHTML='<span>'+escHtml(GRADER_LABEL[grader])+' '+escHtml(grade)+' — live eBay</span><b>from '+money(e.low)+' ↗</b>'; }
-    else { a.href=e.url; a.innerHTML='<span>'+escHtml(GRADER_LABEL[grader])+' '+escHtml(grade)+' — live eBay</span><b>no live asks ↗</b>'; }
+    var ebaySmall = !e ? "Checking live eBay asks…" : (e.low!=null ? "Live eBay ask from "+money(e.low)+" right now" : "No live eBay asks right now");
+    if(pc){
+      // PriceCharting row is the value; the eBay ask is a supplement line.
+      a.href=pcUrl||ebayURL([item.name,item.set,item.number,grader,grade].filter(Boolean).join(" "),"bin");
+      var srcTxt=isGenericGradeLabel(pc.label) ? ("PriceCharting "+pc.label+" (generic)") : ("PriceCharting "+pc.label);
+      a.innerHTML='<span>'+escHtml(GRADER_LABEL[grader])+' '+escHtml(grade)+'<small style="display:block;font-weight:600;color:var(--muted);font-size:12px">'+escHtml(srcTxt)+' · '+escHtml(ebaySmall)+'</small></span><b>'+money(pc.price)+' ↗</b>';
+    } else if(!e){
+      a.href=ebayURL([item.name,item.set,item.number,grader,grade].filter(Boolean).join(" "),"bin"); a.innerHTML='<span>'+escHtml(GRADER_LABEL[grader])+' '+escHtml(grade)+'</span><b>Fetching…</b>';
+    } else if(e.low!=null){
+      a.href=e.url; a.innerHTML='<span>'+escHtml(GRADER_LABEL[grader])+' '+escHtml(grade)+' — live eBay</span><b>from '+money(e.low)+' ↗</b>';
+    } else {
+      a.href=e.url; a.innerHTML='<span>'+escHtml(GRADER_LABEL[grader])+' '+escHtml(grade)+' — live eBay</span><b>no live asks ↗</b>';
+    }
     box.appendChild(a);
   });
   var anchors=$("gradedAnchors"); if(anchors) anchors.innerHTML=gradedAnchorsHTML(item);
@@ -1393,7 +1640,7 @@ function openConditionPicker(sourceItem, existingCol, onDone){
   wrap.querySelector("p.note").textContent=sourceItem.name+(sourceItem.set?" · "+sourceItem.set:"")+(sourceItem.number?" · #"+sourceItem.number:"");
   document.body.appendChild(wrap);
   function sourceForValue(){
-    return {rawValue:(sourceItem.rawValue!=null?sourceItem.rawValue:(existingCol&&existingCol.rawValue!=null?existingCol.rawValue:null)), ladder:(sourceItem.ladder||(existingCol&&existingCol.ladder)||null), price:(sourceItem.price!=null?sourceItem.price:(existingCol?existingCol._basePrice:null))};
+    return {rawValue:(sourceItem.rawValue!=null?sourceItem.rawValue:(existingCol&&existingCol.rawValue!=null?existingCol.rawValue:null)), ladder:(sourceItem.ladder||(existingCol&&existingCol.ladder)||null), fullLadder:(sourceItem.fullLadder||(existingCol&&existingCol.fullLadder)||null), price:(sourceItem.price!=null?sourceItem.price:(existingCol?existingCol._basePrice:null))};
   }
   function sync(){
     wrap.querySelectorAll("[data-state]").forEach(function(b){ b.setAttribute("aria-pressed", b.dataset.state===sel.conditionState?"true":"false"); });
@@ -1402,7 +1649,7 @@ function openConditionPicker(sourceItem, existingCol, onDone){
     var src=sourceForValue(); var calc=collectionValueFor(src, sel.conditionState, sel.grader, sel.grade);
     var pv=wrap.querySelector("#pkPreview");
     if(src.rawValue==null && src.price==null && !src.ladder){ pv.innerHTML="<b>Value still loading…</b><br>PriceCharting value for this printing has not landed yet. You can still save — the basis will use the catalogue price available."; }
-    else if(calc.value!=null){ pv.innerHTML="<b>Value for this copy: "+money(calc.value)+"</b><br><span style='color:var(--muted)'>"+escHtml(calc.label)+"</span>"+(sel.conditionState==="damaged"?"<br><span style='color:var(--muted)'>PriceCharting has no damaged tier — this is a labelled estimate: ½ × ungraded.</span>":"")+(sel.conditionState==="graded"?"<br><span style='color:var(--muted)'>Graded values use the PriceCharting ladder row at or below the grade. Compare live per-service asks in “Graded values — by service” on the card page.</span>":""); }
+    else if(calc.value!=null){ pv.innerHTML="<b>Value for this copy: "+money(calc.value)+"</b><br><span style='color:var(--muted)'>"+escHtml(calc.label)+"</span>"+(sel.conditionState==="damaged"?"<br><span style='color:var(--muted)'>PriceCharting has no damaged tier — this is a labelled estimate: ½ × ungraded.</span>":"")+(sel.conditionState==="graded"?"<br><span style='color:var(--muted)'>Graded values use the matching PriceCharting full-prices row — the grader's own company row at grade 10, the generic Grade N row at or below the grade under it. Compare per-service values in “Graded values — by service” on the card page.</span>":""); }
     else { pv.innerHTML="<b>No value available for this state yet</b><br>Save anyway — it will show as — until a PriceCharting row exists."; }
   }
   wrap.querySelectorAll("[data-state]").forEach(function(b){ b.addEventListener("click",function(){ sel.conditionState=b.dataset.state; sync(); }); });
@@ -1420,13 +1667,13 @@ function openConditionPicker(sourceItem, existingCol, onDone){
     document.body.removeChild(wrap);
     if(existingCol){
       existingCol.conditionState=sel.conditionState; existingCol.grader=sel.conditionState==="graded"?sel.grader:null; existingCol.grade=sel.conditionState==="graded"?sel.grade:null;
-      existingCol.rawValue=src.rawValue; existingCol.ladder=src.ladder; existingCol._basePrice=src.price;
+      existingCol.rawValue=src.rawValue; existingCol.ladder=src.ladder; existingCol.fullLadder=src.fullLadder; existingCol._basePrice=src.price;
       existingCol.price=calc.value; existingCol.priceLabel=calc.label; existingCol.valueBasis=calc.basis;
       refreshStats(); toast("Updated — "+conditionBadgeText(existingCol)+" · "+money(calc.value));
       if(onDone) onDone(existingCol);
     } else {
       var hv=headlineOf(sourceItem);
-      var col={id:sourceItem.id,name:sourceItem.name,set:sourceItem.set,number:sourceItem.number,image:sourceItem.image,game:sourceItem.game,conditionState:sel.conditionState,grader:sel.conditionState==="graded"?sel.grader:null,grade:sel.conditionState==="graded"?sel.grade:null,rawValue:src.rawValue,ladder:src.ladder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis};
+      var col={id:sourceItem.id,name:sourceItem.name,set:sourceItem.set,number:sourceItem.number,image:sourceItem.image,game:sourceItem.game,conditionState:sel.conditionState,grader:sel.conditionState==="graded"?sel.grader:null,grade:sel.conditionState==="graded"?sel.grade:null,rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis};
       // Avoid duplicate id entries stacking silently: replace existing copy of same printing+condition? Keep separate copies allowed only if condition differs — simplest: if same id+condition+grader+grade exists, toast instead
       state.collection.unshift(col); refreshStats(); toast("Added to collection — "+conditionBadgeText(col)+" ✓");
       if(onDone) onDone(col);
@@ -1440,56 +1687,98 @@ function openConditionPicker(sourceItem, existingCol, onDone){
    set size ("4/102": numerator = the card, denominator fingerprints
    the set) and HP as a cross-check — then resolve against the same
    TCGdex catalogue search uses. If the OCR library failed to load,
-   everything degrades to the manual name/number lookup. */
-function downscaleForOcr(src, cb){
+   everything degrades to the manual name/number lookup.
+
+   Why three OCR passes: a single whole-frame read was the Farfetch'd
+   failure — the card fills a third of a hand-held photo, so the name
+   line arrived tiny, glare-streaked and mixed with room text, and one
+   garbled line ("NS oot") was trusted as the name with no recovery.
+   Now the reader works on focused crops (the card region, then the
+   name strip across the top of the card, then the full frame), keeps
+   EVERY plausible name line as a candidate, and the catalogue itself
+   arbitrates: candidates are tried in score order — exact, then a
+   contains-match on the name's letter run (which bridges apostrophe
+   names like Farfetch'd however the apostrophe was read), then the
+   collector number + set size — until one actually resolves. */
+function ocrCropDataURLs(src, cb){
   var img=new Image();
   img.onload=function(){
     try{
-      var maxW=1200, w=img.naturalWidth||img.width||maxW, h=img.naturalHeight||img.height||maxW;
-      var scale=w>maxW ? maxW/w : 1;
-      var c=document.createElement("canvas");
-      c.width=Math.max(1,Math.round(w*scale)); c.height=Math.max(1,Math.round(h*scale));
-      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-      cb(c.toDataURL("image/jpeg",0.9));
-    }catch(e){ cb(src); }
+      var W=img.naturalWidth||img.width||0, H=img.naturalHeight||img.height||0;
+      if(!W || !H){ cb([{tag:"full", url:src}]); return; }
+      function make(sx, sy, sw, sh, outW){
+        var scale=Math.min(2.2, Math.max(0.2, outW/sw));
+        var c=document.createElement("canvas");
+        c.width=Math.max(1,Math.round(sw*scale)); c.height=Math.max(1,Math.round(sh*scale));
+        c.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+        return c.toDataURL("image/jpeg",0.92);
+      }
+      // Card region: the on-screen guide frame (inset ~9%), slightly generous.
+      var cx=W*0.03, cy=H*0.03, cw=W*0.94, ch=H*0.94;
+      var crops=[
+        {tag:"card", url:make(cx, cy, cw, ch, Math.min(1500, Math.max(900, cw)))},
+        // Name strip: the top band of the card, upscaled — the printed
+        // name lives here, left of the HP.
+        {tag:"name", url:make(cx, cy, cw, ch*0.27, 1500)},
+        {tag:"full", url:make(0, 0, W, H, Math.min(1200, W))}
+      ];
+      cb(crops);
+    }catch(e){ cb([{tag:"full", url:src}]); }
   };
-  img.onerror=function(){ cb(src); };
+  img.onerror=function(){ cb([{tag:"full", url:src}]); };
   img.src=src;
 }
-function extractCardFields(text){
-  var t=String(text||"");
-  var numM=t.match(/(\d{1,3})\s*\/\s*(\d{2,3})/);
-  var hpM=t.match(/(\d{2,3})\s*HP/i);
-  function cleanName(s){
-    if(!s) return "";
-    s=String(s);
-    s=s.replace(/(\d{2,3})\s*HP.*$/i," ");
-    s=s.replace(/\bLV\.?\s*X?\b.*$/i," ");
-    s=s.replace(/^\s*(basic|stage\s*[12]|pok[eé]mon)\b[\s:.\-]*/i," ");
-    s=s.replace(/[^A-Za-z0-9'’.\- ]/g," ");
-    s=s.replace(/\s+/g," ").trim();
-    return s;
-  }
-  var lines=t.split(/\r?\n/).map(function(s){ return s.trim(); }).filter(Boolean);
-  var best="", bestScore=-1;
-  lines.slice(0,7).forEach(function(line, idx){
-    var hadHp=/HP/i.test(line);
-    var c=cleanName(line);
+function cleanOcrName(s){
+  if(!s) return "";
+  s=String(s);
+  s=s.replace(/(\d{2,3})\s*HP.*$/i," ");
+  s=s.replace(/\bLV\.?\s*X?\b.*$/i," ");
+  s=s.replace(/^\s*(basic|stage\s*[12]|pok[eé]mon)\b[\s:.\-]*/i," ");
+  s=s.replace(/[^A-Za-z0-9'’.\- ]/g," ");
+  s=s.replace(/’/g,"'");
+  s=s.replace(/\s+/g," ").trim();
+  return s;
+}
+/* Card-body vocabulary that OCR lines love to surface and that is never
+   a card's name (attack names, rules words, frame furniture). */
+var OCR_NONNAME=/^(leek|pot|gust|jab|smash|flip|coin|damage|weakness|resistance|retreat|evolves|energy|illus|copyright|printed|bench|defending|attack|paralyzed|confused|asleep|poisoned|burned|discard|shuffle|draw|trainer|stadium|supporter|item)\b/i;
+function extractCardFields(texts){
+  texts=texts||{};
+  var allText=[texts.card||"", texts.name||"", texts.full||""].join("\n");
+  var numM=allText.match(/(\d{1,3})\s*\/\s*(\d{2,3})/);
+  var hpM=allText.match(/(\d{2,3})\s*HP/i);
+  var candMap={}, candList=[];
+  function consider(rawLine, zoneBoost, idx){
+    if(!rawLine) return;
+    var hadHp=/HP/i.test(rawLine);
+    var c=cleanOcrName(rawLine);
     if(!c) return;
     var letters=(c.match(/[A-Za-z]/g)||[]).length;
-    if(letters<3 || c.length<3 || c.length>30) return;
-    var ratio=letters/Math.max(c.length,1);
-    var score=ratio*10 - idx*0.7 + (hadHp?3:0) - Math.abs(c.length-10)*0.08;
-    if(score>bestScore){ bestScore=score; best=c; }
-  });
-  // The name sits immediately left of the HP on the top line — if that
-  // line's prefix cleans up to something name-like, trust it most.
-  if(hpM){
-    var hpLine=lines.filter(function(l){ return /HP/i.test(l); })[0];
-    var pre=cleanName(hpLine||"");
-    if(pre && pre.length>=3 && (pre.match(/[A-Za-z]/g)||[]).length>=3) best=pre;
+    if(letters<3 || c.length<3 || c.length>32) return;
+    var tokens=c.split(/\s+/);
+    var maxTok=0; tokens.forEach(function(tok){ maxTok=Math.max(maxTok, (tok.match(/[A-Za-z]/g)||[]).length); });
+    // A name always has one solid token (Mew=3) or real length; two+
+    // short fragments ("NS oot") are read-noise, not a name.
+    if(!(maxTok>=4 || (tokens.length===1 && letters>=3) || letters>=8)) return;
+    if(/^pok[eé]mon$/i.test(c)) return; // the word Pokémon alone is never a card's name
+    if(OCR_NONNAME.test(c)) return;
+    var ratio=letters/c.length;
+    if(ratio<0.5) return;
+    var score=zoneBoost + ratio*6 - idx*0.25 + (hadHp?4:0) - Math.abs(c.length-10)*0.06 - (tokens.length>3?2:0);
+    var key=c.toLowerCase();
+    if(candMap[key]==null || candMap[key].score<score){
+      if(candMap[key]==null) candList.push(key);
+      candMap[key]={name:c, score:score};
+    }
   }
-  return { name:best, num:numM?String(parseInt(numM[1],10)):null, den:numM?String(parseInt(numM[2],10)):null, hp:hpM?hpM[1]:null };
+  function scanZone(text, boost, limit){
+    String(text||"").split(/\r?\n/).map(function(s){ return s.trim(); }).filter(Boolean).slice(0, limit).forEach(function(line, idx){ consider(line, boost, idx); });
+  }
+  scanZone(texts.name, 12, 4);   // the name strip: anything name-like here leads
+  scanZone(texts.card, 6, 9);
+  scanZone(texts.full, 0, 10);
+  var candidates=candList.map(function(k){ return candMap[k]; }).sort(function(a,b){ return b.score-a.score; }).slice(0,5).map(function(x){ return x.name; });
+  return { name:candidates[0]||"", candidates:candidates, num:numM?String(parseInt(numM[1],10)):null, den:numM?String(parseInt(numM[2],10)):null, hp:hpM?hpM[1]:null };
 }
 function numEq(a,b){
   if(a==null||b==null||a===""||b==="") return false;
@@ -1514,25 +1803,40 @@ function identifyFromPhoto(){
   var btn=$("btnOcr"); if(btn){ btn.disabled=true; btn.textContent="Reading card…"; }
   setOcrStatus('<p class="note"><span class="spinner"></span>Reading card…</p>');
   $("idFields").innerHTML="";
-  downscaleForOcr(prev.src, function(dataUrl){
-    var timedOut=false;
+  ocrCropDataURLs(prev.src, function(crops){
+    var texts={}, timedOut=false, finished=false;
     var timer=setTimeout(function(){
       timedOut=true;
       finishIdentifyError("Reading the photo took too long — try a straighter, brighter photo, or type the name &amp; number below.");
-    }, 90000);
-    window.Tesseract.recognize(dataUrl, "eng", { logger:function(m){
-      if(timedOut) return;
-      if(m && m.status==="recognizing text") setOcrStatus('<p class="note"><span class="spinner"></span>Reading card… '+Math.round((m.progress||0)*100)+'%</p>');
-    }}).then(function(res){
-      if(timedOut) return;
+    }, 150000);
+    function finish(){
+      if(finished || timedOut) return;
+      finished=true;
       clearTimeout(timer);
       state.ocrBusy=false; ocrBtnReset();
-      resolvePhotoFields(extractCardFields((res&&res.data&&res.data.text)||""));
-    }).catch(function(){
-      if(timedOut) return;
-      clearTimeout(timer);
-      finishIdentifyError("That photo could not be read — glare, angle and blur defeat text reading. Retake straight-on in good light, or type the name &amp; number below.");
-    });
+      resolvePhotoFields(extractCardFields(texts));
+    }
+    (function next(i){
+      if(timedOut || finished) return;
+      if(i>=crops.length){ finish(); return; }
+      setOcrStatus('<p class="note"><span class="spinner"></span>Reading card… pass '+(i+1)+' of '+crops.length+'</p>');
+      window.Tesseract.recognize(crops[i].url, "eng", { logger:function(m){
+        if(timedOut || finished) return;
+        if(m && m.status==="recognizing text") setOcrStatus('<p class="note"><span class="spinner"></span>Reading card… pass '+(i+1)+' of '+crops.length+' · '+Math.round((m.progress||0)*100)+'%</p>');
+      }}).then(function(res){
+        if(timedOut || finished) return;
+        texts[crops[i].tag]=(res&&res.data&&res.data.text)||"";
+        // Early exit once two passes have produced a name candidate AND
+        // the collector number + set size — the fields that pin a printing.
+        var f=extractCardFields(texts);
+        if(i>=1 && f.candidates.length && f.num && f.den){ finish(); return; }
+        next(i+1);
+      }).catch(function(){
+        if(timedOut || finished) return;
+        texts[crops[i].tag]="";
+        next(i+1);
+      });
+    })(0);
   });
 }
 function maybeAutoIdentify(){
@@ -1557,17 +1861,75 @@ function resolvePhotoFields(fields){
     setOcrStatus('<p class="note"><b>Nothing readable on that photo.</b> Glare, angle and blur defeat text reading — retake straight-on in good light, or type the name &amp; number below.</p>');
     return;
   }
-  if(!fields.name){
-    setOcrStatus('<p class="note">A collector number was read ('+fields.num+(fields.den?"/"+fields.den:"")+') but no name — type the name below and include that number to pin the printing.</p>');
-    return;
-  }
-  setOcrStatus('<p class="note"><span class="spinner"></span>Matching “'+escHtml(fields.name)+'” against the catalogue…</p>');
-  fetchDex(fields.name).then(function(items){
-    if(items && items.length){ handlePhotoCandidates(items, fields); return; }
-    return fetchPokeFallback(fields.name).then(function(items2){ handlePhotoCandidates(items2||[], fields); });
-  }).catch(function(){
-    fetchPokeFallback(fields.name).then(function(items2){ handlePhotoCandidates(items2||[], fields); }).catch(function(){ photoNoMatch(fields); });
+  /* Resolution is a chain of attempts, each verified against the real
+     catalogue — a garbled front-runner no longer dead-ends the scan:
+     1) each candidate name exactly, 2) each candidate via the Pokémon
+     TCG API, 3) a contains-match on each candidate's longest letter run
+     (bridges apostrophe reads like Farfetch'd), 4) the collector
+     number + set size on their own. */
+  var attempts=[];
+  var cands=fields.candidates && fields.candidates.length ? fields.candidates : (fields.name?[fields.name]:[]);
+  cands.forEach(function(c){ attempts.push({kind:"dex", q:c, label:c}); });
+  cands.forEach(function(c){ attempts.push({kind:"poke", q:c, label:c}); });
+  var seenRuns={};
+  cands.forEach(function(c){
+    var run=((String(c).toLowerCase().match(/[a-z]+/g)||[]).sort(function(a,b){ return b.length-a.length; })[0])||"";
+    // Try the full run, then trimmed runs: an apostrophe read as a
+    // letter ("Farfetchd") still bridges to Farfetch'd via "farfetch".
+    for(var cut=0; cut<=2; cut++){
+      var r=run.slice(0, run.length-cut);
+      if(r.length>=5 && !seenRuns[r]){ seenRuns[r]=true; attempts.push({kind:"contains", q:r, label:c}); }
+    }
   });
+  function numberFallback(){
+    if(fields.num && fields.den){
+      setOcrStatus('<p class="note"><span class="spinner"></span>The name didn\'t resolve — matching by the collector number '+fields.num+'/'+fields.den+' instead…</p>');
+      return fetchDexByLocalId(fields.num).then(function(items){
+        var narrowed=(items||[]).filter(function(it){ return numEq(it.number, fields.num) && it.setTotal && numEq(it.setTotal, fields.den); });
+        if(fields.hp) {
+          var hpHit=narrowed.filter(function(it){ return it.raw && String(it.raw.hp)===String(fields.hp); });
+          if(hpHit.length) narrowed=hpHit;
+        }
+        if(narrowed.length){ handlePhotoCandidates(narrowed, fields); return true; }
+        return false;
+      }).catch(function(){ return false; });
+    }
+    return Promise.resolve(false);
+  }
+  var weakFallback=null;
+  (function tryNext(i){
+    if(i>=attempts.length){
+      numberFallback().then(function(done){
+        if(done) return;
+        if(weakFallback){ handlePhotoCandidates(weakFallback, fields); return; }
+        if(!fields.name && fields.num){
+          setOcrStatus('<p class="note">A collector number was read ('+fields.num+(fields.den?"/"+fields.den:"")+') but no name — type the name below and include that number to pin the printing.</p>');
+          $("identifyInput").value=fields.num;
+          return;
+        }
+        photoNoMatch(fields);
+      });
+      return;
+    }
+    var at=attempts[i];
+    setOcrStatus('<p class="note"><span class="spinner"></span>Matching “'+escHtml(at.label)+'” against the catalogue…</p>');
+    var p= at.kind==="dex" ? fetchDex(at.q) : (at.kind==="poke" ? fetchPokeFallback(at.q) : fetchDexContains(at.q));
+    p.then(function(items){
+      if(items && items.length){
+        // Results that contain a card with the read collector number
+        // are a strong resolution. Results without it (a stray word
+        // candidate matched some other card) are kept only as a
+        // last-resort picker while the chain keeps looking.
+        if(fields.num && !items.some(function(it){ return numEq(it.number, fields.num); })){
+          if(!weakFallback) weakFallback=items;
+          tryNext(i+1);
+          return;
+        }
+        handlePhotoCandidates(items, fields); return;
+      }
+      tryNext(i+1);
+    }).catch(function(){ tryNext(i+1); });
+  })(0);
 }
 function handlePhotoCandidates(items, fields){
   if(!items.length){ photoNoMatch(fields); return; }
@@ -1656,11 +2018,11 @@ function renderPhotoAdd(item){
   syncSegs();
   wrap.querySelector("#paAdd").addEventListener("click",function(){
     if(item.game==="Pokémon" && item.rawState!=="ok" && item.rawState!=="none") ensureValue(item, function(){ updateDetailValue(item); });
-    var src={rawValue:(item.rawValue!=null?item.rawValue:null), ladder:item.ladder||null, price:item.price};
+    var src={rawValue:(item.rawValue!=null?item.rawValue:null), ladder:item.ladder||null, fullLadder:item.fullLadder||null, price:item.price};
     var calc=collectionValueFor(src, pa.cond, pa.grader, pa.grade);
     var basis=calc.basis;
     if(hasEditions && pa.edition==="first") basis=(basis?basis+" · ":"")+"copy marked 1st Edition on the photo sheet (a photo can't verify the stamp)";
-    var col={id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,game:item.game,conditionState:pa.cond,grader:pa.cond==="graded"?pa.grader:null,grade:pa.cond==="graded"?pa.grade:null,edition:hasEditions?pa.edition:null,rawValue:src.rawValue,ladder:src.ladder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:basis};
+    var col={id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,game:item.game,conditionState:pa.cond,grader:pa.cond==="graded"?pa.grader:null,grade:pa.cond==="graded"?pa.grade:null,edition:hasEditions?pa.edition:null,rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:basis};
     state.collection.unshift(col); refreshStats();
     toast("Added to collection — "+conditionBadgeText(col)+" ✓");
     wrap.innerHTML='<div class="quickadd"><div class="id-banner"><b>Added · '+escHtml(conditionBadgeText(col))+(col.edition==="first"?' · 1st Edition':"")+'</b><span>'+escHtml(item.name)+(item.set?" · "+escHtml(item.set):"")+' is in your collection'+(calc.value!=null?(" — valued at "+money(calc.value)+" ("+escHtml(calc.label)+")"):"")+'.</span></div><div class="btnrow" style="margin-top:12px"><button class="btn" id="paUndo">Undo</button><button class="btn" id="paAgain">Add another copy</button><button class="btn primary" id="paView">View collection</button></div></div>';
@@ -1698,8 +2060,8 @@ function openDetail(item, keepEbayFilters){
     '<div id="tcgFiltersWrap">'+tcgFiltersHTML(item)+'</div>'+
     '<div class="tcg-list" id="tcgListings" aria-live="polite"></div>'+
     '</div>'+
-    '<div class="ebay-live"><div class="ebay-live-head"><h3>Live on eBay</h3><span class="count" id="ebayCount"></span></div>'+
-    '<p class="note" style="margin:6px 0 0">Real items for sale for this exact printing, fetched live. Tap any listing to open it on eBay and buy.</p>'+
+    '<div class="ebay-live"><div class="ebay-live-head"><h3 id="ebayHead">Live on eBay</h3><span class="count" id="ebayCount"></span></div>'+
+    '<p class="note" id="ebayNote" style="margin:6px 0 0">Real items for sale for this exact printing, fetched live. Tap any listing to open it on eBay and buy.</p>'+
     ebayFiltersHTML()+
     '<div class="ebay-list" id="ebayListings" aria-live="polite"></div>'+
     '<div class="btnrow" style="margin-top:12px"><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayBin+'">All Buy It Now on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayAuction+'">All auctions on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebay+'">Browse all eBay results ↗</a></div>'+
@@ -1710,6 +2072,9 @@ function openDetail(item, keepEbayFilters){
   $("modalName").textContent=item.name;
   $("modalSub").textContent=item.game+" · Unlimited headline (PriceCharting) · 1st Edition priced separately where the feed has it";
   var edEl=$("modalEditions"); if(edEl) edEl.innerHTML=editionBadgesHTML(item)+(inCol?'<div style="margin-top:6px">'+state.collection.filter(function(c){return c.id===item.id;}).map(function(c){return conditionBadgeHTML(c);}).join(" ")+'</div>':"");
+  var fin0=printingFinish(item);
+  var eh=$("ebayHead"); if(eh) eh.textContent="Live on eBay"+(fin0.label?(" — "+fin0.label+" printing"):"");
+  var en=$("ebayNote"); if(en && fin0.kind) en.textContent="Real items for sale for this exact printing, fetched live. This card also exists as a "+(fin0.kind==="holo"?"non-holo":"holo")+" printing under a different collector number — listings that clearly belong to that sibling are filtered out here. Tap any listing to open it on eBay and buy.";
   $("kvSet").textContent=item.set||"—"; $("kvNum").textContent=item.number?("#"+item.number):"—"; $("kvRar").textContent=item.rarity||"—"; $("kvPrice").innerHTML=kvPriceHTML(head0);
   $("kvPriceLabel").textContent=head0.label||"Market price";
   $("modal").classList.add("open"); document.body.style.overflow="hidden";
@@ -1755,9 +2120,9 @@ function toggleCollection(item){
   if(i<0) i=state.collection.findIndex(function(c){return c.id===item.id});
   if(i>=0){ state.collection.splice(i,1); toast("Removed from collection"); refreshStats(); return; }
   // Fallback direct add (legacy paths) defaults to Raw via picker logic
-  var src={rawValue:item.rawValue!=null?item.rawValue:null,ladder:item.ladder||null,price:item.price};
+  var src={rawValue:item.rawValue!=null?item.rawValue:null,ladder:item.ladder||null,fullLadder:item.fullLadder||null,price:item.price};
   var calc=collectionValueFor(src,"raw",null,null);
-  state.collection.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis,game:item.game,conditionState:"raw",grader:null,grade:null,rawValue:src.rawValue,ladder:src.ladder,_basePrice:item.price});
+  state.collection.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis,game:item.game,conditionState:"raw",grader:null,grade:null,rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:item.price});
   toast("Added to collection — Raw ✓");
   refreshStats();
 }
@@ -1785,7 +2150,7 @@ function renderCollection(){
     editBtn.addEventListener("click",function(){
       // Build a source-like object from the owned copy + current catalogue item if open
       var src=(state.current&&state.current.id===item.id)?state.current:item;
-      var sourceItem={id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,game:item.game,rawValue:(src.rawValue!=null?src.rawValue:item.rawValue),ladder:(src.ladder||item.ladder||null),price:(item._basePrice!=null?item._basePrice:(src!==item?src.price:null)),rawState:src.rawState,priceLabel:item.priceLabel};
+      var sourceItem={id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,game:item.game,rawValue:(src.rawValue!=null?src.rawValue:item.rawValue),ladder:(src.ladder||item.ladder||null),fullLadder:(src.fullLadder||item.fullLadder||null),price:(item._basePrice!=null?item._basePrice:(src!==item?src.price:null)),rawState:src.rawState,priceLabel:item.priceLabel};
       openConditionPicker(sourceItem, item, function(){ refreshStats(); });
     });
     var rm=document.createElement("button"); rm.className="iconbtn"; rm.setAttribute("aria-label","Remove");
