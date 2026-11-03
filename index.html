@@ -129,7 +129,25 @@
   .listing .lbadge{display:inline-flex;font-size:11px;font-weight:800;letter-spacing:.02em;padding:3px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-right:5px;vertical-align:1px}
   .listing .lbadge.auction{background:var(--amber-soft);color:var(--amber)}
   .ebay-note{font-size:13.5px;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:12px 14px;line-height:1.5}
-  @media(max-width:520px){.listing img{width:68px;height:68px}.ebay-filters{flex-direction:column}}
+  /* For sale on TCGplayer */
+  .tcg-live{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .tcg-live-head{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}
+  .tcg-live-head h3{margin:0;font-size:18px;letter-spacing:-.01em}
+  .tcg-live-head .count{font-size:13px;color:var(--muted);font-weight:700}
+  .tcg-filters{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+  .tcg-list{display:grid;gap:10px}
+  .tcg-prod{display:flex;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;text-decoration:none;color:inherit;align-items:flex-start}
+  .tcg-prod:hover{border-color:var(--accent)}
+  .tcg-prod img{width:76px;height:106px;object-fit:contain;border-radius:8px;background:var(--surface2);flex:none}
+  .tcg-prod .p-main{flex:1;min-width:0}
+  .tcg-prod .p-finish{font-weight:900;font-size:14.5px;line-height:1.3}
+  .tcg-prod .p-from{font-weight:900;font-size:17px;margin-top:3px;color:var(--accent)}
+  .tcg-prod .p-from small{font-weight:700;font-size:12px;color:var(--muted)}
+  .tcg-prod .p-meta{font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px}
+  .tcg-prod .p-meta b{color:var(--ink)}
+  .tcg-prod .p-cta{font-size:12.5px;font-weight:800;color:var(--accent);margin-top:4px}
+  .tcg-prod .lbadge{display:inline-flex;font-size:11px;font-weight:800;letter-spacing:.02em;padding:3px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-left:6px;vertical-align:1px}
+  @media(max-width:520px){.listing img{width:68px;height:68px}.ebay-filters,.tcg-filters{flex-direction:column}.tcg-prod img{width:62px;height:87px}}
   .spinner{width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin .8s linear infinite;display:inline-block;vertical-align:-5px;margin-right:8px}
   @keyframes spin{to{transform:rotate(360deg)}}
   /* Collection lists */
@@ -244,7 +262,7 @@
         <ol class="steps">
           <li><span class="n">1</span><span><b>Turn on the camera</b> and allow access when your browser asks. On a phone it uses the rear camera automatically. No prompt? Tap <b>Take a photo — device camera</b> instead — it opens your phone's camera app directly.</span></li>
           <li><span class="n">2</span><span><b>Frame the card</b> inside the guide, in good light, and tap <b>Take photo</b>.</span></li>
-          <li><span class="n">3</span><span><b>Type the name &amp; number</b> printed on the card. Prices come live from TCGdex (TCGplayer market data) and Scryfall, with live eBay listings for the same card alongside.</span></li>
+          <li><span class="n">3</span><span><b>Type the name &amp; number</b> printed on the card. The headline value is the raw (ungraded) price for that exact printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings for the same card.</span></li>
           <li><span class="n">4</span><span><b>Add it</b> to your collection or wishlist from the card page, and jump straight to buy listings on TCGplayer or eBay.</span></li>
         </ol>
         <p class="note" style="margin-top:16px">Live camera not prompting? Use <b>Take a photo — device camera</b> — it opens your phone's own camera app and needs no browser permission, and the photo works exactly the same way here. <b>Upload a photo</b> opens your camera roll or file picker. If you want the live viewfinder, open this link directly in Safari or Chrome (not inside another app's preview), tap the lock / site-settings icon in the address bar, set Camera to <b>Allow</b>, reload, and tap “Turn on camera” again.</p>
@@ -255,7 +273,7 @@
   <!-- SEARCH -->
   <section class="panel" id="panel-search" role="tabpanel">
     <h2>Search the catalogue</h2>
-    <p class="sub">Search pulls the card catalogue and TCGplayer market prices live (via TCGdex — the same TCGplayer data <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors daily). Tap any card to see its full price breakdown <b>and live eBay listings in-app</b> — filter by Auction / Buy It Now and sort by price or ending soonest, then tap a listing to buy.</p>
+    <p class="sub">Search pulls the card catalogue live (via TCGdex — the same TCGplayer data <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors daily). The headline value on every card is the <b>raw, ungraded price for that exact printing</b> — set and number — from <b>PriceCharting</b>: Base Set, Base Set 2, Jungle, Fossil, Legendary Collection and 1st Edition vs Unlimited all price separately, because they trade at different money. TCGplayer's near-mint market figures appear as labelled per-finish rows on each card page. Tap any card for the full breakdown, <b>For sale on TCGplayer</b> product cards per finish <b>and live eBay listings in-app</b> with Auction / Buy It Now filters, then tap through to buy.</p>
     <div class="searchbar" role="search">
       <div class="grow">
         <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -282,15 +300,15 @@
   <!-- COLLECTION -->
   <section class="panel" id="panel-collection" role="tabpanel">
     <h2>Your collection</h2>
-    <p class="sub">Cards you add during this visit, valued at current market price. This demo keeps everything in the page only — add cards from Search to see the portfolio total move.</p>
-    <div class="totalbar"><div><p>Portfolio value · market</p><div class="big" id="colTotal">$0.00</div></div><button class="btn small" id="btnGoSearch1" style="background:transparent;color:inherit;border-color:currentColor">+ Add cards from Search</button></div>
+    <p class="sub">Cards you add during this visit, valued at the raw (ungraded) PriceCharting price for each card's exact printing where available — TCGplayer market otherwise. This demo keeps everything in the page only — add cards from Search to see the portfolio total move.</p>
+    <div class="totalbar"><div><p>Portfolio value · raw (ungraded)</p><div class="big" id="colTotal">$0.00</div></div><button class="btn small" id="btnGoSearch1" style="background:transparent;color:inherit;border-color:currentColor">+ Add cards from Search</button></div>
     <div id="collectionList"></div>
   </section>
 
   <!-- WISHLIST -->
   <section class="panel" id="panel-wishlist" role="tabpanel">
     <h2>Wishlist</h2>
-    <p class="sub">Cards you're hunting, with the market price tracked against a target you set. When a card's market price drops to your target, it flags right here.</p>
+    <p class="sub">Cards you're hunting, with each card's raw (ungraded) value tracked against a target you set. When a card's value drops to your target, it flags right here.</p>
     <div id="wishList"></div>
   </section>
 
@@ -300,14 +318,14 @@
     <p class="sub">What this demo does, where its data comes from, and how buying works.</p>
     <div class="aboutgrid">
       <div class="cardbox"><h3>What it is</h3><p>A trading card companion: photograph or search any Pokémon or Magic card, see what it's worth right now, track a collection's total value, and keep a wishlist with target prices — all in one place, on phone or desktop.</p></div>
-      <div class="cardbox"><h3>Data sources</h3><p>Pokémon card images, sets and TCGplayer market prices come live from <a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex</a>, with the <a href="https://pokemontcg.io" target="_blank" rel="noopener">Pokémon TCG API</a> as backup. That TCGplayer pricing is the same catalogue <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors as daily price files, which this demo uses as its pricing reference while direct TCGplayer access is pending. Magic data and prices come from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Prices are fetched fresh each time you search.</p></div>
-      <div class="cardbox"><h3>Buying</h3><p>Every card page now shows <b>live eBay listings in-app</b> for that exact printing — thumbnail, price + shipping and all-in total, bids and end time on auctions, seller and condition — fetched live via the eBay search proxy, with filters for Auction / Buy It Now and sorting by best match, price, or ending soonest. The <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> market price and buy link sit right alongside. Tap any listing to open it on eBay and buy; purchases happen on the marketplace — this demo never handles payment.</p></div>
+      <div class="cardbox"><h3>Data sources</h3><p>Headline values are the <b>raw (ungraded) price for the exact printing</b> — name, set and collector number — from <a href="https://www.pricecharting.com" target="_blank" rel="noopener">PriceCharting</a>, fetched per card: a Base Set Raichu, a Fossil Raichu and a 1st Edition printing each carry their own value. Pokémon card images, sets and TCGplayer market prices come live from <a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex</a>, with the <a href="https://pokemontcg.io" target="_blank" rel="noopener">Pokémon TCG API</a> as backup; those TCGplayer figures are near-mint market prices, shown as labelled per-finish rows (1st Edition and Unlimited separately), never as the headline. That TCGplayer pricing is the same catalogue <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors as daily price files. Magic data and prices come from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Prices are fetched fresh each time you search.</p></div>
+      <div class="cardbox"><h3>Buying</h3><p>Every card page shows two ways to buy that exact printing. <b>For sale on TCGplayer:</b> one product card per finish (Holofoil, Normal, Reverse Holofoil…) with the TCGplayer product photo, “from” lowest current ask, market price and TCGplayer Direct price when available — filter by finish and sort by lowest ask or market price, then tap through to that finish's <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> product page with every seller. <b>Live on eBay:</b> thumbnail, price + shipping and all-in total, bids and end time on auctions, seller and condition — fetched live via the eBay search proxy, with filters for Auction / Buy It Now and sorting by best match, price, or ending soonest. Purchases happen on the marketplace — this demo never handles payment.</p></div>
       <div class="cardbox"><h3>For partners</h3><p>Built by Muse Enterprise Solutions as a working product exhibit for marketplace and data partnership conversations — including TCGplayer affiliate (Impact) and partner data access. The full version adds photo identification, graded-card pricing boards, population data and daily price alerts.</p></div>
     </div>
   </section>
 
   <footer>
-    Demo build — collection and wishlist live for this visit only and reset when the page closes. Card data © their respective publishers; Pokémon prices via TCGdex (TCGplayer data, mirrored daily by TCGCSV) with Pokémon TCG API backup; Magic prices via Scryfall. Card pages show live eBay listings in-app (via the eBay search proxy) plus a TCGplayer buy link for the exact card shown.
+    Demo build — collection and wishlist live for this visit only and reset when the page closes. Card data © their respective publishers; headline values are raw (ungraded) prices per exact printing via PriceCharting; Pokémon catalogue and TCGplayer market prices via TCGdex (mirrored daily by TCGCSV) with Pokémon TCG API backup; Magic prices via Scryfall. Card pages show TCGplayer product cards per finish (photo, lowest ask + market, direct link to the product page) plus live eBay listings in-app (via the eBay search proxy) for the exact card shown.
   </footer>
 </div>
 
@@ -326,7 +344,7 @@
 "use strict";
 var $=function(id){return document.getElementById(id)};
 var money=function(n){ if(n==null||isNaN(n)) return "—"; return "$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); };
-var state={ game:"pokemon", collection:[], wishlist:[], current:null, stream:null, facing:"environment", captured:false, ebayType:"all", ebaySort:"best", ebayReq:0 };
+var state={ game:"pokemon", collection:[], wishlist:[], current:null, stream:null, facing:"environment", captured:false, ebayType:"all", ebaySort:"best", ebayReq:0, tcgFinish:"all", tcgSort:"low" };
 var toastTimer=null;
 function toast(msg){ var t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(function(){t.classList.remove("show")},2600); }
 
@@ -506,18 +524,22 @@ function parseQuery(q){
   return { name:q.trim(), number:null };
 }
 function pokePrice(card){
-  var p=card.tcgplayer && card.tcgplayer.prices; if(!p) return {price:null,label:""};
-  var order=["holofoil","reverseHolofoil","normal","1stEditionHolofoil","1stEditionNormal"];
-  for(var i=0;i<order.length;i++){ var v=p[order[i]]; if(v && (v.market!=null||v.mid!=null)) return { price:(v.market!=null?v.market:v.mid), label:order[i].replace(/([A-Z])/g," $1").toLowerCase() }; }
-  return {price:null,label:""};
+  var p=card.tcgplayer && card.tcgplayer.prices; if(!p) return {price:null,label:"",lowPrice:null};
+  // Same rule as the TCGdex path: this printing's own unlimited finish
+  // first (holofoil keys only exist for holo printings in this API),
+  // 1st Edition finishes last — never headline an edition the card isn't.
+  var order=["holofoil","normal","reverseHolofoil","1stEditionHolofoil","1stEditionNormal"];
+  for(var i=0;i<order.length;i++){ var v=p[order[i]]; if(v && (v.market!=null||v.mid!=null)) return { price:(v.market!=null?v.market:v.mid), label:"TCGplayer mkt · "+finishLabel(order[i]), lowPrice:(v.low!=null?v.low:null) }; }
+  return {price:null,label:"",lowPrice:null};
 }
 function normalizePoke(card){
   var pr=pokePrice(card);
-  return { id:"poke-"+card.id, game:"Pokémon", name:card.name, set:card.set?card.set.name:"", number:card.number||"", rarity:card.rarity||"", image:(card.images&&(card.images.large||card.images.small))||"", price:pr.price, priceLabel:pr.label?("TCGplayer · "+pr.label):"TCGplayer", prices: pokePriceRows(card), tcgUrl: card.tcgplayer && card.tcgplayer.url ? card.tcgplayer.url : null, raw:card };
+  // Pokémon TCG API fallback has no per-finish productId, so TCG section will show the honest fallback note; keep any direct product URL if present.
+  return { id:"poke-"+card.id, game:"Pokémon", name:card.name, set:card.set?card.set.name:"", number:card.number||"", rarity:card.rarity||"", image:(card.images&&(card.images.large||card.images.small))||"", price:pr.price, priceLabel:pr.label||"TCGplayer", lowPrice:(pr.lowPrice!=null?pr.lowPrice:null), prices: pokePriceRows(card), tcgUrl: card.tcgplayer && card.tcgplayer.url ? card.tcgplayer.url : null, tcgFinishes:[], raw:card };
 }
 function pokePriceRows(card){
   var rows=[]; var p=card.tcgplayer && card.tcgplayer.prices;
-  if(p){ Object.keys(p).forEach(function(k){ var v=p[k]; var val=(v.market!=null?v.market:(v.mid!=null?v.mid:null)); if(val!=null) rows.push({label:"TCGplayer — "+k.replace(/([A-Z])/g," $1").toLowerCase(), value:val}); }); }
+  if(p){ Object.keys(p).forEach(function(k){ var v=p[k]; var val=(v.market!=null?v.market:(v.mid!=null?v.mid:null)); if(val!=null) rows.push({label:"TCGplayer — "+finishLabel(k)+" market", value:val}); }); }
   var cm=card.cardmarket && card.cardmarket.prices;
   if(cm && cm.averageSellPrice!=null) rows.push({label:"Cardmarket — average sell", value:cm.averageSellPrice, cur:"€"});
   return rows;
@@ -530,7 +552,15 @@ function normalizeMtg(card){
   if(usd!=null) rows.push({label:"Scryfall — USD", value:usd});
   if(foil!=null) rows.push({label:"Scryfall — USD foil", value:foil});
   if(card.prices && card.prices.eur) rows.push({label:"Scryfall — EUR", value:parseFloat(card.prices.eur)});
-  return { id:"mtg-"+card.id, game:"Magic", name:card.name, set:card.set_name||"", number:card.collector_number||"", rarity:card.rarity||"", image:(card.image_uris&&(card.image_uris.large||card.image_uris.normal))||(card.card_faces&&card.card_faces[0]&&card.card_faces[0].image_uris?(card.card_faces[0].image_uris.large||card.card_faces[0].image_uris.normal):""), price:price, priceLabel:"Scryfall · market", prices:rows, tcgUrl:null, raw:card };
+  var mtgFinishes=[];
+  if(card.tcgplayer_id){
+    mtgFinishes.push({ key:"normal", label:"Paper", productId:card.tcgplayer_id, lowPrice:null, midPrice:null, highPrice:null, marketPrice:usd, directLowPrice:null });
+    if(foil!=null && card.tcgplayer_etched_id){
+      mtgFinishes.push({ key:"foil", label:"Foil", productId:card.tcgplayer_etched_id, lowPrice:null, midPrice:null, highPrice:null, marketPrice:foil, directLowPrice:null });
+    }
+  }
+  var mtgTcgUrl = card.tcgplayer_id ? ("https://www.tcgplayer.com/product/"+card.tcgplayer_id) : (card.purchase_uris && card.purchase_uris.tcgplayer ? card.purchase_uris.tcgplayer : null);
+  return { id:"mtg-"+card.id, game:"Magic", name:card.name, set:card.set_name||"", number:card.collector_number||"", rarity:card.rarity||"", image:(card.image_uris&&(card.image_uris.large||card.image_uris.normal))||(card.card_faces&&card.card_faces[0]&&card.card_faces[0].image_uris?(card.card_faces[0].image_uris.large||card.card_faces[0].image_uris.normal):""), price:price, priceLabel:"Scryfall · market", prices:rows, tcgUrl:mtgTcgUrl, tcgFinishes:mtgFinishes, raw:card };
 }
 function ebayURL(q, mode){
   var base="https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent(q);
@@ -560,17 +590,58 @@ function ebayBarHTML(query){
    TCGCSV (tcgcsv.com) mirrors as daily CSV/JSON. TCGCSV itself sends no
    CORS headers, so a browser page cannot fetch it directly; TCGdex can
    be, and carries the same prices, refreshed through the day. */
+function finishLabel(key){
+  if(!key) return "";
+  // Handles both TCGdex kebab-case keys ("1st-edition-holofoil",
+  // "unlimited-holofoil") and Pokémon TCG API camelCase keys
+  // ("1stEditionHolofoil") so every finish reads as its own edition.
+  var s=String(key).replace(/-/g," ").replace(/([a-z0-9])([A-Z])/g,"$1 $2").toLowerCase().replace(/\s+/g," ").trim();
+  return s.replace(/(^|\s)(\S)/g,function(m,pre,c){ return pre+c.toUpperCase(); });
+}
 function dexPrice(detail){
-  var rows=[], price=null, label="";
+  var rows=[], price=null, label="", finishes=[], lowPrice=null;
   var pr=detail.pricing||{};
   if(pr.tcgplayer){
     Object.keys(pr.tcgplayer).forEach(function(k){
       if(k==="unit"||k==="updated") return;
       var v=pr.tcgplayer[k]; if(!v) return;
-      var mp=(v.marketPrice!=null?v.marketPrice:(v.midPrice!=null?v.midPrice:null));
-      if(mp!=null){ rows.push({label:"TCGplayer — "+k+" market", value:mp}); if(price==null){ price=mp; label="TCGplayer · "+k; } }
-      if(v.lowPrice!=null && v.lowPrice!==mp) rows.push({label:"TCGplayer — "+k+" low", value:v.lowPrice});
-      if(v.directLowPrice!=null) rows.push({label:"TCGplayer — "+k+" direct low", value:v.directLowPrice});
+      finishes.push({ key:k, label:finishLabel(k), productId:(v.productId!=null?v.productId:null), lowPrice:(v.lowPrice!=null?v.lowPrice:null), midPrice:(v.midPrice!=null?v.midPrice:null), highPrice:(v.highPrice!=null?v.highPrice:null), marketPrice:(v.marketPrice!=null?v.marketPrice:null), directLowPrice:(v.directLowPrice!=null?v.directLowPrice:null) });
+    });
+  }
+  /* Headline price = the market price of the finish that matches THIS
+     printing: the unlimited finish, never a 1st Edition finish, and
+     holofoil only when the printing itself is holo (per the card's own
+     `variants`). Pricing keys arrive in arbitrary order (Fossil lists
+     1st-edition-holofoil first), so never take the first key blindly,
+     and never blend or max across finishes/editions. */
+  var variants=detail.variants||{};
+  var order;
+  if(variants.normal && !variants.holo){
+    order=["unlimited","normal","reverse-holofoil","unlimited-holofoil","holofoil","1st-edition","1st-edition-holofoil"];
+  } else if(variants.reverse && !variants.holo && !variants.normal){
+    order=["reverse-holofoil","unlimited-holofoil","holofoil","unlimited","normal","1st-edition-holofoil","1st-edition"];
+  } else {
+    order=["unlimited-holofoil","holofoil","unlimited","normal","reverse-holofoil","1st-edition-holofoil","1st-edition"];
+  }
+  function rank(k){ var i=order.indexOf(k); return i<0?order.length:i; }
+  var priced=finishes.filter(function(f){ return f.marketPrice!=null||f.midPrice!=null; });
+  priced.sort(function(a,b){ return rank(a.key)-rank(b.key); });
+  var head=priced.length?priced[0]:null;
+  if(head){
+    price=(head.marketPrice!=null?head.marketPrice:head.midPrice);
+    label="TCGplayer mkt · "+head.label;
+    lowPrice=head.lowPrice;
+    // Detail rows: this printing's own finish first, then every other
+    // finish/edition as its own labelled row with its own price.
+    priced.forEach(function(f){
+      var mp=(f.marketPrice!=null?f.marketPrice:f.midPrice);
+      rows.push({label:"TCGplayer — "+f.label+" market", value:mp});
+      // Sanity rule: a finish's low / direct-low can never exceed its own
+      // market price. TCGdex occasionally returns impossible rows (e.g.
+      // Legendary Collection Hitmonlee reverse-holofoil low $893.14 vs
+      // market $196.97) — drop those instead of presenting them as fact.
+      if(f.lowPrice!=null && f.lowPrice<mp) rows.push({label:"TCGplayer — "+f.label+" low", value:f.lowPrice});
+      if(f.directLowPrice!=null && f.directLowPrice<=mp) rows.push({label:"TCGplayer — "+f.label+" direct low", value:f.directLowPrice});
     });
   }
   if(pr.cardmarket){
@@ -578,12 +649,13 @@ function dexPrice(detail){
     if(trend!=null) rows.push({label:"Cardmarket — trend", value:trend, cur:"€"});
     if(cm.low!=null) rows.push({label:"Cardmarket — low", value:cm.low, cur:"€"});
   }
-  return { price:price, label:label, rows:rows };
+  return { price:price, label:label, rows:rows, finishes:finishes, lowPrice:lowPrice };
 }
 function normalizeDex(detail, brief){
   var p=dexPrice(detail);
   var imgBase=detail.image||(brief&&brief.image)||"";
-  return { id:"dex-"+detail.id, game:"Pokémon", name:detail.name, set:detail.set?detail.set.name:"", number:detail.localId||(brief&&brief.localId)||"", rarity:detail.rarity||"", image:imgBase?imgBase+"/high.webp":"", price:p.price, priceLabel:p.label||"TCGdex", prices:p.rows, tcgUrl:null, raw:detail };
+  var firstTcgUrl = (p.finishes && p.finishes.length) ? ("https://www.tcgplayer.com/product/"+p.finishes[0].productId) : null;
+  return { id:"dex-"+detail.id, game:"Pokémon", name:detail.name, set:detail.set?detail.set.name:"", number:detail.localId||(brief&&brief.localId)||"", rarity:detail.rarity||"", image:imgBase?imgBase+"/high.webp":"", price:p.price, priceLabel:p.label||"TCGdex", lowPrice:(p.lowPrice!=null?p.lowPrice:null), prices:p.rows, tcgUrl:firstTcgUrl, tcgFinishes:p.finishes||[], raw:detail };
 }
 function fetchDex(query){
   var pq=parseQuery(query);
@@ -605,7 +677,7 @@ function fetchDex(query){
         if(!r.ok) throw new Error("HTTP "+r.status);
         return r.json();
       }).then(function(d){ return normalizeDex(d,b); }).catch(function(){
-        return { id:"dex-"+b.id, game:"Pokémon", name:b.name, set:"", number:b.localId||"", rarity:"", image:b.image+"/high.webp", price:null, priceLabel:"TCGdex", prices:[], tcgUrl:null, raw:b };
+        return { id:"dex-"+b.id, game:"Pokémon", name:b.name, set:"", number:b.localId||"", rarity:"", image:b.image+"/high.webp", price:null, priceLabel:"TCGdex", prices:[], tcgUrl:null, tcgFinishes:[], raw:b };
       });
     }));
   });
@@ -627,6 +699,111 @@ function fetchPokeFallback(query){
     return (data.data||[]).slice(0,24).map(normalizePoke).filter(function(c){ return c.image; });
   });
 }
+/* --- Headline value: PriceCharting raw (ungraded), per exact printing ---
+   TCGplayer marketPrice is a near-mint figure and badly overstates what a
+   typical raw vintage copy is worth (Legendary Collection Hitmonlee:
+   $41.14 TCGplayer holo market vs $22.59 PriceCharting ungraded). So the
+   headline value everywhere is the proxy's PriceCharting ungraded price
+   for the card's own name + set + number — Base Set, Base Set 2, Jungle,
+   Fossil, Legendary Collection etc. each resolve to their own printing.
+   TCGplayer figures stay as clearly-labelled secondary rows only. */
+var VALUE_EP="https://ebay-search-proxy.369samclarkisfine.workers.dev/value";
+var valueCache={}, valueQueue=[], valueActive=0;
+function valueKey(item){ return (item.name+"|"+item.set+"|"+item.number).toLowerCase(); }
+function applyValueEntry(item, entry){
+  if(entry.found){ item.rawValue=entry.ungraded; item.rawUrl=entry.url||null; item.grade9=(entry.grade9!=null?entry.grade9:null); item.psa10=(entry.psa10!=null?entry.psa10:null); item.rawState="ok"; }
+  else { item.rawState="none"; }
+}
+function ensureValue(item, cb){
+  if(!item || item.game!=="Pokémon" || !item.set || !item.number){ if(item && !item.rawState) item.rawState="skip"; if(cb)cb(item); return; }
+  if(item.rawState==="ok"||item.rawState==="none"){ if(cb)cb(item); return; }
+  item.rawState="pending";
+  var key=valueKey(item);
+  var entry=valueCache[key];
+  if(entry && entry.done){ applyValueEntry(item, entry); if(cb)cb(item); return; }
+  if(!entry){
+    entry=valueCache[key]={done:false,found:false,ungraded:null,grade9:null,psa10:null,url:null,cbs:[]};
+    valueQueue.push({entry:entry,name:item.name,set:item.set,number:item.number});
+    pumpValues();
+  }
+  entry.cbs.push(function(){ applyValueEntry(item, entry); if(cb)cb(item); });
+}
+function pumpValues(){
+  while(valueActive<4 && valueQueue.length){
+    var job=valueQueue.shift(); valueActive++;
+    var url=VALUE_EP+"?name="+encodeURIComponent(job.name)+"&set="+encodeURIComponent(job.set)+"&number="+encodeURIComponent(job.number);
+    fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.json();
+    }).then(function(d){
+      job.entry.found=!!(d && d.found && d.ungraded!=null);
+      if(d){ job.entry.ungraded=(d.ungraded!=null?d.ungraded:null); job.entry.grade9=(d.grade9!=null?d.grade9:null); job.entry.psa10=(d.psa10!=null?d.psa10:null); job.entry.url=d.url||null; }
+    }).catch(function(){ job.entry.found=false; }).then(function(){
+      job.entry.done=true; valueActive--;
+      var cbs=job.entry.cbs.slice(); job.entry.cbs=[];
+      cbs.forEach(function(f){ try{f();}catch(e){} });
+      pumpValues();
+    });
+  }
+}
+/* The one value a card is headlined by: PriceCharting raw when we have it;
+   while it loads, a pending state; when PriceCharting has no row for the
+   printing, the printing's own TCGplayer market — always source-labelled. */
+function headlineOf(item){
+  if(item.rawValue!=null) return { v:item.rawValue, label:"Raw value · PriceCharting", url:item.rawUrl||null, pending:false };
+  if(item.game==="Pokémon" && item.set && item.number && item.rawState!=="none" && item.rawState!=="skip") return { v:null, label:"Raw value · PriceCharting", url:null, pending:true };
+  if(item.price!=null) return { v:item.price, label:item.priceLabel||"TCGplayer", url:item.tcgUrl||null, pending:false };
+  return { v:null, label:"", url:null, pending:false };
+}
+function tilePriceHTML(item){
+  var h=headlineOf(item);
+  var html;
+  if(h.pending){ html="Fetching…"+'<small>Raw value · PriceCharting</small>'; }
+  else if(h.v!=null){ html=money(h.v)+'<small>'+h.label+'</small>'; }
+  else { html="Price n/a"+'<small>see card page</small>'; }
+  if(item.lowPrice!=null && item.price!=null && item.lowPrice<item.price && h.v!==item.lowPrice) html+='<small>TCGplayer lowest ask '+money(item.lowPrice)+'</small>';
+  html+='<small>Tap for TCGplayer + eBay ↗</small>';
+  return html;
+}
+function updateTilePrice(item){
+  var el=document.querySelector('.rcard[data-iid="'+item.id+'"]');
+  if(!el) return;
+  var pr=el.querySelector(".pr");
+  if(pr) pr.innerHTML=tilePriceHTML(item);
+}
+function fmtRowVal(r){ return r.cur==="€" ? "€"+Number(r.value).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : money(r.value); }
+function priceRowsHTML(item){
+  var rows=[];
+  var h=headlineOf(item);
+  if(item.rawValue!=null){
+    rows.push({label:"PriceCharting — raw (ungraded)", value:item.rawValue, url:item.rawUrl});
+    if(item.grade9!=null) rows.push({label:"PriceCharting — Grade 9", value:item.grade9, url:item.rawUrl});
+    if(item.psa10!=null) rows.push({label:"PriceCharting — PSA 10", value:item.psa10, url:item.rawUrl});
+  } else if(h.pending){
+    rows.push({label:"PriceCharting — raw (ungraded)", pending:true});
+  }
+  (item.prices||[]).forEach(function(r){ rows.push(r); });
+  if(!rows.length) return '<div class="prow"><span>Market price</span><b>Not listed — check listings below</b></div>';
+  return rows.map(function(r){
+    if(r.pending) return '<div class="prow"><span>'+r.label+'</span><b>Fetching…</b></div>';
+    var val=fmtRowVal(r);
+    var b=r.url ? '<a href="'+r.url+'" target="_blank" rel="noopener">'+val+' ↗</a>' : val;
+    return '<div class="prow"><span>'+r.label+'</span><b>'+b+'</b></div>';
+  }).join("");
+}
+function kvPriceHTML(h){
+  if(h.pending) return "Fetching…";
+  if(h.v==null) return "—";
+  return h.url ? '<a href="'+h.url+'" target="_blank" rel="noopener">'+money(h.v)+' ↗</a>' : money(h.v);
+}
+function updateDetailValue(item){
+  if(!state.current || state.current.id!==item.id || !$("modal").classList.contains("open")) return;
+  var h=headlineOf(item);
+  var kp=$("kvPrice"), kl=$("kvPriceLabel"), pg=$("priceGrid");
+  if(kp) kp.innerHTML=kvPriceHTML(h);
+  if(kl) kl.textContent=h.label||"Market price";
+  if(pg) pg.innerHTML=priceRowsHTML(item);
+}
 function renderResults(list, query, sourceNote){
   var status=$("searchStatus"), results=$("results");
   var esc=query.replace(/</g,"&lt;");
@@ -637,15 +814,18 @@ function renderResults(list, query, sourceNote){
     results.appendChild(holder);
     return;
   }
-  status.innerHTML='<p class="sub" style="margin-bottom:2px">'+list.length+' result'+(list.length===1?"":"s")+' · '+sourceNote+' · tap a card for its price breakdown &amp; live eBay listings</p>'+ebayBarHTML(query);
+  status.innerHTML='<p class="sub" style="margin-bottom:2px">'+list.length+' result'+(list.length===1?"":"s")+' · '+sourceNote+' · tap a card for TCGplayer products &amp; live eBay listings</p>'+ebayBarHTML(query);
   results.innerHTML="";
   list.forEach(function(item){
-    var b=document.createElement("button"); b.className="rcard";
-    b.innerHTML='<img loading="lazy" alt="" src="'+item.image+'"><div class="meta"><span class="nm"></span><span class="st"></span><span class="pr">'+(item.price!=null?money(item.price):"Price n/a")+'<small>'+(item.price!=null?item.priceLabel:"see card page")+'</small><small>Tap for live eBay listings ↗</small></span></div>';
+    var b=document.createElement("button"); b.className="rcard"; b.setAttribute("data-iid", item.id);
+    b.innerHTML='<img loading="lazy" alt="" src="'+item.image+'"><div class="meta"><span class="nm"></span><span class="st"></span><span class="pr">'+tilePriceHTML(item)+'</span></div>';
     b.querySelector(".nm").textContent=item.name+(item.number?" · #"+item.number:"");
     b.querySelector(".st").textContent=item.set+(item.rarity?" · "+item.rarity:"");
     b.addEventListener("click",function(){ openDetail(item); });
     results.appendChild(b);
+    // Lazily resolve this printing's raw (ungraded) headline value —
+    // deduped + concurrency-capped inside ensureValue.
+    if(item.game==="Pokémon") ensureValue(item, function(){ updateTilePrice(item); updateDetailValue(item); });
   });
 }
 function searchFailed(query){
@@ -673,13 +853,13 @@ function doSearch(query){
     return;
   }
   fetchDex(query).then(function(list){
-    if(list.length){ renderResults(list, query, "TCGplayer market prices via TCGdex"); return; }
+    if(list.length){ renderResults(list, query, "catalogue via TCGdex · raw values via PriceCharting"); return; }
     return fetchPokeFallback(query).then(function(list2){
-      renderResults(list2, query, "prices via Pokémon TCG API");
+      renderResults(list2, query, "prices via Pokémon TCG API · raw values via PriceCharting");
     });
   }).catch(function(){
     fetchPokeFallback(query).then(function(list2){
-      renderResults(list2, query, "prices via Pokémon TCG API");
+      renderResults(list2, query, "prices via Pokémon TCG API · raw values via PriceCharting");
     }).catch(function(){ searchFailed(query); });
   });
 }
@@ -800,34 +980,143 @@ function ebayFiltersHTML(){
   '</div>';
 }
 
+/* ---------- For sale on TCGplayer ---------- */
+function getTcgFinishes(item){
+  if(item.tcgFinishes && item.tcgFinishes.length) return item.tcgFinishes;
+  // Derive on the fly from raw TCGdex payload if the normalized field is missing (e.g. older in-memory item)
+  try{
+    var pr=item.raw && item.raw.pricing && item.raw.pricing.tcgplayer;
+    if(pr){
+      var out=[];
+      Object.keys(pr).forEach(function(k){
+        if(k==="unit"||k==="updated") return;
+        var v=pr[k]; if(!v||v.productId==null) return;
+        out.push({ key:k, label:finishLabel(k), productId:v.productId, lowPrice:(v.lowPrice!=null?v.lowPrice:null), midPrice:(v.midPrice!=null?v.midPrice:null), highPrice:(v.highPrice!=null?v.highPrice:null), marketPrice:(v.marketPrice!=null?v.marketPrice:null), directLowPrice:(v.directLowPrice!=null?v.directLowPrice:null) });
+      });
+      if(out.length) return out;
+    }
+  }catch(e){}
+  return [];
+}
+function tcgFiltersHTML(item){
+  var finishes=getTcgFinishes(item);
+  if(!finishes || finishes.length<=1) return "";
+  function fbtn(val,label,cur){ return '<button data-tcgroup="finish" data-tcval="'+val+'" aria-pressed="'+(cur===val?"true":"false")+'">'+label+'</button>'; }
+  function sbtn(val,label,cur){ return '<button data-tcgroup="sort" data-tcval="'+val+'" aria-pressed="'+(cur===val?"true":"false")+'">'+label+'</button>'; }
+  var finishBtns=fbtn("all","All finishes",state.tcgFinish);
+  finishes.forEach(function(f){ finishBtns+=fbtn(f.key,f.label,state.tcgFinish); });
+  return '<div class="tcg-filters">'+
+    '<div class="filter-group"><label>Finish</label><div class="fseg" role="group" aria-label="TCGplayer finish">'+finishBtns+'</div></div>'+
+    '<div class="filter-group"><label>Sort</label><div class="fseg" role="group" aria-label="Sort TCGplayer products">'+sbtn("low","Lowest ask",state.tcgSort)+sbtn("market","Market price",state.tcgSort)+'</div></div>'+
+  '</div>';
+}
+/* A finish's lowest ask can never exceed its own market price — TCGdex
+   sometimes returns impossible rows (low $893.14 vs market $196.97), so
+   treat those asks as absent rather than presenting them as fact. */
+function tcgEffLow(f){ if(f.lowPrice==null) return null; if(f.marketPrice!=null && f.lowPrice>f.marketPrice) return null; return f.lowPrice; }
+function tcgEffDirect(f){ if(f.directLowPrice==null) return null; if(f.marketPrice!=null && f.directLowPrice>f.marketPrice) return null; return f.directLowPrice; }
+function renderTcgProducts(item){
+  var box=$("tcgListings"); if(!box) return;
+  var countEl=$("tcgCount");
+  var finishes=getTcgFinishes(item).slice();
+  if(!finishes.length){
+    if(countEl) countEl.textContent="";
+    var fallbackUrl=(searchURLs(item).tcg)||"https://www.tcgplayer.com";
+    box.innerHTML='<div class="ebay-note">No TCGplayer product page for this printing in the catalogue data — the market price above still comes from TCGplayer where available. <a href="'+fallbackUrl+'" target="_blank" rel="noopener">Search for it on TCGplayer ↗</a></div>';
+    return;
+  }
+  // Filter
+  var filtered=finishes.filter(function(f){ return state.tcgFinish==="all" || f.key===state.tcgFinish; });
+  // If the saved filter doesn't match this card's finishes (switched cards), fall back to all
+  if(!filtered.length){ filtered=finishes.slice(); state.tcgFinish="all"; }
+  // Sort low-first, nulls last
+  filtered.sort(function(a,b){
+    var av, bv;
+    if(state.tcgSort==="market"){ av=(a.marketPrice!=null?a.marketPrice:(tcgEffLow(a)!=null?tcgEffLow(a):Infinity)); bv=(b.marketPrice!=null?b.marketPrice:(tcgEffLow(b)!=null?tcgEffLow(b):Infinity)); }
+    else { av=(tcgEffLow(a)!=null?tcgEffLow(a):(a.marketPrice!=null?a.marketPrice:Infinity)); bv=(tcgEffLow(b)!=null?tcgEffLow(b):(b.marketPrice!=null?b.marketPrice:Infinity)); }
+    return av-bv;
+  });
+  if(countEl) countEl.textContent= finishes.length+(finishes.length===1?" finish":" finishes")+" · tap to buy";
+  box.innerHTML="";
+  filtered.forEach(function(f){
+    var a=document.createElement("a");
+    a.className="tcg-prod"; a.href="https://www.tcgplayer.com/product/"+f.productId; a.target="_blank"; a.rel="noopener";
+    var primary="https://tcgplayer-cdn.tcgplayer.com/product/"+f.productId+"_in_1000x1000.jpg";
+    var fallback="https://tcgplayer-cdn.tcgplayer.com/product/"+f.productId+"_200w.jpg";
+    a.innerHTML='<img loading="lazy" alt=""><div class="p-main"><div class="p-finish"></div><div class="p-from"></div><div class="p-meta"></div><div class="p-cta">View all sellers on TCGplayer ↗</div></div>';
+    var img=a.querySelector("img");
+    img.alt=item.name+" — "+f.label+" — product photo on TCGplayer";
+    img.src=primary;
+    img.onerror=function(){
+      if(img.src===primary){ img.src=fallback; }
+      else if(img.src===fallback){ img.onerror=null; if(item.image) img.src=item.image; else img.style.display="none"; }
+      else { img.onerror=null; img.style.display="none"; }
+    };
+    a.querySelector(".p-finish").textContent=f.label;
+    var effLow=tcgEffLow(f), effDirect=tcgEffDirect(f);
+    var fromEl=a.querySelector(".p-from");
+    if(effLow!=null){
+      fromEl.innerHTML="";
+      fromEl.appendChild(document.createTextNode("from "+money(effLow)+" "));
+      var sm=document.createElement("small"); sm.textContent="lowest ask"; fromEl.appendChild(sm);
+    } else if(f.marketPrice!=null){
+      fromEl.innerHTML="";
+      fromEl.appendChild(document.createTextNode(money(f.marketPrice)+" "));
+      var sm2=document.createElement("small"); sm2.textContent="market price"; fromEl.appendChild(sm2);
+    } else {
+      fromEl.textContent="See sellers for price";
+    }
+    var metaParts=[];
+    var metaEl=a.querySelector(".p-meta");
+    if(effLow!=null && f.marketPrice!=null) metaParts.push("Market "+money(f.marketPrice));
+    if(effDirect!=null) metaParts.push("TCGplayer Direct "+money(effDirect));
+    if(f.midPrice!=null && effLow==null) metaParts.push("Mid "+money(f.midPrice));
+    metaEl.textContent=metaParts.join(" · ");
+    if(effDirect!=null){
+      var badge=document.createElement("span"); badge.className="lbadge"; badge.textContent="Direct available";
+      a.querySelector(".p-finish").appendChild(badge);
+    }
+    box.appendChild(a);
+  });
+  if(!filtered.length){
+    box.innerHTML='<div class="ebay-note">No finish matches this filter. Try <b>All finishes</b>.</div>';
+  }
+}
+
 /* ---------- Detail modal ---------- */
 function openDetail(item, keepEbayFilters){
-  if(!keepEbayFilters){ state.ebayType="all"; state.ebaySort="best"; }
+  if(!keepEbayFilters){ state.ebayType="all"; state.ebaySort="best"; state.tcgFinish="all"; state.tcgSort="low"; }
   state.current=item;
   var urls=searchURLs(item);
   var inCol=state.collection.some(function(c){return c.id===item.id});
   var inWish=state.wishlist.some(function(c){return c.id===item.id});
-  var priceRows=item.prices && item.prices.length ? item.prices.map(function(r){ return '<div class="prow"><span>'+r.label+'</span><b>'+(r.cur==="€" ? "€"+Number(r.value).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : money(r.value))+'</b></div>'; }).join("") : '<div class="prow"><span>Market price</span><b>Not listed — check listings below</b></div>';
+  var head0=headlineOf(item);
   $("modalBody").innerHTML=
     '<div class="sheetgrid"><div><img class="big" id="modalImg" alt=""></div><div>'+
     '<h2 style="margin-top:2px" id="modalName"></h2>'+
     '<p class="sub" id="modalSub" style="margin-bottom:4px"></p>'+
-    '<div class="kv"><div><span>Set</span><b id="kvSet"></b></div><div><span>Number</span><b id="kvNum"></b></div><div><span>Rarity</span><b id="kvRar"></b></div><div><span>Market price</span><b id="kvPrice"></b></div></div>'+
-    '<div class="pricegrid">'+priceRows+'</div>'+
+    '<div class="kv"><div><span>Set</span><b id="kvSet"></b></div><div><span>Number</span><b id="kvNum"></b></div><div><span>Rarity</span><b id="kvRar"></b></div><div><span id="kvPriceLabel">Market price</span><b id="kvPrice"></b></div></div>'+
+    '<div class="pricegrid" id="priceGrid">'+priceRowsHTML(item)+'</div>'+
     '<div class="btnrow"><button class="btn primary" id="mAddCol">'+(inCol?"✓ In your collection":"Add to collection")+'</button><button class="btn" id="mAddWish">'+(inWish?"✓ On wishlist":"Add to wishlist")+'</button></div>'+
     '<div class="btnrow"><a class="btn dark" target="_blank" rel="noopener" href="'+urls.tcg+'">Buy on TCGplayer ↗</a></div>'+
+    '<div class="tcg-live"><div class="tcg-live-head"><h3>For sale on TCGplayer</h3><span class="count" id="tcgCount"></span></div>'+
+    '<p class="note" style="margin:6px 0 0">TCGplayer product pages for this exact printing — photo, live lowest ask and market price per finish. Tap a finish to see every seller for it on TCGplayer and buy.</p>'+
+    '<div id="tcgFiltersWrap">'+tcgFiltersHTML(item)+'</div>'+
+    '<div class="tcg-list" id="tcgListings" aria-live="polite"></div>'+
+    '</div>'+
     '<div class="ebay-live"><div class="ebay-live-head"><h3>Live on eBay</h3><span class="count" id="ebayCount"></span></div>'+
     '<p class="note" style="margin:6px 0 0">Real items for sale for this exact printing, fetched live. Tap any listing to open it on eBay and buy.</p>'+
     ebayFiltersHTML()+
     '<div class="ebay-list" id="ebayListings" aria-live="polite"></div>'+
     '<div class="btnrow" style="margin-top:12px"><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayBin+'">All Buy It Now on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayAuction+'">All auctions on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebay+'">Browse all eBay results ↗</a></div>'+
     '</div>'+
-    '<p class="note" style="margin-top:12px">Catalogue prices above are market figures; eBay prices are the live asks/bids on each listing, plus shipping where shown.</p>'+
+    '<p class="note" style="margin-top:12px">The headline value is the raw (ungraded) PriceCharting price for this exact printing — what a typical ungraded copy is worth. TCGplayer figures are near-mint market prices and lowest asks per finish (1st Edition and Unlimited are separate printings with separate prices), and eBay prices are the live asks/bids on each listing, plus shipping where shown.</p>'+
     '</div></div>';
   $("modalImg").src=item.image;
   $("modalName").textContent=item.name;
-  $("modalSub").textContent=item.game+" · TCGplayer market price + live eBay listings for this printing";
-  $("kvSet").textContent=item.set||"—"; $("kvNum").textContent=item.number?("#"+item.number):"—"; $("kvRar").textContent=item.rarity||"—"; $("kvPrice").textContent=money(item.price);
+  $("modalSub").textContent=item.game+" · For sale on TCGplayer + live on eBay for this printing";
+  $("kvSet").textContent=item.set||"—"; $("kvNum").textContent=item.number?("#"+item.number):"—"; $("kvRar").textContent=item.rarity||"—"; $("kvPrice").innerHTML=kvPriceHTML(head0);
+  $("kvPriceLabel").textContent=head0.label||"Market price";
   $("modal").classList.add("open"); document.body.style.overflow="hidden";
   $("mAddCol").addEventListener("click",function(){ toggleCollection(item); openDetail(item, true); });
   $("mAddWish").addEventListener("click",function(){ toggleWishlist(item); openDetail(item, true); });
@@ -840,7 +1129,19 @@ function openDetail(item, keepEbayFilters){
       loadEbayListings(item);
     });
   });
+  document.querySelectorAll("#modalBody [data-tcgroup]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var g=b.getAttribute("data-tcgroup"), v=b.getAttribute("data-tcval");
+      if(g==="finish") state.tcgFinish=v; if(g==="sort") state.tcgSort=v;
+      document.querySelectorAll('#modalBody [data-tcgroup="'+g+'"]').forEach(function(x){ x.setAttribute("aria-pressed", x.getAttribute("data-tcval")===v?"true":"false"); });
+      renderTcgProducts(item);
+    });
+  });
+  renderTcgProducts(item);
   loadEbayListings(item);
+  // Resolve (or re-apply) this printing's raw headline value and refresh
+  // the value block in place when it lands.
+  if(item.game==="Pokémon") ensureValue(item, function(){ updateDetailValue(item); updateTilePrice(item); });
 }
 function closeModal(){ $("modal").classList.remove("open"); document.body.style.overflow=""; }
 $("modalClose").addEventListener("click",closeModal);
@@ -850,20 +1151,20 @@ document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeModal
 function toggleCollection(item){
   var i=state.collection.findIndex(function(c){return c.id===item.id});
   if(i>=0){ state.collection.splice(i,1); toast("Removed from collection"); }
-  else { state.collection.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:item.price,game:item.game}); toast("Added to collection ✓"); }
+  else { var hv=headlineOf(item); state.collection.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:(hv.v!=null?hv.v:item.price),priceLabel:(hv.v!=null?hv.label:(item.priceLabel||"TCGplayer")),game:item.game}); toast("Added to collection ✓"); }
   refreshStats();
 }
 function toggleWishlist(item){
   var i=state.wishlist.findIndex(function(c){return c.id===item.id});
   if(i>=0){ state.wishlist.splice(i,1); toast("Removed from wishlist"); }
-  else { state.wishlist.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:item.price,game:item.game,target:item.price!=null?Math.round(item.price*0.85*100)/100:null}); toast("Added to wishlist ✓"); }
+  else { var hv2=headlineOf(item); var sp=(hv2.v!=null?hv2.v:item.price); state.wishlist.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:sp,priceLabel:(hv2.v!=null?hv2.label:(item.priceLabel||"TCGplayer")),game:item.game,target:sp!=null?Math.round(sp*0.85*100)/100:null}); toast("Added to wishlist ✓"); }
   refreshStats();
 }
 
 /* ---------- Collection / wishlist render ---------- */
 function rowHTML(item, isWish){
   var hit = isWish && item.target!=null && item.price!=null && item.price<=item.target;
-  return '<img alt="" src="'+item.image+'"><div class="info"><b></b><span>'+(item.set||"")+(item.number?" · #"+item.number:"")+'</span>'+(isWish?'<span style="display:block;margin-top:3px">Target: <b style="display:inline;font-size:13px">'+money(item.target)+'</b>'+(hit?' · <b style="display:inline;color:var(--accent);font-size:13px">TARGET HIT ✓</b>':'')+'</span>':"")+'</div><div class="val">'+money(item.price)+'<small>market</small></div>';
+  return '<img alt="" src="'+item.image+'"><div class="info"><b></b><span>'+(item.set||"")+(item.number?" · #"+item.number:"")+'</span>'+(isWish?'<span style="display:block;margin-top:3px">Target: <b style="display:inline;font-size:13px">'+money(item.target)+'</b>'+(hit?' · <b style="display:inline;color:var(--accent);font-size:13px">TARGET HIT ✓</b>':'')+'</span>':"")+'</div><div class="val">'+money(item.price)+'<small>'+(item.priceLabel||"market")+'</small></div>';
 }
 function renderCollection(){
   var el=$("collectionList");
