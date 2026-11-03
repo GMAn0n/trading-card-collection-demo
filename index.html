@@ -209,6 +209,8 @@
   .grade-badge{display:inline-flex;font-size:11.5px;font-weight:900;padding:4px 8px;border-radius:999px;background:var(--accent);color:var(--accent-ink);letter-spacing:.02em;vertical-align:1px}
   .grade-badge.raw{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
   .grade-badge.damaged{background:var(--amber-soft);color:var(--amber);border:1px solid var(--amber)}
+  .slab-banner{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:10px 12px;font-weight:800;font-size:14.5px;margin:10px 0;line-height:1.4}
+  .slab-banner span{display:block;font-weight:600;font-size:12.5px;color:var(--muted);margin-top:2px}
   .graded-live{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
   .service-row{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:14.5px;text-decoration:none;color:inherit}
   a.service-row:hover{border-color:var(--accent)}
@@ -278,7 +280,7 @@
           <div class="cam-frame" id="camFrame" hidden></div>
           <div class="cam-placeholder" id="camPlaceholder">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            <div><b style="color:#fff">Camera preview will appear here</b><br><span style="font-size:13.5px">Tap “Turn on camera” below. Your browser will ask for permission — choose Allow. If no prompt appears, use “Take a photo — device camera” — it opens your phone's camera app directly, no permission prompt needed.</span></div>
+            <div><b style="color:#fff">Camera preview will appear here</b><br><span style="font-size:13.5px">Tap “Turn on camera” below. Your browser will ask for permission — choose Allow. If no prompt appears, use “Upload a photo” instead — on a phone the picker offers your camera or your library.</span></div>
           </div>
           <img id="capturePreview" class="capture-img" alt="Photo you just took of a trading card" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0a0f0d" hidden>
         </div>
@@ -292,8 +294,6 @@
           <button class="btn dark" id="btnCapture" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg>Take photo</button>
           <button class="btn" id="btnFlip" disabled>Flip camera</button>
           <button class="btn" id="btnRetake" hidden>Retake</button>
-          <label class="btn" for="cameraInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Take a photo — device camera</label>
-          <input class="sr" type="file" id="cameraInput" accept="image/*" capture="environment">
           <label class="btn" for="fileInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5M12 3v12"/></svg>Upload a photo</label>
           <input class="sr" type="file" id="fileInput" accept="image/*">
         </div>
@@ -317,12 +317,12 @@
       <div class="cardbox">
         <h3 style="margin:0 0 14px;font-size:17px">How scanning works here</h3>
         <ol class="steps">
-          <li><span class="n">1</span><span><b>Turn on the camera</b> and allow access when your browser asks. On a phone it uses the rear camera automatically. No prompt? Tap <b>Take a photo — device camera</b> instead — it opens your phone's camera app directly.</span></li>
-          <li><span class="n">2</span><span><b>Fill the card-shaped guide</b> with the card, edge to edge — including its <b>bottom edge</b>, where the collector number sits — in good light, and tap <b>Take photo</b>. The preview shows the camera's full field (nothing is cropped away) and the photo is kept at full resolution.</span></li>
-          <li><span class="n">3</span><span><b>Let it identify the card.</b> First, AI reads the photo (sent to our card-data proxy) and returns the card's name, HP, attacks, collector number, 1st Edition stamp, set symbol and © year line. If that can't read it, the on-device fallback takes over: it finds the card's edges in the photo, squares it up, and reads the <b>name in the top band</b> (HP beside it as a cross-check) and the <b>collector number in the bottom-right</b>. Either way, <b>every printing of that name is then scored on the combination</b> — number, HP, each attack and its damage, the edition stamp, the set symbol and the © years — which is what separates look-alike reprints like Base Set from Base Set 2, since they share name, HP and attacks. A read number that no printing of that name carries is treated as a misread and ignored, never shown as fact. Only a clear winner opens automatically; anything close goes to a picker where each printing lists the signals that matched it, so your tap is an informed one. If nothing reads clearly, it says so and asks for a retake instead of guessing. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings.</span></li>
-          <li><span class="n">4</span><span><b>Add it in one tap.</b> From a photo, the card page leads with a one-tap <b>Add to collection</b> — Raw by default, with Damaged and Graded (PSA / CGC / BGS / SGC / TAG) right there on the same sheet. A photo can't prove a 1st Edition stamp, so photo adds default to Unlimited unless you switch.</span></li>
+          <li><span class="n">1</span><span><b>Turn on the camera</b> and allow access when your browser asks — on a phone it uses the rear camera automatically. Rather not use the live view? <b>Upload a photo</b> instead: on a phone the picker offers your camera or your library.</span></li>
+          <li><span class="n">2</span><span><b>Fill the card-shaped guide</b> with the card, edge to edge — including its <b>bottom edge</b>, where the collector number sits — in good light, and tap <b>Take photo</b>. The preview shows the camera's full field (nothing is cropped away) and the photo is kept at full resolution. A graded card can stay in its case — photograph the whole slab and the label is read too.</span></li>
+          <li><span class="n">3</span><span><b>Let it identify the card.</b> First, AI reads the photo (sent to our card-data proxy) and returns the card's name, HP, attacks, collector number, illustrator, finish (holo, reverse holo or non-holo), 1st Edition stamp, set symbol and © year line — and, when the card sits in a grading slab, the label's company, grade and cert number. The read also reports the card's language and its name exactly as printed: printings in other languages are different cards with their own values, so a non-English read is matched only within that language's printings — a Japanese card is never swapped for the English printing. If that can't read it, the on-device fallback takes over: it finds the card's edges in the photo, squares it up, and reads the <b>name in the top band</b> (HP beside it as a cross-check) and the <b>collector number in the bottom-right</b>. Either way, <b>every printing of that name is then scored on the combination</b> — number, HP, each attack (name first, damage only as a bonus), the illustrator, the finish, the edition stamp, the set symbol and the © years — which is what separates look-alike reprints like Base Set from Base Set 2, since they share name, HP and attacks. Illustrator and finish reads are noisy, so they only ever add points when they agree — a mismatch never counts against a printing. A read number that no printing of that name carries is treated as a misread and ignored, never shown as fact. A printing opens automatically only on a clear win — a strong score with a clear margin, or at least three independent signal types agreeing; name and HP alone never auto-pick. Anything close goes to a picker where each printing lists the signals that matched it, so your tap is an informed one. If nothing reads clearly, it says so and asks for a retake instead of guessing. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings.</span></li>
+          <li><span class="n">4</span><span><b>Add it in one tap.</b> From a photo, the card page leads with a one-tap <b>Add to collection</b> — Raw by default, with Damaged and Graded (PSA / CGC / BGS / SGC / TAG) right there on the same sheet. If the photo showed a grading slab, that sheet opens with <b>Graded</b> already selected — company and grade filled in from the label, cert number included — and the copy is valued from that grader's ladder row. A photo can't prove a 1st Edition stamp, so photo adds default to Unlimited unless you switch.</span></li>
         </ol>
-        <p class="note" style="margin-top:16px">Live camera not prompting? Use <b>Take a photo — device camera</b> — it opens your phone's own camera app and needs no browser permission, and the photo works exactly the same way here. <b>Upload a photo</b> opens your camera roll or file picker. If you want the live viewfinder, open this link directly in Safari or Chrome (not inside another app's preview), tap the lock / site-settings icon in the address bar, set Camera to <b>Allow</b>, reload, and tap “Turn on camera” again.</p>
+        <p class="note" style="margin-top:16px">Live camera not prompting? Use <b>Upload a photo</b> instead — or open this page directly in Safari or Chrome (not inside another app's preview) and set Camera to <b>Allow</b> in site settings, then reload and tap “Turn on camera” again.</p>
       </div>
     </div>
   </section>
@@ -377,7 +377,7 @@
       <div class="cardbox"><h3>What it is</h3><p>A trading card companion: photograph or search any Pokémon or Magic card, see what it's worth right now, track a collection's total value, and keep a wishlist with target prices — all in one place, on phone or desktop.</p></div>
       <div class="cardbox"><h3>Data sources</h3><p>Headline values are the <b>raw (ungraded) price for the exact printing</b> — name, set and collector number — from <a href="https://www.pricecharting.com" target="_blank" rel="noopener">PriceCharting</a>, fetched per card: a Base Set Raichu, a Fossil Raichu and a 1st Edition printing each carry their own value. Pokémon card images, sets and TCGplayer market prices come live from <a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex</a>, with the <a href="https://pokemontcg.io" target="_blank" rel="noopener">Pokémon TCG API</a> as backup; those TCGplayer figures are near-mint market prices, shown as labelled per-finish rows (1st Edition and Unlimited separately), never as the headline. That TCGplayer pricing is the same catalogue <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors as daily price files. Magic data and prices come from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Prices are fetched fresh each time you search.</p></div>
       <div class="cardbox"><h3>Buying</h3><p>Every card page shows two ways to buy that exact printing. <b>For sale on TCGplayer:</b> one product card per finish (Holofoil, Normal, Reverse Holofoil…) with the TCGplayer product photo, “from” lowest current ask, market price and TCGplayer Direct price when available — filter by finish and sort by lowest ask or market price, then tap through to that finish's <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> product page with every seller. <b>Live on eBay:</b> thumbnail, price + shipping and all-in total, bids and end time on auctions, seller and condition — fetched live via the eBay search proxy, with filters for Auction / Buy It Now and sorting by best match, price, or ending soonest. Purchases happen on the marketplace — this demo never handles payment.</p></div>
-      <div class="cardbox"><h3>For partners</h3><p>Built by Muse Enterprise Solutions as a working product exhibit for marketplace and data partnership conversations — including TCGplayer affiliate (Impact) and partner data access. Photo identification (an AI read of the printed name, HP, attacks, collector number, edition stamp, set symbol and © year line, scored across every printing of the name, with an on-device OCR fallback) and graded-card states are live in this demo; the full version adds population data and daily price alerts.</p></div>
+      <div class="cardbox"><h3>For partners</h3><p>Built by Muse Enterprise Solutions as a working product exhibit for marketplace and data partnership conversations — including TCGplayer affiliate (Impact) and partner data access. Photo identification (an AI read of the printed name, HP, attacks, collector number, illustrator, finish, edition stamp, set symbol and © year line — plus grading-slab labels: company, grade and cert — scored across every printing of the name, with an on-device OCR fallback) and graded-card states are live in this demo; the full version adds population data and daily price alerts.</p></div>
     </div>
   </section>
 
@@ -442,7 +442,7 @@ function initCamBadges(){
   var sup=$("badgeSupport"), stat=$("statCam");
   if(window.isSecureContext===false){ sup.textContent="Needs a secure (HTTPS) page for camera"; sup.className="badge warn"; stat.textContent="Needs HTTPS"; return; }
   if(camSupported()){ sup.textContent="Camera supported on this device"; sup.className="badge ok"; stat.textContent="Supported ✓"; }
-  else { sup.textContent="No live-camera API here — use “Take a photo — device camera”"; sup.className="badge warn"; stat.textContent="Device camera / upload"; }
+  else { sup.textContent="No live-camera API here — use “Upload a photo”"; sup.className="badge warn"; stat.textContent="Upload a photo"; }
   // If camera permission was already denied earlier, say so up front —
   // the browser will never show the prompt again until it's reset.
   if(navigator.permissions && navigator.permissions.query){
@@ -474,7 +474,7 @@ function camHelpHTML(kind){
   var lead = kind==="denied"
     ? "<b>Camera permission is blocked, so no prompt can appear.</b> The browser remembers an earlier “Block / Don't allow” choice and denies the camera instantly. To fix it: "+steps
     : "<b>The camera was blocked before a prompt could appear.</b> That happens when this page runs inside an app's embedded preview, or permission was denied earlier. "+steps;
-  return lead+"<br><br><b>No settings needed:</b> tap <b>“Take a photo — device camera”</b> below — it opens your phone's own camera app, needs no browser permission, and the photo works exactly the same way. <b>Upload a photo</b> works too.";
+  return lead+"<br><br><b>No settings needed:</b> tap <b>“Upload a photo”</b> below — on a phone the picker offers your camera or your photo library, and the photo works exactly the same way.";
 }
 initCamBadges();
 
@@ -513,16 +513,16 @@ function onCamError(err){
       showCamError(camHelpHTML("embedded"));
     }
   } else if(err && (err.name==="NotFoundError"||err.name==="DevicesNotFoundError")){
-    showCamError("<b>No camera found on this device.</b> Use <b>Take a photo — device camera</b> or <b>Upload a photo</b> instead.");
+    showCamError("<b>No camera found on this device.</b> Use <b>Upload a photo</b> instead.");
   } else if(err && err.name==="NotReadableError"){
-    showCamError("<b>The camera is busy</b> — another app or tab is using it. Close it and try again, or use <b>Take a photo — device camera</b>.");
+    showCamError("<b>The camera is busy</b> — another app or tab is using it. Close it and try again, or use <b>Upload a photo</b>.");
   } else {
-    showCamError("<b>The camera couldn't start</b> ("+(err&&err.name?err.name:"unknown error")+"). Use <b>Take a photo — device camera</b> instead — it works the same way.");
+    showCamError("<b>The camera couldn't start</b> ("+(err&&err.name?err.name:"unknown error")+"). Use <b>Upload a photo</b> instead — it works the same way.");
   }
 }
 function startCamera(){
   clearCamError();
-  if(!camSupported()){ showCamError("<b>No live camera in this browser view.</b> Use <b>Take a photo — device camera</b> — it opens your phone's camera app and works the same way. Or open this link directly in Safari / Chrome for the live viewfinder."); return; }
+  if(!camSupported()){ showCamError("<b>No live camera in this browser view.</b> Use <b>Upload a photo</b> — on a phone the picker offers your camera or library, and it works the same way. Or open this link directly in Safari / Chrome for the live viewfinder."); return; }
   setBadge("Requesting permission…","warn");
   var gum=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
   var attempts=[
@@ -583,7 +583,6 @@ function handlePhotoFile(f){
   reader.readAsDataURL(f);
 }
 $("fileInput").addEventListener("change",function(e){ handlePhotoFile(e.target.files && e.target.files[0]); e.target.value=""; });
-$("cameraInput").addEventListener("change",function(e){ handlePhotoFile(e.target.files && e.target.files[0]); e.target.value=""; });
 document.addEventListener("visibilitychange",function(){ if(document.hidden) stopCamera(); });
 
 /* ---------- Search ---------- */
@@ -938,16 +937,16 @@ function dexPrice(detail){
   }
   return { price:price, label:label, rows:rows, finishes:finishes, lowPrice:lowPrice };
 }
-function normalizeDex(detail, brief){
+function normalizeDex(detail, brief, lang){
   var p=dexPrice(detail);
   var sc=detail.set?detail.set.cardCount:null;
   var setTotal=(typeof sc==="number")?sc:((sc&&(sc.total||sc.official))||null);
   var imgBase=detail.image||(brief&&brief.image)||"";
   var unlimFinish=(p.finishes||[]).filter(function(f){return !isFirstFinish(f) && f.productId!=null;})[0];
   var firstTcgUrl = unlimFinish ? ("https://www.tcgplayer.com/product/"+unlimFinish.productId) : null;
-  return { id:"dex-"+detail.id, game:"Pokémon", name:detail.name, set:detail.set?detail.set.name:"", number:detail.localId||(brief&&brief.localId)||"", rarity:detail.rarity||"", setTotal:setTotal, image:imgBase?imgBase+"/high.webp":"", price:p.price, priceLabel:p.label||"TCGdex", lowPrice:(p.lowPrice!=null?p.lowPrice:null), prices:p.rows, tcgUrl:firstTcgUrl, tcgFinishes:p.finishes||[], raw:detail };
+  return { id:"dex-"+detail.id, game:"Pokémon", name:detail.name, set:detail.set?detail.set.name:"", number:detail.localId||(brief&&brief.localId)||"", rarity:detail.rarity||"", setTotal:setTotal, image:imgBase?imgBase+"/high.webp":"", price:p.price, priceLabel:p.label||"TCGdex", lowPrice:(p.lowPrice!=null?p.lowPrice:null), prices:p.rows, tcgUrl:firstTcgUrl, tcgFinishes:p.finishes||[], language:(lang||"en"), raw:detail };
 }
-function dexBriefsToItems(list, preferNameLc){
+function dexBriefsToItems(list, preferNameLc, lang){
   if(!Array.isArray(list)) return Promise.resolve([]);
   list=list.filter(function(b){ return b.image; });
   if(preferNameLc){
@@ -957,23 +956,23 @@ function dexBriefsToItems(list, preferNameLc){
     });
   }
   return Promise.all(list.slice(0,24).map(function(b){
-    return fetch("https://api.tcgdex.net/v2/en/cards/"+encodeURIComponent(b.id),{headers:{"Accept":"application/json"}}).then(function(r){
+    return fetch("https://api.tcgdex.net/v2/"+(lang||"en")+"/cards/"+encodeURIComponent(b.id),{headers:{"Accept":"application/json"}}).then(function(r){
       if(!r.ok) throw new Error("HTTP "+r.status);
       return r.json();
-    }).then(function(d){ return normalizeDex(d,b); }).catch(function(){
-      return { id:"dex-"+b.id, game:"Pokémon", name:b.name, set:"", number:b.localId||"", rarity:"", image:b.image+"/high.webp", price:null, priceLabel:"TCGdex", prices:[], tcgUrl:null, tcgFinishes:[], raw:b };
+    }).then(function(d){ return normalizeDex(d,b,lang); }).catch(function(){
+      return { id:"dex-"+b.id, game:"Pokémon", name:b.name, set:"", number:b.localId||"", rarity:"", image:b.image+"/high.webp", price:null, priceLabel:"TCGdex", prices:[], tcgUrl:null, tcgFinishes:[], language:(lang||"en"), raw:b };
     });
   }));
 }
-function fetchDex(query){
+function fetchDex(query, lang){
   var pq=parseQuery(query);
-  var url="https://api.tcgdex.net/v2/en/cards?name="+encodeURIComponent(pq.name);
+  var url="https://api.tcgdex.net/v2/"+(lang||"en")+"/cards?name="+encodeURIComponent(pq.name);
   if(pq.number) url+="&localId="+encodeURIComponent(pq.number);
   return fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){
     if(!r.ok) throw new Error("HTTP "+r.status);
     return r.json();
   }).then(function(list){
-    return dexBriefsToItems(list, pq.name.toLowerCase());
+    return dexBriefsToItems(list, pq.name.toLowerCase(), lang);
   });
 }
 /* Contains-match on a letter run — how an apostrophe name survives OCR.
@@ -991,13 +990,13 @@ function fetchDexContains(run){
 }
 /* Every printing with this collector number, across sets — the resolver
    narrows it by set size (and HP) when the name couldn't be read. */
-function fetchDexByLocalId(num){
-  var url="https://api.tcgdex.net/v2/en/cards?localId="+encodeURIComponent(String(num||""));
+function fetchDexByLocalId(num, lang){
+  var url="https://api.tcgdex.net/v2/"+(lang||"en")+"/cards?localId="+encodeURIComponent(String(num||""));
   return fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){
     if(!r.ok) throw new Error("HTTP "+r.status);
     return r.json();
   }).then(function(list){
-    return dexBriefsToItems(list, null);
+    return dexBriefsToItems(list, null, lang);
   });
 }
 /* --- Pokémon via Pokémon TCG API (fallback) ---
@@ -1070,6 +1069,11 @@ function pumpValues(){
 function headlineOf(item){
   if(item.rawValue!=null) return { v:item.rawValue, label:"Raw value · PriceCharting", url:item.rawUrl||null, pending:false };
   if(item.game==="Pokémon" && item.set && item.number && item.rawState!=="none" && item.rawState!=="skip") return { v:null, label:"Raw value · PriceCharting", url:null, pending:true };
+  // Non-English printing with no PriceCharting row of its own: say
+  // so in its own language's name. The English printing's price —
+  // and any TCGplayer figure, which prices the English product —
+  // is NEVER shown as this printing's value.
+  if(item.language && item.language!=="en") return { v:null, label:"Not available for the "+langNameOf(item.language)+" printing yet", url:null, pending:false };
   if(item.price!=null) return { v:item.price, label:item.priceLabel||"TCGplayer", url:item.tcgUrl||null, pending:false };
   return { v:null, label:"", url:null, pending:false };
 }
@@ -1078,7 +1082,7 @@ function tilePriceHTML(item){
   var html;
   if(h.pending){ html="Fetching…"+'<small>Raw value · PriceCharting</small>'; }
   else if(h.v!=null){ html=money(h.v)+'<small>'+h.label+'</small>'; }
-  else { html="Price n/a"+'<small>see card page</small>'; }
+  else { html="Price n/a"+'<small>'+(h.label||"see card page")+'</small>'; }
   if(item.lowPrice!=null && item.price!=null && item.lowPrice<item.price && h.v!==item.lowPrice) html+='<small>TCGplayer lowest ask '+money(item.lowPrice)+'</small>';
   html+='<small>Tap for TCGplayer + eBay ↗</small>';
   return html;
@@ -1105,6 +1109,7 @@ function rowLinkHTML(r){
 }
 function priceRowsHTML(item){
   var h=headlineOf(item);
+  var langNote=(item.language && item.language!=="en" && item.rawValue==null && !h.pending) ? '<p class="note" style="margin:0 0 6px">PriceCharting value is not available for the '+escHtml(langNameOf(item.language))+' printing yet — the English printing\'s price is never substituted for it.</p>' : "";
   var groups=[];
   // PriceCharting — the FULL merged ladder: Ungraded first, then every
   // row of the full-prices table (Grade 1 … 9.5, then the per-company
@@ -1154,8 +1159,8 @@ function priceRowsHTML(item){
   }
   if(cmRows.length) groups.push({title:"Cardmarket", rows:cmRows});
   if(otherRows.length) groups.push({title:"More prices", rows:otherRows});
-  if(!groups.length) return '<div class="prow"><span>Market price</span><b>Not listed — check listings below</b></div>';
-  return groups.map(function(g){
+  if(!groups.length) return langNote+'<div class="prow"><span>Market price</span><b>Not listed — check listings below</b></div>';
+  return langNote+groups.map(function(g){
     return '<div class="price-group"><div class="price-group-title">'+escHtml(g.title)+'</div>'+g.rows.map(rowLinkHTML).join("")+(g.footnote?'<p class="note" style="margin:2px 0 0">'+escHtml(g.footnote)+'</p>':"")+'</div>';
   }).join("");
 }
@@ -1647,7 +1652,9 @@ function renderGradedServices(item){
 /* ---------- Condition / grading picker ---------- */
 function openConditionPicker(sourceItem, existingCol, onDone){
   // sourceItem: catalogue item (has rawValue/ladder/price) ; existingCol: collection item to edit or null
-  var sel={conditionState:(existingCol&&existingCol.conditionState)||"raw", grader:(existingCol&&existingCol.grader)||"PSA", grade:(existingCol&&existingCol.grade!=null?existingCol.grade:10)};
+  var slabSrc=(!existingCol && sourceItem && sourceItem._photoFields && sourceItem._photoFields.slab) ? sourceItem._photoFields.slab : null;
+  var slabGrade=slabSrc ? parseSlabGrade(slabSrc.grade) : null;
+  var sel={conditionState:(existingCol&&existingCol.conditionState)||(slabSrc?"graded":"raw"), grader:(existingCol&&existingCol.grader)||(slabSrc?mapSlabCompany(slabSrc.company):"PSA"), grade:(existingCol&&existingCol.grade!=null?existingCol.grade:(slabGrade!=null?slabGrade:10))};
   var wrap=document.createElement("div"); wrap.className="picker-overlay";
   var gradeOpts=""; for(var gv=10; gv>=1; gv-=0.5){ var gvv=Math.round(gv*10)/10; gradeOpts+='<option value="'+gvv+'"'+(Number(sel.grade)===gvv?' selected':'')+'>'+(gvv%1===0?gvv.toFixed(0):gvv)+'</option>'; }
   var graderOpts=GRADERS.map(function(g){return '<option value="'+g+'"'+(sel.grader===g?' selected':'')+'>'+GRADER_LABEL[g]+'</option>';}).join("");
@@ -1657,6 +1664,7 @@ function openConditionPicker(sourceItem, existingCol, onDone){
   '<div class="picker-preview" id="pkPreview"></div>'+
   '<div class="btnrow"><button class="btn primary" data-save="1">'+(existingCol?'Save changes':'Add to collection')+'</button><button class="btn" data-cancel="1">Cancel</button>'+(existingCol?'<button class="btn" data-remove="1">Remove from collection</button>':'')+'</div></div>';
   wrap.querySelector("p.note").textContent=sourceItem.name+(sourceItem.set?" · "+sourceItem.set:"")+(sourceItem.number?" · #"+sourceItem.number:"");
+  if(slabSrc) wrap.querySelector("p.note").textContent+=" · Graded slab read from your photo: "+(slabSrc.company||"")+(slabSrc.grade?" "+slabSrc.grade:"")+(slabSrc.cert?" · Cert #"+slabSrc.cert:"")+" — preselected below.";
   document.body.appendChild(wrap);
   function sourceForValue(){
     return {rawValue:(sourceItem.rawValue!=null?sourceItem.rawValue:(existingCol&&existingCol.rawValue!=null?existingCol.rawValue:null)), ladder:(sourceItem.ladder||(existingCol&&existingCol.ladder)||null), fullLadder:(sourceItem.fullLadder||(existingCol&&existingCol.fullLadder)||null), price:(sourceItem.price!=null?sourceItem.price:(existingCol?existingCol._basePrice:null))};
@@ -1692,7 +1700,7 @@ function openConditionPicker(sourceItem, existingCol, onDone){
       if(onDone) onDone(existingCol);
     } else {
       var hv=headlineOf(sourceItem);
-      var col={id:sourceItem.id,name:sourceItem.name,set:sourceItem.set,number:sourceItem.number,image:sourceItem.image,game:sourceItem.game,conditionState:sel.conditionState,grader:sel.conditionState==="graded"?sel.grader:null,grade:sel.conditionState==="graded"?sel.grade:null,rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis};
+      var col={id:sourceItem.id,name:sourceItem.name,set:sourceItem.set,number:sourceItem.number,image:sourceItem.image,game:sourceItem.game,conditionState:sel.conditionState,grader:sel.conditionState==="graded"?sel.grader:null,grade:sel.conditionState==="graded"?sel.grade:null,cert:(sel.conditionState==="graded" && slabSrc && slabSrc.cert)?String(slabSrc.cert):null,language:langOf(sourceItem),rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis};
       // Avoid duplicate id entries stacking silently: replace existing copy of same printing+condition? Keep separate copies allowed only if condition differs — simplest: if same id+condition+grader+grade exists, toast instead
       state.collection.unshift(col); refreshStats(); toast("Added to collection — "+conditionBadgeText(col)+" ✓");
       if(onDone) onDone(col);
@@ -2148,7 +2156,7 @@ function extractCardFields(texts){
     });
   });
   var candidates=candList.map(function(k){ return candMap[k]; }).sort(function(a,b){ return b.score-a.score; }).slice(0,4).map(function(x){ return x.name; });
-  return { name:candidates[0]||"", candidates:candidates, rejectedName:rejected, num:numM?String(parseInt(numM[1],10)):null, den:numM?String(parseInt(numM[2],10)):null, hp:hpM?hpM[1]:null, attacks:[], firstEdition:null, setSymbol:null, yearLine:null };
+  return { name:candidates[0]||"", candidates:candidates, rejectedName:rejected, num:numM?String(parseInt(numM[1],10)):null, den:numM?String(parseInt(numM[2],10)):null, hp:hpM?hpM[1]:null, attacks:[], firstEdition:null, setSymbol:null, yearLine:null, illustrator:null, finish:null, slab:null, numFromLabel:false, language:null, namePrinted:null, dexNo:null };
 }
 function numEq(a,b){
   if(a==null||b==null||a===""||b==="") return false;
@@ -2253,8 +2261,45 @@ function aiIdentifyFields(src, cb){
             else { var m2=String(j.number).match(/(\d{1,3})/); if(m2) num=String(parseInt(m2[1],10)); }
           }
           var nm=String(j.name).trim();
-          var atks=Array.isArray(j.attacks)?j.attacks.map(function(a){ return (a&&a.name)?{name:String(a.name), damage:(a.damage==null?"":String(a.damage))}:null; }).filter(Boolean):[];
-          cb({ name:nm, candidates:[nm], rejectedName:"", num:num, den:den, hp:j.hp?String(j.hp):null, attacks:atks, firstEdition:(typeof j.firstEdition==="boolean"?j.firstEdition:null), setSymbol:(j.setSymbol==null?null:String(j.setSymbol)), yearLine:(j.yearLine==null?null:String(j.yearLine)), ai:true });
+          // Attacks: accept the documented {name,damage} objects, but
+          // also plain strings and alternate keys — an earlier build
+          // silently dropped any attack that wasn't an object with a
+          // .name, which is how a returned attack produced no
+          // evidence at all in the resolver.
+          var atks=Array.isArray(j.attacks)?j.attacks.map(function(a){
+            if(typeof a==="string"){ var s0=a.trim(); return s0?{name:s0, damage:""}:null; }
+            if(a && a.name) return {name:String(a.name), damage:(a.damage==null?"":String(a.damage))};
+            if(a && (a.attack||a.text)) return {name:String(a.attack||a.text), damage:""};
+            return null;
+          }).filter(Boolean):[];
+          var slab=null;
+          if(j.slab && typeof j.slab==="object"){
+            slab={ company:(j.slab.company==null?"":String(j.slab.company)), grade:(j.slab.grade==null?null:String(j.slab.grade)), cert:(j.slab.cert==null?null:String(j.slab.cert)), labelName:(j.slab.labelName==null?null:String(j.slab.labelName)), labelNumber:(j.slab.labelNumber==null?null:String(j.slab.labelNumber)) };
+            if(!slab.company && !slab.grade && !slab.cert && !slab.labelName && !slab.labelNumber) slab=null;
+          }
+          // A number printed on the slab label is TRUSTED evidence:
+          // labels are machine-printed and graded for legibility,
+          // unlike the card face read through a case. When the face
+          // number is missing, the label number stands in for it.
+          var numFromLabel=false;
+          if(slab && slab.labelNumber){
+            var lm=String(slab.labelNumber).match(/(\d{1,3})\s*\/\s*(\d{2,3})/);
+            if(lm){
+              var ln=String(parseInt(lm[1],10)), ld=String(parseInt(lm[2],10));
+              if(num==null){ num=ln; den=ld; numFromLabel=true; }
+              else if(numEq(num, ln)){ numFromLabel=true; if(!den) den=ld; }
+            }
+          }
+          var fin=(j.finish==="holo"||j.finish==="reverse-holo"||j.finish==="non-holo") ? j.finish : null;
+          // Language partition inputs. Effective language: the
+          // proxy's read, or — when it came back null but the
+          // printed name is non-Latin — Japanese (a katakana name
+          // strip is a Japanese-template card whatever the model
+          // said about the rest).
+          var printed=(j.namePrinted==null?null:String(j.namePrinted));
+          var lang=(j.language==null?null:String(j.language).toLowerCase());
+          if(!lang && printed && /[^\u0000-\u024F]/.test(printed)) lang="ja";
+          cb({ name:nm, candidates:[nm], rejectedName:"", num:num, den:den, hp:j.hp?String(j.hp):null, attacks:atks, firstEdition:(typeof j.firstEdition==="boolean"?j.firstEdition:null), setSymbol:(j.setSymbol==null?null:String(j.setSymbol)), yearLine:(j.yearLine==null?null:String(j.yearLine)), illustrator:(j.illustrator?String(j.illustrator):null), finish:fin, slab:slab, numFromLabel:numFromLabel, language:lang, namePrinted:printed, dexNo:(j.dexNo==null?null:String(j.dexNo)), ai:true });
         })
         .catch(function(){ if(to) clearTimeout(to); cb(null); });
     }catch(e){ cb(null); }
@@ -2282,18 +2327,64 @@ function maybeAutoIdentify(){
   identifyFromCapture();
 }
 $("btnOcr").addEventListener("click", identifyFromCapture);
+var LANG_NAMES={en:"English",ja:"Japanese",de:"German",fr:"French",it:"Italian",es:"Spanish",pt:"Portuguese",nl:"Dutch"};
+function langNameOf(code){ return LANG_NAMES[String(code||"").toLowerCase()] || (code?String(code).toUpperCase():""); }
+function langOf(item){ return (item && item.language) || "en"; }
+/* Map a slab label's company string onto the grader list the app
+   already prices and stores (PSA / CGC / BGS / SGC / TAG). Known
+   full names resolve to their abbreviation; anything unrecognised
+   files as TAG — and the banner always shows the ORIGINAL company
+   string plus the "filed as" note, so the mapping is never silent. */
+function mapSlabCompany(s){
+  var u=String(s||"").toUpperCase().trim();
+  if(!u) return "PSA";
+  if(GRADERS.indexOf(u)>=0) return u;
+  if(/BECKETT|^BGS\b/.test(u)) return "BGS";
+  if(/PROFESSIONAL SPORTS|PSA/.test(u)) return "PSA";
+  if(/CERTIFIED GUARANTY|CGC/.test(u)) return "CGC";
+  if(/SPORTSCARD|SGC/.test(u)) return "SGC";
+  if(/TAG/.test(u)) return "TAG";
+  return "TAG";
+}
+/* A slab grade is only preselected when it is a real grade the app
+   can store (1–10 in 0.5 steps). Anything else — null, "Authentic",
+   a qualifier — returns null and the user picks; a grade is never
+   guessed. */
+function parseSlabGrade(g){
+  if(g==null) return null;
+  var n=parseFloat(String(g).replace(/[^0-9.]/g,""));
+  if(isNaN(n) || n<1 || n>10) return null;
+  if(Math.abs(n*2-Math.round(n*2))>0.001) return null;
+  return Math.round(n*2)/2;
+}
+function slabBannerHTML(f){
+  var s=f&&f.slab; if(!s) return "";
+  var co=String(s.company||"").trim();
+  var known=GRADERS.indexOf(co.toUpperCase())>=0;
+  var sub=[];
+  if(s.cert) sub.push("Cert #"+escHtml(String(s.cert)));
+  if(co && !known) sub.push("filed as "+mapSlabCompany(co)+" for pricing");
+  if(!s.grade) sub.push("grade not read — pick it on the add sheet");
+  return '<div class="slab-banner">Graded slab detected — '+escHtml(co||"Unknown grader")+(s.grade?(" "+escHtml(String(s.grade))):"")+(sub.length?'<span>'+sub.join(" · ")+'</span>':"")+'</div>';
+}
 function fieldsChipsHTML(f){
   var chips=[];
   if(f.ai) chips.push('<span class="badge ok">Identified from your photo · AI</span>');
   if(f.name) chips.push('<span class="badge ok">Name read: '+escHtml(f.name)+'</span>');
-  if(f.num) chips.push('<span class="badge ok">Number read: '+f.num+(f.den?"/"+f.den:"")+'</span>');
+  if(f.num) chips.push('<span class="badge ok">Number read: '+f.num+(f.den?"/"+f.den:"")+(f.numFromLabel?" · from slab label":"")+'</span>');
   if(f.hp) chips.push('<span class="badge">HP read: '+f.hp+'</span>');
   if(f.attacks && f.attacks.length) chips.push('<span class="badge">Attacks read: '+f.attacks.map(function(a){ return escHtml(a.name)+(a.damage?" "+escHtml(a.damage):""); }).join(", ")+'</span>');
+  if(f.illustrator) chips.push('<span class="badge">Illus. read: '+escHtml(f.illustrator)+'</span>');
+  if(f.finish) chips.push('<span class="badge">Finish read: '+escHtml(finishReadLabel(f.finish))+'</span>');
+  if(f.language) chips.push('<span class="badge ok">Language read: '+escHtml(langNameOf(f.language))+'</span>');
+  if(f.namePrinted && f.namePrinted!==f.name) chips.push('<span class="badge">Printed name: '+escHtml(f.namePrinted)+'</span>');
+  if(f.dexNo) chips.push('<span class="badge">Pokédex № read: '+escHtml(f.dexNo)+'</span>');
   if(f.firstEdition===true) chips.push('<span class="badge ok">1st Edition stamp: seen</span>');
   if(f.firstEdition===false) chips.push('<span class="badge">1st Edition stamp: not seen</span>');
   if(f.setSymbol) chips.push('<span class="badge">Set symbol: '+escHtml(f.setSymbol)+'</span>');
   if(f.yearLine) chips.push('<span class="badge">© line: '+escHtml(f.yearLine)+'</span>');
-  return chips.length ? '<div class="cam-status" style="margin:0">'+chips.join("")+'</div>' : "";
+  var chipsHtml=chips.length ? '<div class="cam-status" style="margin:0">'+chips.join("")+'</div>' : "";
+  return slabBannerHTML(f)+chipsHtml;
 }
 function photoUnreadable(fields){
   // Nothing plausible was read: say so honestly, ask for a retake,
@@ -2327,7 +2418,12 @@ function photoNoMatch(fields){
    evidence either (the same read caught only one of two attacks).
 
    Auto-select ONLY on a clear winner: top score ≥ 50 AND ≥ 25
-   ahead of the runner-up. Otherwise the picker opens, ranked by
+   ahead of the runner-up — or at least three independent signal
+   types agreeing (number, HP, attack name, illustrator, finish,
+   © year, set symbol) with a ≥ 15 lead; name + HP alone is one
+   type and never auto-picks. Illustrator and finish reads are
+   noisy, so they score only when they agree — a mismatch is
+   never negative evidence. Otherwise the picker opens, ranked by
    score, each printing annotated with the evidence that matched
    it ("HP ✓ · Leek Jab ✓ · number not read") so the user's one
    tap is informed. Ties are never silently auto-selected — that
@@ -2349,7 +2445,15 @@ function dmgNum(s){ var m=String(s==null?"":s).match(/\d+/); return m?m[0]:null;
 function attackNameEq(a,b){
   var x=normKeyText(a), y=normKeyText(b);
   if(!x||!y) return false;
-  return x===y || x.indexOf(y)===0 || y.indexOf(x)===0;
+  if(x===y) return true;
+  // Name agreement is what scores; damage is a separate bonus and
+  // is NEVER required. Reads sometimes glue the damage onto the
+  // name ("Rainbow Wave 30") or truncate a trailing word, so also
+  // compare with trailing numbers stripped and allow containment
+  // either way.
+  var xs=x.replace(/\s+\d+$/,""), ys=y.replace(/\s+\d+$/,"");
+  if(xs && ys && xs===ys) return true;
+  return x.indexOf(y)>=0 || y.indexOf(x)>=0 || (xs && ys && (xs.indexOf(ys)>=0 || ys.indexOf(xs)>=0));
 }
 /* Era class for the © year-line rule: the original 1999 WotC sets
    whose year lines end in the 1990s, vs the 2000-era reprint sets
@@ -2376,21 +2480,52 @@ function parseYearLine(yl){
   if(!yl) return [];
   return (String(yl).match(/\d{4}/g)||[]).map(function(y){ return parseInt(y,10); });
 }
+function finishReadLabel(fin){ return fin==="reverse-holo" ? "reverse holo" : (fin==="non-holo" ? "non-holo" : "holo"); }
+/* The finishes a printing actually exists in, as scoring kinds
+   ("holo" | "reverse" | "normal"): from its TCGdex variant flags
+   first, then its single printing finish, then its finish list. */
+function candFinishKinds(it){
+  var v=cardVariants(it), kinds=[];
+  if(v && typeof v==="object" && !Array.isArray(v) && (v.holo!=null || v.normal!=null || v.reverse!=null)){
+    if(v.holo===true) kinds.push("holo");
+    if(v.normal===true) kinds.push("normal");
+    if(v.reverse===true) kinds.push("reverse");
+    if(kinds.length) return kinds;
+  }
+  var pf=printingFinish(it);
+  if(pf && pf.kind) return [pf.kind];
+  var seen={};
+  getTcgFinishesSafe(it).forEach(function(f){ seen[finishKindOf(f.key)]=true; });
+  return Object.keys(seen);
+}
+/* Tolerant illustrator agreement: the vision model's artist reads
+   are noisy (the same photo returned different names across runs),
+   so agreement means a surname match or one name containing the
+   other — and disagreement is simply no evidence, never negative. */
+function illustratorEq(read, cand){
+  var a=normKeyText(read), b=normKeyText(cand);
+  if(!a || !b) return false;
+  if(a===b || a.indexOf(b)>=0 || b.indexOf(a)>=0) return true;
+  var at=a.split(" "), bt=b.split(" ");
+  var as=at[at.length-1], bs=bt[bt.length-1];
+  return as.length>=4 && as===bs;
+}
 function scoreCandidate(it, f){
-  var score=0, ev=[], gaps=[];
+  var score=0, ev=[], gaps=[], types=[];
   // Collector number — the strongest single signal, when it's real
   // (the caller has already discarded numbers no printing carries).
   if(f.num){
     if(numEq(it.number, f.num)){
       var tot=candSetTotal(it);
-      if(f.den && tot && numEq(tot, f.den)){ score+=100; ev.push("number "+f.num+"/"+f.den+" ✓"); }
-      else { score+=60; ev.push("number "+f.num+" ✓"); }
+      if(f.den && tot && numEq(tot, f.den)){ score+=100; ev.push("number "+f.num+"/"+f.den+" ✓"+(f.numFromLabel?" · from slab label":"")); }
+      else { score+=60; ev.push("number "+f.num+" ✓"+(f.numFromLabel?" · from slab label":"")); }
+      types.push("number");
     } else gaps.push("number differs");
   }
   // HP
   if(f.hp){
     var ch=candHp(it);
-    if(ch!=null && parseInt(ch,10)===parseInt(f.hp,10)){ score+=25; ev.push("HP ✓"); }
+    if(ch!=null && parseInt(ch,10)===parseInt(f.hp,10)){ score+=25; ev.push("HP ✓"); types.push("hp"); }
     else if(ch!=null) gaps.push("HP differs");
   }
   // Attacks: +20 per matched name, +10 more when its damage also
@@ -2408,8 +2543,31 @@ function scoreCandidate(it, f){
         if(rd && cd && rd===cd) dmgMatched++;
       }
     });
-    if(matched){ score+=matched*20+dmgMatched*10; if(dmgMatched) ev.push("damage ✓"); }
+    if(matched){ score+=matched*20+dmgMatched*10; types.push("attack"); if(dmgMatched) ev.push("damage ✓"); }
     else gaps.push("attacks differ");
+  }
+  // Illustrator — the "Illus." credit line. POSITIVE EVIDENCE ONLY:
+  // the vision model's artist reads vary run to run, so agreement
+  // (+20, tolerant surname/containment match) helps and a different
+  // read scores 0 — never negative, never an exclusion. Same
+  // discipline as the 1st Edition stamp rule below.
+  if(f.illustrator){
+    var ci=(it.raw && it.raw.illustrator) ? String(it.raw.illustrator) : "";
+    if(ci && illustratorEq(f.illustrator, ci)){ score+=20; ev.push("illustrator ✓"); types.push("illustrator"); }
+  }
+  // Finish — the sparkle pattern read from the photo, agreed
+  // against the finishes this printing exists in. POSITIVE
+  // EVIDENCE ONLY for the same reason: the read flips between runs,
+  // and sibling sets carry the same finish (Expedition has reverse
+  // holos too), so agreement adds +15 and disagreement scores 0 —
+  // it can help separate Southern Islands from Expedition, never
+  // veto either.
+  if(f.finish){
+    var wantFinish={ "holo":"holo", "reverse-holo":"reverse", "non-holo":"normal" }[f.finish]||null;
+    if(wantFinish){
+      var kinds=candFinishKinds(it);
+      if(kinds.length && kinds.indexOf(wantFinish)>=0){ score+=15; ev.push(finishReadLabel(f.finish)+" ✓"); types.push("finish"); }
+    }
   }
   // 1st Edition stamp: seeing it is strong evidence for the 1st
   // Edition printing; NOT seeing it is weak — a photo can miss a
@@ -2425,9 +2583,9 @@ function scoreCandidate(it, f){
     var readSym=String(f.setSymbol).toLowerCase().trim();
     var exp=expectedSymbol(it);
     if(/^(none|no|no symbol|none visible|absent)$/.test(readSym)){
-      if(exp && exp.none){ score+=10; ev.push("no set symbol ✓"); }
+      if(exp && exp.none){ score+=10; ev.push("no set symbol ✓"); types.push("symbol"); }
     } else if(exp && !exp.none && exp.keys.some(function(k){ return readSym.indexOf(k)>=0; })){
-      score+=15; ev.push("set symbol ✓");
+      score+=15; ev.push("set symbol ✓"); types.push("symbol");
     }
   }
   // © year line — the decisive discriminator for WotC reprint
@@ -2437,10 +2595,10 @@ function scoreCandidate(it, f){
   if(years.length){
     var era=eraClassOf(it);
     var has2000=years.some(function(y){ return y>=2000; });
-    if(has2000){ if(era==="reprint2000"){ score+=35; ev.push("© line runs to 2000 ✓"); } }
-    else if(era==="original"){ score+=30; ev.push("© line ends in the 1990s ✓"); }
+    if(has2000){ if(era==="reprint2000"){ score+=35; ev.push("© line runs to 2000 ✓"); types.push("year"); } }
+    else if(era==="original"){ score+=30; ev.push("© line ends in the 1990s ✓"); types.push("year"); }
   }
-  return { item:it, score:score, ev:ev, gaps:gaps, era:eraClassOf(it) };
+  return { item:it, score:score, ev:ev, gaps:gaps, era:eraClassOf(it), types:types };
 }
 function eraRank(e){ return e==="original"?0:(e==="reprint2000"?1:2); }
 function sortScored(scored){
@@ -2464,7 +2622,39 @@ function fetchNamePool(name){
     return poke();
   }).catch(function(){ return poke(); });
 }
+/* Printings in the read's OWN language. LANGUAGE IS A HARD
+   PARTITION, not points: non-English printings share art, HP,
+   attacks and illustrator with the English printing by design, so
+   no amount of agreeing signals may auto-resolve across languages
+   — a Japanese Southern Islands Mew is a different product with a
+   different value from the English 1/18. TCGdex serves en, fr, de,
+   it, es, pt and ja; the card is looked up by its English name AND
+   by its name as printed (katakana for Japanese), searching by
+   name across that language's whole catalogue because Japanese
+   promos live in promo sets, not the set the English card is in. */
+var TCGDEX_LANGS=["en","fr","de","it","es","pt","ja"];
+function fetchDexInLang(name, lang){
+  var url="https://api.tcgdex.net/v2/"+lang+"/cards?name="+encodeURIComponent(name);
+  return fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(list){ return dexBriefsToItems(list, null, lang); });
+}
+function fetchLangPool(fields){
+  var lang=fields.language;
+  if(TCGDEX_LANGS.indexOf(lang)<0) return Promise.resolve([]);
+  var jobs=[fetchDexInLang(fields.name, lang).catch(function(){ return []; })];
+  if(fields.namePrinted && fields.namePrinted!==fields.name) jobs.push(fetchDexInLang(fields.namePrinted, lang).catch(function(){ return []; }));
+  return Promise.all(jobs).then(function(lists){
+    var seen={}, out=[];
+    lists.forEach(function(l){ (l||[]).forEach(function(it){ if(it && !seen[it.id]){ seen[it.id]=true; out.push(it); } }); });
+    return out;
+  });
+}
 function resolvePhotoFields(fields){
+  // Detected language (incl. non-Latin printed name ⇒ Japanese):
+  // resolve inside that language's printings ONLY.
+  if(fields.language && fields.language!=="en"){ resolvePhotoFieldsLang(fields); return; }
   var names=(fields.candidates&&fields.candidates.length)?fields.candidates.slice():(fields.name?[fields.name]:[]);
   function poolFor(i){
     if(i>=names.length) return Promise.resolve([]);
@@ -2496,12 +2686,35 @@ function resolvePhotoFields(fields){
     if(fields.name) photoNoMatch(fields); else photoUnreadable(fields);
   });
 }
+function langNoCatalogue(fields){
+  $("idFields").innerHTML=fieldsChipsHTML(fields);
+  setOcrStatus('<p class="note"><b>This looks like a '+escHtml(langNameOf(fields.language))+' printing, which the catalogue doesn\'t cover — nothing was auto-picked.</b> The English printing is a different card with a different value, so it is never substituted for it. The name is in the box below — search by name to browse the catalogue yourself.</p>');
+  $("identifyInput").value=fields.name||"";
+}
+function resolvePhotoFieldsLang(fields){
+  var langName=langNameOf(fields.language);
+  setOcrStatus('<p class="note"><span class="spinner"></span>Matching within '+escHtml(langName)+' printings only — a '+escHtml(langName)+' printing is a different card from the English one, with its own value…</p>');
+  fetchLangPool(fields).then(function(pool){
+    if(pool && pool.length){ finishScoredResolve(fields, pool); return; }
+    if(fields.num){
+      fetchDexByLocalId(fields.num, fields.language).then(function(items){
+        if(items && items.length){ finishScoredResolve(fields, items); return; }
+        langNoCatalogue(fields);
+      }).catch(function(){ langNoCatalogue(fields); });
+      return;
+    }
+    langNoCatalogue(fields);
+  });
+}
 function finishScoredResolve(fields, pool){
   // Hallucinated-number guard: a read number that NO printing of
   // this name carries is discarded as evidence entirely — it is
   // removed from the fields before chips render, so it is never
-  // displayed as a read fact, and it scores nothing.
-  if(fields.num && pool.length){
+  // displayed as a read fact, and it scores nothing. EXCEPTION: a
+  // number that came from a grading slab's printed label is
+  // trusted (labels are machine-printed, not read off the card
+  // face through a case) and is never discarded.
+  if(fields.num && pool.length && !fields.numFromLabel){
     var anyNum=pool.some(function(it){ return numEq(it.number, fields.num); });
     if(!anyNum){ fields.numDiscarded=fields.num+(fields.den?"/"+fields.den:""); fields.num=null; fields.den=null; }
   }
@@ -2513,38 +2726,75 @@ function finishScoredResolve(fields, pool){
   var scored=sortScored(pool.map(function(it){ return scoreCandidate(it, fields); }));
   var discardNote=fields.numDiscarded?'<p class="note">A number was read ('+escHtml(fields.numDiscarded)+') but no '+escHtml(fields.name||"")+' printing carries it, so it was ignored — the match rests on the other signals combined.</p>':"";
   var top=scored[0], second=scored[1];
-  if(top.score>=50 && (!second || top.score-second.score>=25)){
+  var margin=second ? top.score-second.score : Infinity;
+  // Auto-select on EITHER rule:
+  //  A) the main rule — score ≥ 50 with a ≥ 25 margin; or
+  //  B) at least THREE independent signal types agreeing (number,
+  //     HP, attack name, illustrator, finish, © year, set symbol —
+  //     agreeing types only; noisy reads that disagree add nothing)
+  //     with a ≥ 15 lead. Name is not a signal type and HP is only
+  //     one, so name + HP alone can never trigger rule B.
+  if((top.score>=50 && margin>=25) || (top.types.length>=3 && margin>=15)){
     setOcrStatus(discardNote+'<p class="note"><b>Matched:</b> '+escHtml(top.item.name)+' · '+escHtml(top.item.set||"")+' · #'+escHtml(top.item.number||"")+(top.ev.length?(' — '+escHtml(top.ev.join(" · "))):'')+'. Opening it — add it to your collection in one tap.</p>');
     top.item._fromPhoto=true; top.item._photoFields=fields;
     openDetail(top.item);
     return;
   }
+  if(fields.language && fields.language!=="en"){
+    setOcrStatus(discardNote+'<p class="note">No '+escHtml(langNameOf(fields.language))+' printing wins clearly on the combined evidence, so nothing was auto-picked — the '+escHtml(langNameOf(fields.language))+' printings are ranked below by how much of what was read they match. Other languages appear underneath as manual alternatives only; they are different printings with different values and were not matched to your photo.</p>');
+    fetchNamePool(fields.name||"").then(function(altPool){
+      var altScored=sortScored((altPool||[]).map(function(it){ return scoreCandidate(it, fields); })).slice(0,8);
+      showScoredPicker(scored.slice(0,12), fields, altScored);
+    }).catch(function(){ showScoredPicker(scored.slice(0,12), fields, []); });
+    return;
+  }
   setOcrStatus(discardNote+'<p class="note">No printing wins clearly on the combined evidence, so nothing was auto-picked — the printings are ranked below by how much of what was read they match. Tap the one that matches your card; nothing is added until you choose.</p>');
   showScoredPicker(scored.slice(0,12), fields);
 }
-function showScoredPicker(scored, fields){
+function showScoredPicker(scored, fields, altScored){
   var wrap=document.createElement("div"); wrap.className="picker-overlay";
-  var cards=scored.map(function(s,i){
+  function cardHTML(s, attr, i){
     var it=s.item;
     var annParts=s.ev.slice();
     if(!fields.num) annParts.push(fields.numDiscarded?"number read matches no printing":"number not read");
     s.gaps.forEach(function(g){ annParts.push(g); });
     var ann=annParts.length?annParts.join(" · "):"no signal matched";
-    return '<button class="cand-card" data-cand="'+i+'"><img alt="" src="'+escAttr(it.image)+'"><span class="cand-nm">'+escHtml(it.name)+(it.number?" · #"+escHtml(it.number):"")+'</span><span class="cand-st">'+escHtml(it.set||"")+(candSetTotal(it)?" · set of "+candSetTotal(it):"")+(it.rarity?" · "+escHtml(it.rarity):"")+'</span><span class="cand-st" style="color:var(--accent);font-weight:700">'+escHtml(ann)+'</span></button>';
-  }).join("");
+    return '<button class="cand-card" '+attr+'="'+i+'"><img alt="" src="'+escAttr(it.image)+'"><span class="cand-nm">'+escHtml(it.name)+(it.number?" · #"+escHtml(it.number):"")+'</span><span class="cand-st">'+escHtml(it.set||"")+(candSetTotal(it)?" · set of "+candSetTotal(it):"")+(it.rarity?" · "+escHtml(it.rarity):"")+'</span><span class="cand-st" style="color:var(--accent);font-weight:700">'+escHtml(ann)+'</span></button>';
+  }
+  var cards=scored.map(function(s,i){ return cardHTML(s, "data-cand", i); }).join("");
   var readBits=[];
   if(fields.hp) readBits.push(fields.hp+" HP");
   if(fields.attacks && fields.attacks.length) readBits.push("attacks "+fields.attacks.map(function(a){ return a.name; }).join(", "));
-  if(fields.num) readBits.push("number "+fields.num+(fields.den?"/"+fields.den:""));
+  if(fields.illustrator) readBits.push("Illus. "+fields.illustrator);
+  if(fields.finish) readBits.push(finishReadLabel(fields.finish));
+  if(fields.num) readBits.push("number "+fields.num+(fields.den?"/"+fields.den:"")+(fields.numFromLabel?" (from slab label)":""));
+  if(fields.slab) readBits.push("slab: "+(fields.slab.company||"")+(fields.slab.grade?" "+fields.slab.grade:""));
+  if(fields.language) readBits.push("language: "+langNameOf(fields.language));
+  if(fields.namePrinted && fields.namePrinted!==fields.name) readBits.push("printed name: "+fields.namePrinted);
+  if(fields.dexNo) readBits.push("Pokédex № "+fields.dexNo);
   if(fields.firstEdition===true) readBits.push("1st Edition stamp seen");
   if(fields.setSymbol) readBits.push("symbol: "+fields.setSymbol);
   if(fields.yearLine) readBits.push("© "+fields.yearLine);
-  wrap.innerHTML='<div class="picker-box" role="dialog" aria-modal="true" aria-label="Which card is it?" style="width:min(680px,100%)"><h3>Which one is it?</h3><p class="note" style="margin:0">Read from your photo: <b style="color:var(--ink)">'+escHtml(fields.name||"")+'</b>'+(readBits.length?(" · "+escHtml(readBits.join(" · "))):"")+'. Ranked by combined evidence — tap the printing that matches your card.</p><div class="cand-grid">'+cards+'</div><div class="btnrow"><button class="btn" data-none="1">None of these — search by name</button><button class="btn" data-cancel="1">Cancel</button></div></div>';
+  var langDetected=fields.language && fields.language!=="en";
+  var mainLabel=langDetected ? '<p class="note" style="margin:12px 0 0"><b style="color:var(--ink)">'+escHtml(langNameOf(fields.language))+' printings</b> — the only printings your photo can match.</p>' : "";
+  var altHtml="";
+  if(langDetected && altScored && altScored.length){
+    altHtml='<p class="note" style="margin:16px 0 0;border-top:1px solid var(--line);padding-top:12px"><b style="color:var(--ink)">Other languages — manual alternatives only.</b> Different printings with different values; not matched to your photo.</p><div class="cand-grid">'+altScored.map(function(s,i){ return cardHTML(s, "data-alt", i); }).join("")+'</div>';
+  }
+  wrap.innerHTML='<div class="picker-box" role="dialog" aria-modal="true" aria-label="Which card is it?" style="width:min(680px,100%)"><h3>Which one is it?</h3><p class="note" style="margin:0">Read from your photo: <b style="color:var(--ink)">'+escHtml(fields.name||"")+'</b>'+(readBits.length?(" · "+escHtml(readBits.join(" · "))):"")+'. Ranked by combined evidence — tap the printing that matches your card.</p>'+mainLabel+'<div class="cand-grid">'+cards+'</div>'+altHtml+'<div class="btnrow"><button class="btn" data-none="1">None of these — search by name</button><button class="btn" data-cancel="1">Cancel</button></div></div>';
   document.body.appendChild(wrap);
   function close(){ if(wrap.parentNode) document.body.removeChild(wrap); }
   wrap.querySelectorAll("[data-cand]").forEach(function(b){
     b.addEventListener("click",function(){
       var it=scored[Number(b.getAttribute("data-cand"))].item;
+      close();
+      it._fromPhoto=true; it._photoFields=fields;
+      openDetail(it);
+    });
+  });
+  wrap.querySelectorAll("[data-alt]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var it=altScored[Number(b.getAttribute("data-alt"))].item;
       close();
       it._fromPhoto=true; it._photoFields=fields;
       openDetail(it);
@@ -2568,7 +2818,20 @@ function showScoredPicker(scored, fields){
 function photoAddSlotHTML(item){ return item && item._fromPhoto ? '<div id="photoAddWrap"></div>' : ""; }
 function renderPhotoAdd(item){
   var wrap=$("photoAddWrap"); if(!wrap) return;
-  if(!item._pa) item._pa={cond:"raw", grader:"PSA", grade:10, edition:"unlimited"};
+  if(!item._pa){
+    item._pa={cond:"raw", grader:"PSA", grade:10, edition:"unlimited"};
+    var f0=item._photoFields||{};
+    if(f0.slab){
+      // A slab in the photo preselects Graded with the label's own
+      // company + grade — the user confirms rather than re-typing.
+      // A grade the label didn't yield is never guessed: the select
+      // simply starts at the top and the banner says it wasn't read.
+      item._pa.cond="graded";
+      item._pa.grader=mapSlabCompany(f0.slab.company);
+      var sg=parseSlabGrade(f0.slab.grade);
+      if(sg!=null) item._pa.grade=sg;
+    }
+  }
   var pa=item._pa;
   var f=item._photoFields||{};
   var readBits=[];
@@ -2578,6 +2841,7 @@ function renderPhotoAdd(item){
   if(f.attacks && f.attacks.length) readBits.push("attacks "+f.attacks.map(function(a){ return escHtml(a.name); }).join(", "));
   if(f.firstEdition===true) readBits.push("1st Edition stamp seen");
   if(f.yearLine) readBits.push("© "+escHtml(f.yearLine));
+  if(f.slab) readBits.push("slab: "+escHtml(String(f.slab.company||""))+(f.slab.grade?" "+escHtml(String(f.slab.grade)):"")+(f.slab.cert?" · cert "+escHtml(String(f.slab.cert)):""));
   var es=editionSummary(item);
   var hasEditions=!!(es.hasFirst||es.variantFirst||es.needsSeparateFirstEntry);
   var gradeOpts=""; for(var gv=10; gv>=1; gv-=0.5){ var gvv=Math.round(gv*10)/10; gradeOpts+='<option value="'+gvv+'"'+(Number(pa.grade)===gvv?' selected':'')+'>'+(gvv%1===0?gvv.toFixed(0):gvv)+'</option>'; }
@@ -2607,7 +2871,7 @@ function renderPhotoAdd(item){
     var calc=collectionValueFor(src, pa.cond, pa.grader, pa.grade);
     var basis=calc.basis;
     if(hasEditions && pa.edition==="first") basis=(basis?basis+" · ":"")+"copy marked 1st Edition on the photo sheet (a photo can't verify the stamp)";
-    var col={id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,game:item.game,conditionState:pa.cond,grader:pa.cond==="graded"?pa.grader:null,grade:pa.cond==="graded"?pa.grade:null,edition:hasEditions?pa.edition:null,rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:basis};
+    var col={id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,game:item.game,conditionState:pa.cond,grader:pa.cond==="graded"?pa.grader:null,grade:pa.cond==="graded"?pa.grade:null,cert:(pa.cond==="graded" && f.slab && f.slab.cert)?String(f.slab.cert):null,language:langOf(item),edition:hasEditions?pa.edition:null,rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:src.price,price:calc.value,priceLabel:calc.label,valueBasis:basis};
     state.collection.unshift(col); refreshStats();
     toast("Added to collection — "+conditionBadgeText(col)+" ✓");
     wrap.innerHTML='<div class="quickadd"><div class="id-banner"><b>Added · '+escHtml(conditionBadgeText(col))+(col.edition==="first"?' · 1st Edition':"")+'</b><span>'+escHtml(item.name)+(item.set?" · "+escHtml(item.set):"")+' is in your collection'+(calc.value!=null?(" — valued at "+money(calc.value)+" ("+escHtml(calc.label)+")"):"")+'.</span></div><div class="btnrow" style="margin-top:12px"><button class="btn" id="paUndo">Undo</button><button class="btn" id="paAgain">Add another copy</button><button class="btn primary" id="paView">View collection</button></div></div>';
@@ -2632,7 +2896,7 @@ function openDetail(item, keepEbayFilters){
   $("modalBody").innerHTML=
     '<div class="sheetgrid"><div><img class="big" id="modalImg" alt=""></div><div>'+
     '<h2 style="margin-top:2px" id="modalName"></h2>'+
-    '<p class="sub" id="modalSub" style="margin-bottom:4px"></p><div id="modalEditions"></div>'+
+    '<p class="sub" id="modalSub" style="margin-bottom:4px"></p><div id="modalEditions"></div><div id="modalSlab"></div>'+
     '<div class="kv"><div><span>Set</span><b id="kvSet"></b></div><div><span>Number</span><b id="kvNum"></b></div><div><span>Rarity</span><b id="kvRar"></b></div><div><span id="kvPriceLabel">Market price</span><b id="kvPrice"></b></div></div>'+
     '<div class="pricegrid" id="priceGrid">'+priceRowsHTML(item)+'</div>'+
     photoAddSlotHTML(item)+
@@ -2656,7 +2920,8 @@ function openDetail(item, keepEbayFilters){
   $("modalImg").src=item.image;
   $("modalName").textContent=item.name;
   $("modalSub").textContent=item.game+" · Unlimited headline (PriceCharting) · 1st Edition priced separately where the feed has it";
-  var edEl=$("modalEditions"); if(edEl) edEl.innerHTML=editionBadgesHTML(item)+(inCol?'<div style="margin-top:6px">'+state.collection.filter(function(c){return c.id===item.id;}).map(function(c){return conditionBadgeHTML(c);}).join(" ")+'</div>':"");
+  var edEl=$("modalEditions"); if(edEl) edEl.innerHTML=editionBadgesHTML(item)+((item.language&&item.language!=="en")?'<div class="ed-badges" style="margin-top:6px"><span class="ed-badge unlimited">'+escHtml(langNameOf(item.language))+' printing</span></div>':"")+(inCol?'<div style="margin-top:6px">'+state.collection.filter(function(c){return c.id===item.id;}).map(function(c){return conditionBadgeHTML(c);}).join(" ")+'</div>':"");
+  var msb=$("modalSlab"); if(msb) msb.innerHTML=item._photoFields?slabBannerHTML(item._photoFields):"";
   var fin0=printingFinish(item);
   var eh=$("ebayHead"); if(eh) eh.textContent="Live on eBay"+(fin0.label?(" — "+fin0.label+" printing"):"");
   var en=$("ebayNote"); if(en && fin0.kind) en.textContent="Real items for sale for this exact printing, fetched live. This card also exists as a "+(fin0.kind==="holo"?"non-holo":"holo")+" printing under a different collector number — listings that clearly belong to that sibling are filtered out here. Tap any listing to open it on eBay and buy.";
@@ -2707,7 +2972,7 @@ function toggleCollection(item){
   // Fallback direct add (legacy paths) defaults to Raw via picker logic
   var src={rawValue:item.rawValue!=null?item.rawValue:null,ladder:item.ladder||null,fullLadder:item.fullLadder||null,price:item.price};
   var calc=collectionValueFor(src,"raw",null,null);
-  state.collection.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis,game:item.game,conditionState:"raw",grader:null,grade:null,rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:item.price});
+  state.collection.unshift({id:item.id,name:item.name,set:item.set,number:item.number,image:item.image,price:calc.value,priceLabel:calc.label,valueBasis:calc.basis,game:item.game,conditionState:"raw",grader:null,grade:null,language:langOf(item),rawValue:src.rawValue,ladder:src.ladder,fullLadder:src.fullLadder,_basePrice:item.price});
   toast("Added to collection — Raw ✓");
   refreshStats();
 }
@@ -2721,8 +2986,8 @@ function toggleWishlist(item){
 /* ---------- Collection / wishlist render ---------- */
 function rowHTML(item, isWish){
   var hit = isWish && item.target!=null && item.price!=null && item.price<=item.target;
-  var badge = isWish ? "" : '<span style="display:block;margin-top:4px">'+conditionBadgeHTML(item)+(item.edition==="first"?' <span class="ed-badge first">1st Edition</span>':(item.edition==="unlimited"?' <span class="ed-badge unlimited">Unlimited</span>':""))+(item.valueBasis?' <span style="font-size:12px;color:var(--muted)">'+escHtml(item.valueBasis)+'</span>':"")+'</span>';
-  return '<img alt="" src="'+item.image+'"><div class="info"><b></b><span>'+(item.set||"")+(item.number?" · #"+item.number:"")+'</span>'+badge+(isWish?'<span style="display:block;margin-top:3px">Target: <b style="display:inline;font-size:13px">'+money(item.target)+'</b>'+(hit?' · <b style="display:inline;color:var(--accent);font-size:13px">TARGET HIT ✓</b>':'')+'</span>':"")+'</div><div class="val">'+money(item.price)+'<small>'+(item.priceLabel||"market")+'</small></div>';
+  var badge = isWish ? "" : '<span style="display:block;margin-top:4px">'+conditionBadgeHTML(item)+(item.edition==="first"?' <span class="ed-badge first">1st Edition</span>':(item.edition==="unlimited"?' <span class="ed-badge unlimited">Unlimited</span>':""))+(item.cert?' <span style="font-size:12px;color:var(--muted)">Cert #'+escHtml(String(item.cert))+'</span>':"")+(item.valueBasis?' <span style="font-size:12px;color:var(--muted)">'+escHtml(item.valueBasis)+'</span>':"")+'</span>';
+  return '<img alt="" src="'+item.image+'"><div class="info"><b></b><span>'+(item.set||"")+(item.number?" · #"+item.number:"")+((item.language&&item.language!=="en")?" · "+escHtml(langNameOf(item.language)):"")+'</span>'+badge+(isWish?'<span style="display:block;margin-top:3px">Target: <b style="display:inline;font-size:13px">'+money(item.target)+'</b>'+(hit?' · <b style="display:inline;color:var(--accent);font-size:13px">TARGET HIT ✓</b>':'')+'</span>':"")+'</div><div class="val">'+money(item.price)+'<small>'+(item.priceLabel||"market")+'</small></div>';
 }
 function renderCollection(){
   var el=$("collectionList");
