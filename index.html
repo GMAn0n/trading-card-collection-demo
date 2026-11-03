@@ -184,6 +184,11 @@
   a.prow{text-decoration:none;color:inherit}
   a.prow:hover{border-color:var(--accent)}
   a.prow b{color:var(--accent)}
+  /* More prices — cross-source comparison (PriceCharting / TCGCSV / Cardmarket) */
+  .more-prices{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px}
+  .more-prices .mp-title{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:800}
+  .more-prices .prow small{display:block;font-weight:600;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.45}
+  .cm-sub{font-size:12.5px;font-weight:800;color:var(--ink);margin:6px 0 0}
   .cond-row{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}
   .cond-row .cond-label{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:800;display:block;margin-bottom:6px}
   .cond-links{display:flex;flex-wrap:wrap;gap:6px}
@@ -330,7 +335,7 @@
   <!-- SEARCH -->
   <section class="panel" id="panel-search" role="tabpanel">
     <h2>Search the catalogue</h2>
-    <p class="sub">Search pulls the card catalogue live (via TCGdex — the same TCGplayer data <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors daily). The headline value on every card is the <b>raw, ungraded price for that exact printing</b> — set and number — from <b>PriceCharting</b>: Base Set, Base Set 2, Jungle, Fossil, Legendary Collection and 1st Edition vs Unlimited all price separately, because they trade at different money. TCGplayer's near-mint market figures appear as labelled per-finish rows on each card page. Tap any card for the full breakdown, <b>For sale on TCGplayer</b> product cards per finish <b>and live eBay listings in-app</b> with Auction / Buy It Now filters, then tap through to buy.</p>
+    <p class="sub">Search pulls the card catalogue live (via TCGdex — the same TCGplayer data <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors daily). The headline value on every card is the <b>raw, ungraded price for that exact printing</b> — set and number — from <b>PriceCharting</b>: Base Set, Base Set 2, Jungle, Fossil, Legendary Collection and 1st Edition vs Unlimited all price separately, because they trade at different money. TCGplayer's near-mint market figures appear as labelled per-finish rows on each card page. Tap any card for the full breakdown, a <b>More prices</b> comparison by source (PriceCharting headline, TCGplayer via the TCGCSV daily feed, and Cardmarket's EUR price guide by edition), <b>For sale on TCGplayer</b> product cards per finish <b>and live eBay listings in-app</b> with Auction / Buy It Now filters, then tap through to buy.</p>
     <div class="searchbar" role="search">
       <div class="grow">
         <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -375,14 +380,14 @@
     <p class="sub">What this demo does, where its data comes from, and how buying works.</p>
     <div class="aboutgrid">
       <div class="cardbox"><h3>What it is</h3><p>A trading card companion: photograph or search any Pokémon or Magic card, see what it's worth right now, track a collection's total value, and keep a wishlist with target prices — all in one place, on phone or desktop.</p></div>
-      <div class="cardbox"><h3>Data sources</h3><p>Headline values are the <b>raw (ungraded) price for the exact printing</b> — name, set and collector number — from <a href="https://www.pricecharting.com" target="_blank" rel="noopener">PriceCharting</a>, fetched per card: a Base Set Raichu, a Fossil Raichu and a 1st Edition printing each carry their own value. Pokémon card images, sets and TCGplayer market prices come live from <a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex</a>, with the <a href="https://pokemontcg.io" target="_blank" rel="noopener">Pokémon TCG API</a> as backup; those TCGplayer figures are near-mint market prices, shown as labelled per-finish rows (1st Edition and Unlimited separately), never as the headline. That TCGplayer pricing is the same catalogue <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors as daily price files. Magic data and prices come from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Prices are fetched fresh each time you search.</p></div>
-      <div class="cardbox"><h3>Buying</h3><p>Every card page shows two ways to buy that exact printing. <b>For sale on TCGplayer:</b> one product card per finish (Holofoil, Normal, Reverse Holofoil…) with the TCGplayer product photo, “from” lowest current ask, market price and TCGplayer Direct price when available — filter by finish and sort by lowest ask or market price, then tap through to that finish's <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> product page with every seller. <b>Live on eBay:</b> thumbnail, price + shipping and all-in total, bids and end time on auctions, seller and condition — fetched live via the eBay search proxy, with filters for Auction / Buy It Now and sorting by best match, price, or ending soonest. Purchases happen on the marketplace — this demo never handles payment.</p></div>
+      <div class="cardbox"><h3>Data sources</h3><p>Headline values are the <b>raw (ungraded) price for the exact printing</b> — name, set and collector number — from <a href="https://www.pricecharting.com" target="_blank" rel="noopener">PriceCharting</a>, fetched per card: a Base Set Raichu, a Fossil Raichu and a 1st Edition printing each carry their own value. Pokémon card images, sets and TCGplayer market prices come live from <a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex</a>, with the <a href="https://pokemontcg.io" target="_blank" rel="noopener">Pokémon TCG API</a> as backup; those TCGplayer figures are near-mint market prices, shown as labelled per-finish rows (1st Edition and Unlimited separately), never as the headline. That TCGplayer pricing is the same catalogue <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors as daily price files — each card page also resolves the printing through the TCGCSV feed directly, shown as its own labelled row. Cardmarket figures on the card page come from Cardmarket's official daily catalogue + price-guide exports, staged as compact per-letter index files the page fetches on demand when a card page opens: EUR guide values (not live listings), one row per edition/printing — the export carries no set-name or language field, so editions are never labelled by language. Identity and value stay separate on purpose: catalogues establish which card it is, pricing sources establish what it's worth, and no source silently overrides another. Magic data and prices come from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Prices are fetched fresh each time you search.</p></div>
+      <div class="cardbox"><h3>Buying</h3><p>Japanese printings also get a <b>Buyee</b> search link-out (Mercari JP + Yahoo! Auctions JP) — link-out only, because Buyee sits behind bot protection, so no Buyee listings are fetched in-app. Every card page shows two ways to buy that exact printing. <b>For sale on TCGplayer:</b> one product card per finish (Holofoil, Normal, Reverse Holofoil…) with the TCGplayer product photo, “from” lowest current ask, market price and TCGplayer Direct price when available — filter by finish and sort by lowest ask or market price, then tap through to that finish's <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> product page with every seller. <b>Live on eBay:</b> thumbnail, price + shipping and all-in total, bids and end time on auctions, seller and condition — fetched live via the eBay search proxy, with filters for Auction / Buy It Now and sorting by best match, price, or ending soonest. Purchases happen on the marketplace — this demo never handles payment.</p></div>
       <div class="cardbox"><h3>For partners</h3><p>Built by Muse Enterprise Solutions as a working product exhibit for marketplace and data partnership conversations — including TCGplayer affiliate (Impact) and partner data access. Photo identification (an AI read of the printed name, HP, attacks, collector number, illustrator, finish, edition stamp, set symbol and © year line — plus grading-slab labels: company, grade and cert — scored across every printing of the name, with an on-device OCR fallback) and graded-card states are live in this demo; the full version adds population data and daily price alerts.</p></div>
     </div>
   </section>
 
   <footer>
-    Demo build — collection and wishlist live for this visit only and reset when the page closes. Card data © their respective publishers; headline values are raw (ungraded) prices per exact printing via PriceCharting; Pokémon catalogue and TCGplayer market prices via TCGdex (mirrored daily by TCGCSV) with Pokémon TCG API backup; Magic prices via Scryfall. Card pages show TCGplayer product cards per finish (photo, lowest ask + market, direct link to the product page) plus live eBay listings in-app (via the eBay search proxy) for the exact card shown.
+    Demo build — collection and wishlist live for this visit only and reset when the page closes. Card data © their respective publishers; headline values are raw (ungraded) prices per exact printing via PriceCharting; Pokémon catalogue and TCGplayer market prices via TCGdex (mirrored daily by TCGCSV) with Pokémon TCG API backup; Magic prices via Scryfall. Card pages show a source-labelled More prices comparison (PriceCharting · TCGplayer via TCGCSV daily feed · Cardmarket EUR price guide by edition, from its official daily exports), TCGplayer product cards per finish (photo, lowest ask + market, direct link to the product page) plus live eBay listings in-app (via the eBay search proxy) for the exact card shown, and a Buyee link-out for Japanese printings.
   </footer>
 </div>
 
@@ -1195,6 +1200,213 @@ function updateDetailValue(item){
   var ga=$("gradedAnchors"); if(ga) ga.innerHTML=gradedAnchorsHTML(item);
   if($("gradedServices")) renderGradedServices(item);
   var edEl=$("modalEditions"); if(edEl && !edEl.innerHTML) edEl.innerHTML=editionBadgesHTML(item);
+  if($("morePrices")) renderMorePrices(item);
+}
+/* ---------- More prices — cross-source comparison ----------
+   The multi-source rule, on the card page: the headline stays the
+   PriceCharting raw value (above). Every other source gets its own
+   labelled row in its own currency — TCGplayer via the TCGCSV daily
+   feed (USD, fetched live through the proxy) and the Cardmarket
+   price guide (EUR, from Cardmarket's official daily export files,
+   staged as compact per-letter index files, fetched on demand).
+   No source ever overrides or blends
+   into another; a source with no row for this printing is omitted
+   silently, never filled in from a different printing or language. */
+var TCGCSV_EP="https://ebay-search-proxy.369samclarkisfine.workers.dev/tcgcsv";
+var tcgcsvCache={};
+/* Cardmarket data is NEVER bundled into this page. It is fetched at
+   runtime only, in per-letter shards: data/cm-<x>.json, where <x> is
+   the first character of the normalized card name (a–z, or "0" for
+   anything else). Each shard maps normalized name → edition rows.
+   Shards are cached in memory for the session. If a shard fetch fails,
+   a whole-index data/cardmarket-index.json is tried once as a fallback
+   when one happens to exist — the page never requires it. Any failure
+   omits the Cardmarket block silently. */
+var cmShards={}, cmShardPromises={}, cmShardState={};
+var cmFallbackData=null, cmFallbackPromise=null, cmFallbackState="idle";
+function eurFmt(n){ if(n==null||isNaN(n)) return "—"; return "€"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function cmNorm(s){ return String(s||"").replace(/’/g,"'").toLowerCase().replace(/[^a-z0-9à-ÿ'& ]+/g," ").replace(/\s+/g," ").trim(); }
+function cmShardLetter(normName){
+  var c=String(normName||"").charAt(0);
+  return (c>="a" && c<="z") ? c : "0";
+}
+function loadCmFallback(){
+  if(cmFallbackData) return Promise.resolve(cmFallbackData);
+  if(cmFallbackPromise) return cmFallbackPromise;
+  cmFallbackState="pending";
+  cmFallbackPromise=fetch("data/cardmarket-index.json",{headers:{"Accept":"application/json"}}).then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); }).then(function(d){
+    if(d && d.cards){ cmFallbackData=d; cmFallbackState="ok"; return d; }
+    cmFallbackState="failed"; return null;
+  }).catch(function(){ cmFallbackState="failed"; return null; });
+  return cmFallbackPromise;
+}
+function loadCmShard(item){
+  var letter=cmShardLetter(cmNorm(item && item.name));
+  if(cmShards[letter]) return Promise.resolve(cmShards[letter]);
+  if(cmFallbackData) return Promise.resolve(null);
+  if(cmShardPromises[letter]) return cmShardPromises[letter];
+  cmShardState[letter]="pending";
+  cmShardPromises[letter]=fetch("data/cm-"+letter+".json",{headers:{"Accept":"application/json"}}).then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); }).then(function(d){
+    if(d && typeof d==="object" && !Array.isArray(d)){ cmShards[letter]=d; cmShardState[letter]="ok"; return d; }
+    throw new Error("bad shard");
+  }).catch(function(){
+    // Shard unavailable (404 / offline) — try the optional whole-index
+    // fallback once; if that is absent too, omit Cardmarket silently.
+    return loadCmFallback().then(function(d){
+      cmShardState[letter]= d ? "ok" : "failed";
+      return d ? null : null;
+    });
+  });
+  return cmShardPromises[letter];
+}
+function cmStateFor(item){
+  if(cmFallbackData) return "ok";
+  var letter=cmShardLetter(cmNorm(item && item.name));
+  if(cmShards[letter]) return "ok";
+  var st=cmShardState[letter];
+  if(st) return st;
+  if(cmFallbackState==="pending") return "pending";
+  if(cmFallbackState==="failed") return "failed";
+  return "idle";
+}
+function itemCmTerms(item){
+  var terms=[], seen={};
+  function add(v){ var t=cmNorm(typeof v==="string"?v:(v&&v.name)); if(t && !seen[t]){ seen[t]=true; terms.push(t); } }
+  var raw=item.raw||{};
+  (raw.attacks||item.attacks||[]).forEach(add);
+  (raw.abilities||[]).forEach(add);
+  if(raw.power) add(raw.power); if(item.power) add(item.power);
+  if(raw.ability) add(raw.ability);
+  return terms;
+}
+function cmBracketTerms(rowName){
+  var m=String(rowName||"").match(/\[([^\]]*)\]/);
+  if(!m) return [];
+  return m[1].split("|").map(function(s){ return cmNorm(s); }).filter(Boolean);
+}
+function cmRowsFor(item){
+  var key=cmNorm(item.name), all=null;
+  var shard=cmShards[cmShardLetter(key)];
+  if(shard) all=shard[key]||[];
+  else if(cmFallbackData && cmFallbackData.cards) all=cmFallbackData.cards[key]||[];
+  if(!all) return null;
+  if(!all.length) return {rows:[],total:0,matched:false,allCount:0};
+  var terms=itemCmTerms(item);
+  var best=0, scored=all.map(function(r){
+    var bt=cmBracketTerms(r.name), score=0;
+    bt.forEach(function(t){ if(terms.indexOf(t)>=0) score++; });
+    if(score>best) best=score;
+    return {row:r,score:score};
+  });
+  if(terms.length && best>0){
+    var picked=scored.filter(function(s){ return s.score===best; }).map(function(s){ return s.row; });
+    return {rows:picked,total:all.length,matched:true,allCount:all.length};
+  }
+  var byTrend=all.slice().sort(function(a,b){ return ((b.trend!=null?b.trend:(b.avg||0))-((a.trend!=null?a.trend:(a.avg||0)))); });
+  return {rows:byTrend.slice(0,6),total:all.length,matched:false,allCount:all.length};
+}
+function buyeeUrl(item){
+  var kw=[item.name];
+  var s=String(item.promoLabel||item.set||"").replace(/^Japanese\s+/i,"").replace(/·.*$/,"").trim();
+  if(s && cmNorm(s)!==cmNorm(item.name)) kw.push(s);
+  return "https://buyee.jp/item/search/query/"+encodeURIComponent(kw.join(" "));
+}
+function loadTcgcsv(item){
+  if(!item || item.game!=="Pokémon") return;
+  var lang=langOf(item);
+  // TCGplayer prices English and Japanese printings (its Pokémon Japan
+  // catalogue) — it does not price DE/FR/IT/… printings separately, so
+  // for those languages there is no TCGCSV row to show, by design.
+  if(lang!=="en" && lang!=="ja") return;
+  var key=(item.name+"|"+(item.set||"")+"|"+(item.number||"")+"|"+lang).toLowerCase();
+  if(tcgcsvCache[key]){ item._tcgcsv=tcgcsvCache[key]; item._tcgcsvState="done"; renderMorePrices(item); return; }
+  if(item._tcgcsvState==="pending") return;
+  item._tcgcsvState="pending"; renderMorePrices(item);
+  var url=TCGCSV_EP+"?name="+encodeURIComponent(item.name||"")+"&set="+encodeURIComponent(item.set||"");
+  if(item.number) url+="&number="+encodeURIComponent(item.number);
+  fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); }).then(function(d){
+    // Language guard: for a Japanese printing, only a Pokémon Japan
+    // catalogue result (category 85) is that printing's own price.
+    // The resolver can fuzzy-match a Japanese set name to the English
+    // product (e.g. "Japanese Southern Islands" → the English Southern
+    // Islands Mew, category 3) — that is a different card with a
+    // different value, so it is discarded, never shown.
+    if(d && d.found && lang==="ja" && d.category!==85) d={found:false};
+    tcgcsvCache[key]=(d&&d.found)?d:{found:false};
+    if(state.current && state.current.id===item.id){ item._tcgcsv=tcgcsvCache[key]; item._tcgcsvState="done"; renderMorePrices(item); }
+  }).catch(function(){
+    tcgcsvCache[key]={found:false};
+    if(state.current && state.current.id===item.id){ item._tcgcsv=tcgcsvCache[key]; item._tcgcsvState="done"; renderMorePrices(item); }
+  });
+}
+function loadMorePrices(item){
+  // Cardmarket data is fetched lazily at runtime, only now that a card
+  // page is open: just the one per-letter shard for this card's
+  // normalized name (cached in memory for the session), failing
+  // silently if unavailable. Nothing is bundled into the page.
+  if(item && item.game==="Pokémon" && cmStateFor(item)!=="failed"){
+    loadCmShard(item).then(function(){ if(state.current && state.current.id===item.id) renderMorePrices(item); });
+  }
+  renderMorePrices(item);
+  loadTcgcsv(item);
+}
+function renderMorePrices(item){
+  var box=$("morePrices"); if(!box || !state.current || state.current.id!==item.id) return;
+  if(item.game!=="Pokémon"){ box.innerHTML=""; return; }
+  var lang=langOf(item);
+  var parts=[];
+  // TCGplayer via TCGCSV
+  var tcHtml="";
+  if(lang==="en" || lang==="ja"){
+    if(item._tcgcsvState==="pending" && !item._tcgcsv){
+      tcHtml='<div class="prow"><span>TCGplayer — via TCGCSV daily feed<small>Resolving this printing to its TCGplayer product…</small></span><b>Fetching…</b></div>';
+    } else if(item._tcgcsv && item._tcgcsv.found){
+      var tc=item._tcgcsv, pr=tc.prices||{};
+      var bits=[];
+      if(pr.low!=null) bits.push("Low "+money(pr.low));
+      if(pr.mid!=null) bits.push("Mid "+money(pr.mid));
+      if(pr.directLow!=null) bits.push("Direct low "+money(pr.directLow));
+      if(tc.number) bits.push("TCGplayer #"+tc.number);
+      tcHtml='<a class="prow" href="'+escAttr(tc.url||"#")+'" target="_blank" rel="noopener"><span>TCGplayer — via TCGCSV'+(tc.subType?" · "+escHtml(tc.subType):"")+(tc.category===85?" · Pokémon Japan catalogue":"")+'<small>'+escHtml(bits.join(" · ")||"Daily TCGCSV feed")+' · USD guide figures from TCGCSV\u2019s daily TCGplayer files — tap for the product page</small></span><b>'+(pr.market!=null?("Market "+money(pr.market)):"See product")+' ↗</b></a>';
+    }
+    // found:false — omit silently (e.g. Japanese CD Promo Mew is not in
+    // TCGplayer's JP catalogue; that is expected, not an error).
+  }
+  // Cardmarket editions (EUR price guide)
+  var cmHtml="";
+  var cmState=cmStateFor(item);
+  if(cmState==="pending"){
+    cmHtml='<div class="prow"><span>Cardmarket — EUR price guide<small>Loading the staged Cardmarket index (official daily export)…</small></span><b>Fetching…</b></div>';
+  } else if(cmState==="ok"){
+    var cmr=cmRowsFor(item);
+    if(cmr && cmr.rows.length){
+      var shown=cmr.rows.slice(0,8);
+      var rowsHtml=shown.map(function(r){
+        var bits2=["Product "+r.id];
+        if(r.exp!=null) bits2.push("edition ref "+r.exp);
+        if(r.avg!=null) bits2.push("Avg "+eurFmt(r.avg));
+        if(r.low!=null) bits2.push("Low "+eurFmt(r.low));
+        if(r.trendHolo!=null) bits2.push("Holo trend "+eurFmt(r.trendHolo));
+        return '<a class="prow" href="https://www.cardmarket.com/en/Pokemon/Products?idProduct='+encodeURIComponent(r.id)+'" target="_blank" rel="noopener"><span>'+escHtml(r.name||item.name)+'<small>'+escHtml(bits2.join(" · "))+'</small></span><b>'+(r.trend!=null?("Trend "+eurFmt(r.trend)):eurFmt(r.avg))+' ↗</b></a>';
+      }).join("");
+      cmHtml='<div class="cm-sub">Cardmarket editions — EUR price guide (not live listings)</div>'+
+        '<p class="note" style="margin:0">'+(cmr.matched?("Matched by this card\u2019s attack / variant name. "):("No attack-name match in the guide, so these are the highest-trend products under this name. "))+'Cardmarket\u2019s export carries no set-name or language field, so each row is a separate edition/printing and this list does <b>not</b> claim which edition is which language.'+(cmr.rows.length>shown.length?(" Showing "+shown.length+" of "+cmr.rows.length+" matched products."):"")+(cmr.allCount>cmr.rows.length?(" "+cmr.allCount+" products share this card name in the guide."):"")+'</p>'+rowsHtml;
+    }
+    // No rows for this name — omit silently.
+  }
+  // Buyee — link-out only for Japanese printings. Terms check first
+  // (2026-11-03): no explicit scraper ban, but the site sits behind
+  // active bot protection (robots.txt 403, search returns a 202
+  // challenge), so NO parser/fetch was built — a human tap only.
+  var buyeeHtml="";
+  if(lang==="ja" || item.supplemental){
+    buyeeHtml='<a class="prow" href="'+escAttr(buyeeUrl(item))+'" target="_blank" rel="noopener"><span>Buyee — Mercari JP + Yahoo! Auctions JP search<small>Link-out only — Buyee sits behind bot protection, so no listings are fetched in-app. Opens Buyee search for this card.</small></span><b>Search ↗</b></a>';
+  }
+  if(!tcHtml && !cmHtml && !buyeeHtml){ box.innerHTML=""; return; }
+  var pcRow="";
+  if(item.rawValue!=null) pcRow='<a class="prow" href="'+escAttr(item.rawUrl||"#")+'" target="_blank" rel="noopener"><span>PriceCharting — Ungraded (the headline value)<small>USD · raw, ungraded, for this exact printing</small></span><b>'+money(item.rawValue)+' ↗</b></a>';
+  else if(headlineOf(item).pending) pcRow='<div class="prow"><span>PriceCharting — Ungraded (the headline value)</span><b>Fetching…</b></div>';
+  box.innerHTML='<div class="more-prices"><div class="mp-title">More prices — compare by source</div><p class="note" style="margin:0">The headline stays PriceCharting. Each source below keeps its own label and currency — figures are never blended or substituted across printings or languages.</p>'+pcRow+tcHtml+cmHtml+buyeeHtml+'</div>';
 }
 function renderResults(list, query, sourceNote){
   var status=$("searchStatus"), results=$("results");
@@ -3090,6 +3302,7 @@ function openDetail(item, keepEbayFilters){
     '<p class="sub" id="modalSub" style="margin-bottom:4px"></p><div id="modalEditions"></div><div id="modalSlab"></div>'+
     '<div class="kv"><div><span>Set</span><b id="kvSet"></b></div><div><span>Number</span><b id="kvNum"></b></div><div><span>Rarity</span><b id="kvRar"></b></div><div><span id="kvPriceLabel">Market price</span><b id="kvPrice"></b></div></div>'+
     '<div class="pricegrid" id="priceGrid">'+priceRowsHTML(item)+'</div>'+
+    '<div id="morePrices" aria-live="polite"></div>'+
     photoAddSlotHTML(item)+
     gradedSectionHTML(item)+
     '<div class="btnrow"><button class="btn primary" id="mAddCol">'+(inCol?"Add another copy — choose condition":"Add to collection — choose condition")+'</button><button class="btn" id="mAddWish">'+(inWish?"✓ On wishlist":"Add to wishlist")+'</button>'+(inCol?'<button class="btn" id="mRemoveCol">Remove a copy</button>':'')+'</div>'+
@@ -3148,6 +3361,7 @@ function openDetail(item, keepEbayFilters){
   });
   renderTcgProducts(item);
   loadEbayListings(item);
+  loadMorePrices(item);
   loadGradedComparison(item);
   if(item.game==="Pokémon") ensureValue(item, function(){ updateDetailValue(item); updateTilePrice(item); var ga=$("gradedAnchors"); if(ga) ga.innerHTML=gradedAnchorsHTML(item); });
 }
