@@ -319,7 +319,7 @@
         <ol class="steps">
           <li><span class="n">1</span><span><b>Turn on the camera</b> and allow access when your browser asks. On a phone it uses the rear camera automatically. No prompt? Tap <b>Take a photo — device camera</b> instead — it opens your phone's camera app directly.</span></li>
           <li><span class="n">2</span><span><b>Fill the card-shaped guide</b> with the card, edge to edge — including its <b>bottom edge</b>, where the collector number sits — in good light, and tap <b>Take photo</b>. The preview shows the camera's full field (nothing is cropped away) and the photo is kept at full resolution.</span></li>
-          <li><span class="n">3</span><span><b>Let it identify the card.</b> First, AI reads the photo (sent to our card-data proxy) and returns the card's name, HP and collector number. If that can't read it, the on-device fallback takes over: it finds the card's edges in the photo, squares it up, and reads only two fixed spots on the card itself — the <b>name in the top band</b> (HP beside it as a cross-check) and the <b>collector number in the bottom-right</b>, the “4/102” that fingerprints the exact printing. The number resolves first; the name confirms it. If they disagree, or more than one printing fits, you pick from picture cards; if nothing reads clearly, it says so and asks for a retake instead of guessing. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings.</span></li>
+          <li><span class="n">3</span><span><b>Let it identify the card.</b> First, AI reads the photo (sent to our card-data proxy) and returns the card's name, HP, attacks, collector number, 1st Edition stamp, set symbol and © year line. If that can't read it, the on-device fallback takes over: it finds the card's edges in the photo, squares it up, and reads the <b>name in the top band</b> (HP beside it as a cross-check) and the <b>collector number in the bottom-right</b>. Either way, <b>every printing of that name is then scored on the combination</b> — number, HP, each attack and its damage, the edition stamp, the set symbol and the © years — which is what separates look-alike reprints like Base Set from Base Set 2, since they share name, HP and attacks. A read number that no printing of that name carries is treated as a misread and ignored, never shown as fact. Only a clear winner opens automatically; anything close goes to a picker where each printing lists the signals that matched it, so your tap is an informed one. If nothing reads clearly, it says so and asks for a retake instead of guessing. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings.</span></li>
           <li><span class="n">4</span><span><b>Add it in one tap.</b> From a photo, the card page leads with a one-tap <b>Add to collection</b> — Raw by default, with Damaged and Graded (PSA / CGC / BGS / SGC / TAG) right there on the same sheet. A photo can't prove a 1st Edition stamp, so photo adds default to Unlimited unless you switch.</span></li>
         </ol>
         <p class="note" style="margin-top:16px">Live camera not prompting? Use <b>Take a photo — device camera</b> — it opens your phone's own camera app and needs no browser permission, and the photo works exactly the same way here. <b>Upload a photo</b> opens your camera roll or file picker. If you want the live viewfinder, open this link directly in Safari or Chrome (not inside another app's preview), tap the lock / site-settings icon in the address bar, set Camera to <b>Allow</b>, reload, and tap “Turn on camera” again.</p>
@@ -377,7 +377,7 @@
       <div class="cardbox"><h3>What it is</h3><p>A trading card companion: photograph or search any Pokémon or Magic card, see what it's worth right now, track a collection's total value, and keep a wishlist with target prices — all in one place, on phone or desktop.</p></div>
       <div class="cardbox"><h3>Data sources</h3><p>Headline values are the <b>raw (ungraded) price for the exact printing</b> — name, set and collector number — from <a href="https://www.pricecharting.com" target="_blank" rel="noopener">PriceCharting</a>, fetched per card: a Base Set Raichu, a Fossil Raichu and a 1st Edition printing each carry their own value. Pokémon card images, sets and TCGplayer market prices come live from <a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex</a>, with the <a href="https://pokemontcg.io" target="_blank" rel="noopener">Pokémon TCG API</a> as backup; those TCGplayer figures are near-mint market prices, shown as labelled per-finish rows (1st Edition and Unlimited separately), never as the headline. That TCGplayer pricing is the same catalogue <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors as daily price files. Magic data and prices come from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Prices are fetched fresh each time you search.</p></div>
       <div class="cardbox"><h3>Buying</h3><p>Every card page shows two ways to buy that exact printing. <b>For sale on TCGplayer:</b> one product card per finish (Holofoil, Normal, Reverse Holofoil…) with the TCGplayer product photo, “from” lowest current ask, market price and TCGplayer Direct price when available — filter by finish and sort by lowest ask or market price, then tap through to that finish's <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> product page with every seller. <b>Live on eBay:</b> thumbnail, price + shipping and all-in total, bids and end time on auctions, seller and condition — fetched live via the eBay search proxy, with filters for Auction / Buy It Now and sorting by best match, price, or ending soonest. Purchases happen on the marketplace — this demo never handles payment.</p></div>
-      <div class="cardbox"><h3>For partners</h3><p>Built by Muse Enterprise Solutions as a working product exhibit for marketplace and data partnership conversations — including TCGplayer affiliate (Impact) and partner data access. Photo identification (in-browser OCR of the printed name, number and set size) and graded-card states are live in this demo; the full version adds population data and daily price alerts.</p></div>
+      <div class="cardbox"><h3>For partners</h3><p>Built by Muse Enterprise Solutions as a working product exhibit for marketplace and data partnership conversations — including TCGplayer affiliate (Impact) and partner data access. Photo identification (an AI read of the printed name, HP, attacks, collector number, edition stamp, set symbol and © year line, scored across every printing of the name, with an on-device OCR fallback) and graded-card states are live in this demo; the full version adds population data and daily price alerts.</p></div>
     </div>
   </section>
 
@@ -1735,10 +1735,19 @@ function openConditionPicker(sourceItem, existingCol, onDone){
    before it is ever looked up. Nothing plausible + no number =
    an honest "couldn't read it — retake", never a pre-filled guess.
 
-   Resolution is NUMBER-FIRST: number + set size fingerprints the
-   exact printing, so it resolves before the name; the name read
-   confirms it, and a disagreement shows the number's printings in
-   the candidate picker rather than trusting either read silently. */
+   Resolution is SCORED, not single-signal: every printing of the
+   read name is gathered and scored on the combination of signals
+   the photo produced — collector number, HP, attacks, 1st Edition
+   stamp, set symbol and © year line — because WotC reprint pairs
+   (Base Set vs Base Set 2) share name, HP, art and attacks and
+   differ only in number, set size and © years, and because a
+   single read can be wrong at photo resolution (the vision model
+   once returned a confident "17/82" for a Farfetch'd that doesn't
+   exist — a read number matching no printing of the name is
+   discarded as evidence entirely). Only a clear winner (top score
+   ≥ 50, ≥ 25 ahead) opens automatically; anything closer goes to
+   the candidate picker, ranked by score with the matched evidence
+   annotated on each printing. */
 var CARD_CANON_W=1000, CARD_CANON_H=1400;
 function locateCardBox(W, H, alt){
   // Live capture: where the guide said the card is.
@@ -2139,7 +2148,7 @@ function extractCardFields(texts){
     });
   });
   var candidates=candList.map(function(k){ return candMap[k]; }).sort(function(a,b){ return b.score-a.score; }).slice(0,4).map(function(x){ return x.name; });
-  return { name:candidates[0]||"", candidates:candidates, rejectedName:rejected, num:numM?String(parseInt(numM[1],10)):null, den:numM?String(parseInt(numM[2],10)):null, hp:hpM?hpM[1]:null };
+  return { name:candidates[0]||"", candidates:candidates, rejectedName:rejected, num:numM?String(parseInt(numM[1],10)):null, den:numM?String(parseInt(numM[2],10)):null, hp:hpM?hpM[1]:null, attacks:[], firstEdition:null, setSymbol:null, yearLine:null };
 }
 function numEq(a,b){
   if(a==null||b==null||a===""||b==="") return false;
@@ -2244,7 +2253,8 @@ function aiIdentifyFields(src, cb){
             else { var m2=String(j.number).match(/(\d{1,3})/); if(m2) num=String(parseInt(m2[1],10)); }
           }
           var nm=String(j.name).trim();
-          cb({ name:nm, candidates:[nm], rejectedName:"", num:num, den:den, hp:j.hp?String(j.hp):null, ai:true });
+          var atks=Array.isArray(j.attacks)?j.attacks.map(function(a){ return (a&&a.name)?{name:String(a.name), damage:(a.damage==null?"":String(a.damage))}:null; }).filter(Boolean):[];
+          cb({ name:nm, candidates:[nm], rejectedName:"", num:num, den:den, hp:j.hp?String(j.hp):null, attacks:atks, firstEdition:(typeof j.firstEdition==="boolean"?j.firstEdition:null), setSymbol:(j.setSymbol==null?null:String(j.setSymbol)), yearLine:(j.yearLine==null?null:String(j.yearLine)), ai:true });
         })
         .catch(function(){ if(to) clearTimeout(to); cb(null); });
     }catch(e){ cb(null); }
@@ -2278,6 +2288,11 @@ function fieldsChipsHTML(f){
   if(f.name) chips.push('<span class="badge ok">Name read: '+escHtml(f.name)+'</span>');
   if(f.num) chips.push('<span class="badge ok">Number read: '+f.num+(f.den?"/"+f.den:"")+'</span>');
   if(f.hp) chips.push('<span class="badge">HP read: '+f.hp+'</span>');
+  if(f.attacks && f.attacks.length) chips.push('<span class="badge">Attacks read: '+f.attacks.map(function(a){ return escHtml(a.name)+(a.damage?" "+escHtml(a.damage):""); }).join(", ")+'</span>');
+  if(f.firstEdition===true) chips.push('<span class="badge ok">1st Edition stamp: seen</span>');
+  if(f.firstEdition===false) chips.push('<span class="badge">1st Edition stamp: not seen</span>');
+  if(f.setSymbol) chips.push('<span class="badge">Set symbol: '+escHtml(f.setSymbol)+'</span>');
+  if(f.yearLine) chips.push('<span class="badge">© line: '+escHtml(f.yearLine)+'</span>');
   return chips.length ? '<div class="cam-status" style="margin:0">'+chips.join("")+'</div>' : "";
 }
 function photoUnreadable(fields){
@@ -2294,130 +2309,242 @@ function photoNoMatch(fields){
   setOcrStatus('<p class="note">Read “'+escHtml(fields.name||"")+'” but the catalogue has no match for it — the box below is pre-filled with what was read; check the spelling and look it up.</p>');
   $("identifyInput").value=(fields.name||"")+(fields.num?" "+fields.num:"");
 }
-function resolvePhotoFields(fields){
-  $("idFields").innerHTML=fieldsChipsHTML(fields);
-  if(!fields.name && !fields.num){ photoUnreadable(fields); return; }
-  /* NUMBER FIRST. Number + set size fingerprints the exact printing,
-     so when both were read, resolve from the bottom-right read
-     before the name is tried at all. The name confirms: if exactly
-     one of the number's printings carries the read name (or the HP),
-     it opens; if the name disagrees with every one of them, the
-     number still wins and its printings go to the picker. */
-  function byNumber(){
-    if(!fields.num) return Promise.resolve(false);
-    setOcrStatus('<p class="note"><span class="spinner"></span>Matching by the collector number '+fields.num+(fields.den?"/"+fields.den:"")+' from the bottom-right of the card…</p>');
-    return fetchDexByLocalId(fields.num).then(function(items){
-      var pool=(items||[]).slice();
-      if(fields.den){
-        var byDen=pool.filter(function(it){ return it.setTotal && numEq(it.setTotal, fields.den); });
-        if(byDen.length) pool=byDen;
-        else if(pool.length) return false; // number read, set size read, but they don't co-exist — don't trust either silently
-      }
-      if(!pool.length) return false;
-      if(fields.hp){
-        var hpHit=pool.filter(function(it){ return it.raw && String(it.raw.hp)===String(fields.hp); });
-        if(hpHit.length===1){ pool=hpHit; }
-      }
-      if(fields.name){
-        var nameHit=pool.filter(function(it){ return it.name && it.name.toLowerCase()===String(fields.name).toLowerCase(); });
-        if(nameHit.length===1){ handlePhotoCandidates(nameHit, fields); return true; }
-        if(pool.length>1 && !nameHit.length){
-          // Disagreement: prefer the number, show its printings.
-          setOcrStatus('<p class="note">The number on the card ('+fields.num+(fields.den?"/"+fields.den:"")+') points to these printings, but the name read (“'+escHtml(fields.name)+'”) doesn\'t match them — the number is the stronger read, so pick the printing that matches your card.</p>');
-          showCandidatePicker(pool.slice(0,12), fields);
-          return true;
-        }
-      }
-      handlePhotoCandidates(pool, fields);
-      return true;
-    }).catch(function(){ return false; });
+/* ---------- Scored printing resolution ----------
+   One resolver for both read paths (AI vision and on-device OCR).
+   It gathers EVERY catalogue printing of the read name and scores
+   each one on the combination of signals the photo produced —
+   collector number, HP, attacks, 1st Edition stamp, set symbol
+   and © year line — because any single signal can be misread at
+   photo resolution, and WotC reprint pairs (Base Set vs Base Set
+   2) share name, HP, art and attacks, differing only in collector
+   number, set size and copyright years.
+
+   A returned number that matches NO printing of the name is a
+   hallucination (the vision model once answered "17/82" for a
+   Farfetch'd — no such printing exists) and is discarded as
+   evidence entirely: it scores nothing and is never displayed as
+   a read fact. Attacks the reader missed are NOT negative
+   evidence either (the same read caught only one of two attacks).
+
+   Auto-select ONLY on a clear winner: top score ≥ 50 AND ≥ 25
+   ahead of the runner-up. Otherwise the picker opens, ranked by
+   score, each printing annotated with the evidence that matched
+   it ("HP ✓ · Leek Jab ✓ · number not read") so the user's one
+   tap is informed. Ties are never silently auto-selected — that
+   coin-flip is exactly how the wrong Farfetch'd got opened. */
+function normKeyText(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); }
+function candHp(it){ var h=it && it.raw && it.raw.hp; if(h==null||h==="") return null; var n=parseInt(h,10); return isNaN(n)?null:String(n); }
+function candSetTotal(it){
+  if(it && it.setTotal) return it.setTotal;
+  var st=it && it.raw && it.raw.set;
+  if(!st) return null;
+  if(st.cardCount) return st.cardCount.total||st.cardCount.official||null;
+  return st.printedTotal||st.total||null;
+}
+function candAttacks(it){
+  var a=(it && it.raw && it.raw.attacks)||[];
+  return a.map(function(x){ return x?{name:String(x.name||""), damage:(x.damage==null?"":String(x.damage))}:null; }).filter(function(x){ return x && x.name; });
+}
+function dmgNum(s){ var m=String(s==null?"":s).match(/\d+/); return m?m[0]:null; }
+function attackNameEq(a,b){
+  var x=normKeyText(a), y=normKeyText(b);
+  if(!x||!y) return false;
+  return x===y || x.indexOf(y)===0 || y.indexOf(x)===0;
+}
+/* Era class for the © year-line rule: the original 1999 WotC sets
+   whose year lines end in the 1990s, vs the 2000-era reprint sets
+   whose lines run to 2000+. Everything else gets no year points. */
+function eraClassOf(item){
+  var s=String((item&&item.set)||"").toLowerCase().trim();
+  if(/base set 2/.test(s) || /legendary collection/.test(s)) return "reprint2000";
+  if(/^(base set|jungle|fossil)$/.test(s)) return "original";
+  return null;
+}
+var SET_SYMBOL_KEYS=[
+  { re:/jungle/, keys:["flower","leaf","vine","plant","jungle"], label:"flower" },
+  { re:/fossil/, keys:["fossil","shell","ammonite","spiral"], label:"fossil shell" },
+  { re:/gym/, keys:["badge","gym"], label:"badge" },
+  { re:/team rocket/, keys:["rocket"], label:"R" }
+];
+function expectedSymbol(item){
+  var s=String((item&&item.set)||"").toLowerCase();
+  if(/base set/.test(s)) return { none:true };
+  for(var i=0;i<SET_SYMBOL_KEYS.length;i++){ if(SET_SYMBOL_KEYS[i].re.test(s)) return SET_SYMBOL_KEYS[i]; }
+  return null;
+}
+function parseYearLine(yl){
+  if(!yl) return [];
+  return (String(yl).match(/\d{4}/g)||[]).map(function(y){ return parseInt(y,10); });
+}
+function scoreCandidate(it, f){
+  var score=0, ev=[], gaps=[];
+  // Collector number — the strongest single signal, when it's real
+  // (the caller has already discarded numbers no printing carries).
+  if(f.num){
+    if(numEq(it.number, f.num)){
+      var tot=candSetTotal(it);
+      if(f.den && tot && numEq(tot, f.den)){ score+=100; ev.push("number "+f.num+"/"+f.den+" ✓"); }
+      else { score+=60; ev.push("number "+f.num+" ✓"); }
+    } else gaps.push("number differs");
   }
-  byNumber().then(function(done){
-    if(done) return;
-    if(!fields.name){
-      if(fields.num){
-        setOcrStatus('<p class="note">A collector number was read ('+fields.num+(fields.den?"/"+fields.den:"")+') but no name, and that number didn\'t resolve on its own — type the name below and include that number to pin the printing.</p>');
+  // HP
+  if(f.hp){
+    var ch=candHp(it);
+    if(ch!=null && parseInt(ch,10)===parseInt(f.hp,10)){ score+=25; ev.push("HP ✓"); }
+    else if(ch!=null) gaps.push("HP differs");
+  }
+  // Attacks: +20 per matched name, +10 more when its damage also
+  // matches. Attacks the reader didn't return score nothing and
+  // count against nobody.
+  if(f.attacks && f.attacks.length){
+    var ca=candAttacks(it), matched=0, dmgMatched=0;
+    f.attacks.forEach(function(ra){
+      var hit=null;
+      for(var i=0;i<ca.length;i++){ if(attackNameEq(ca[i].name, ra.name)){ hit=ca[i]; break; } }
+      if(hit){
+        matched++;
+        ev.push(hit.name+" ✓");
+        var rd=dmgNum(ra.damage), cd=dmgNum(hit.damage);
+        if(rd && cd && rd===cd) dmgMatched++;
+      }
+    });
+    if(matched){ score+=matched*20+dmgMatched*10; if(dmgMatched) ev.push("damage ✓"); }
+    else gaps.push("attacks differ");
+  }
+  // 1st Edition stamp: seeing it is strong evidence for the 1st
+  // Edition printing; NOT seeing it is weak — a photo can miss a
+  // stamp — so absence never excludes and scores nothing.
+  if(f.firstEdition===true){
+    var es=editionSummary(it);
+    if(es.hasFirst||es.variantFirst||es.needsSeparateFirstEntry){ score+=30; ev.push("1st Edition stamp ✓"); }
+  }
+  // Set symbol: keyword agreement (jungle≈flower, fossil≈shell,
+  // gym≈badge, base sets≈none). Both "none" for a symbol-less set
+  // is worth a little; a missed symbol read scores nothing.
+  if(f.setSymbol!=null && String(f.setSymbol).trim()!==""){
+    var readSym=String(f.setSymbol).toLowerCase().trim();
+    var exp=expectedSymbol(it);
+    if(/^(none|no|no symbol|none visible|absent)$/.test(readSym)){
+      if(exp && exp.none){ score+=10; ev.push("no set symbol ✓"); }
+    } else if(exp && !exp.none && exp.keys.some(function(k){ return readSym.indexOf(k)>=0; })){
+      score+=15; ev.push("set symbol ✓");
+    }
+  }
+  // © year line — the decisive discriminator for WotC reprint
+  // pairs: a line running to 2000+ belongs to the reprint; a line
+  // ending in the 1990s belongs to the original printing.
+  var years=parseYearLine(f.yearLine);
+  if(years.length){
+    var era=eraClassOf(it);
+    var has2000=years.some(function(y){ return y>=2000; });
+    if(has2000){ if(era==="reprint2000"){ score+=35; ev.push("© line runs to 2000 ✓"); } }
+    else if(era==="original"){ score+=30; ev.push("© line ends in the 1990s ✓"); }
+  }
+  return { item:it, score:score, ev:ev, gaps:gaps, era:eraClassOf(it) };
+}
+function eraRank(e){ return e==="original"?0:(e==="reprint2000"?1:2); }
+function sortScored(scored){
+  scored.sort(function(a,b){
+    if(b.score!==a.score) return b.score-a.score;
+    var r=eraRank(a.era)-eraRank(b.era); // original printing wins ties
+    if(r) return r;
+    return String(a.item.set||"").localeCompare(String(b.item.set||""));
+  });
+  return scored;
+}
+/* All printings of a name: exact TCGdex name match, then the
+   contains-run (bridges apostrophe reads like "Farfetchd"), then
+   the Pokémon TCG API. First non-empty pool wins. */
+function fetchNamePool(name){
+  function poke(){ return fetchPokeFallback(name).then(function(l){ return l||[]; }).catch(function(){ return []; }); }
+  return fetchDex(name).then(function(list){
+    if(list && list.length) return list;
+    var run=((String(name).toLowerCase().match(/[a-z]+/g)||[]).sort(function(a,b){ return b.length-a.length; })[0])||"";
+    if(run.length>=5) return fetchDexContains(run).then(function(l2){ return (l2&&l2.length)?l2:poke(); }).catch(function(){ return poke(); });
+    return poke();
+  }).catch(function(){ return poke(); });
+}
+function resolvePhotoFields(fields){
+  var names=(fields.candidates&&fields.candidates.length)?fields.candidates.slice():(fields.name?[fields.name]:[]);
+  function poolFor(i){
+    if(i>=names.length) return Promise.resolve([]);
+    setOcrStatus('<p class="note"><span class="spinner"></span>Scoring every “'+escHtml(names[i])+'” printing against the combined evidence — number, HP, attacks, edition stamp, set symbol, © years…</p>');
+    return fetchNamePool(names[i]).then(function(list){
+      if(list && list.length){ fields.name=names[i]; return list; }
+      return poolFor(i+1);
+    });
+  }
+  var startP=names.length?poolFor(0):Promise.resolve([]);
+  startP.then(function(pool){
+    if(pool && pool.length){ finishScoredResolve(fields, pool); return; }
+    if(fields.num){
+      // No name pool at all — resolve from the number alone, scored.
+      setOcrStatus('<p class="note"><span class="spinner"></span>Matching by the collector number '+fields.num+(fields.den?"/"+fields.den:"")+'…</p>');
+      fetchDexByLocalId(fields.num).then(function(items){
+        if(items && items.length){ finishScoredResolve(fields, items); return; }
+        $("idFields").innerHTML=fieldsChipsHTML(fields);
+        setOcrStatus('<p class="note">A collector number was read ('+fields.num+(fields.den?"/"+fields.den:"")+') but it didn\'t resolve to any printing — type the name below and include that number to pin the printing.</p>');
         $("identifyInput").value=fields.num;
-        return;
-      }
-      photoUnreadable(fields);
+      }).catch(function(){
+        $("idFields").innerHTML=fieldsChipsHTML(fields);
+        setOcrStatus('<p class="note">A collector number was read ('+fields.num+(fields.den?"/"+fields.den:"")+') but it couldn\'t be checked just now — type the name below and include that number to pin the printing.</p>');
+        $("identifyInput").value=fields.num;
+      });
       return;
     }
-    resolveByName(fields);
+    $("idFields").innerHTML=fieldsChipsHTML(fields);
+    if(fields.name) photoNoMatch(fields); else photoUnreadable(fields);
   });
 }
-function resolveByName(fields){
-  /* Name chain — plausible candidates only, each verified against the
-     real catalogue: exact via TCGdex, then the Pokémon TCG API, then
-     a contains-match on the name's longest letter run (bridges
-     apostrophe reads like "Farfetchd" → Farfetch'd). */
-  var attempts=[];
-  var cands=fields.candidates && fields.candidates.length ? fields.candidates : (fields.name?[fields.name]:[]);
-  cands.forEach(function(c){ attempts.push({kind:"dex", q:c, label:c}); });
-  cands.forEach(function(c){ attempts.push({kind:"poke", q:c, label:c}); });
-  var seenRuns={};
-  cands.forEach(function(c){
-    var run=((String(c).toLowerCase().match(/[a-z]+/g)||[]).sort(function(a,b){ return b.length-a.length; })[0])||"";
-    for(var cut=0; cut<=2; cut++){
-      var r=run.slice(0, run.length-cut);
-      if(r.length>=5 && !seenRuns[r]){ seenRuns[r]=true; attempts.push({kind:"contains", q:r, label:c}); }
-    }
-  });
-  var weakFallback=null;
-  (function tryNext(i){
-    if(i>=attempts.length){
-      if(weakFallback){ handlePhotoCandidates(weakFallback, fields); return; }
-      photoNoMatch(fields);
-      return;
-    }
-    var at=attempts[i];
-    setOcrStatus('<p class="note"><span class="spinner"></span>Matching “'+escHtml(at.label)+'” against the catalogue…</p>');
-    var p= at.kind==="dex" ? fetchDex(at.q) : (at.kind==="poke" ? fetchPokeFallback(at.q) : fetchDexContains(at.q));
-    p.then(function(items){
-      if(items && items.length){
-        if(fields.num && !items.some(function(it){ return numEq(it.number, fields.num); })){
-          if(!weakFallback) weakFallback=items;
-          tryNext(i+1);
-          return;
-        }
-        handlePhotoCandidates(items, fields); return;
-      }
-      tryNext(i+1);
-    }).catch(function(){ tryNext(i+1); });
-  })(0);
-}
-function handlePhotoCandidates(items, fields){
-  if(!items.length){ photoNoMatch(fields); return; }
-  var byNum=fields.num ? items.filter(function(it){ return numEq(it.number, fields.num); }) : [];
-  var exact=byNum.filter(function(it){ return fields.den && it.setTotal && numEq(it.setTotal, fields.den); });
-  var pick=null;
-  if(exact.length===1) pick=exact[0];
-  else if(byNum.length===1) pick=byNum[0];
-  if(pick){
-    setOcrStatus('<p class="note"><b>Matched:</b> '+escHtml(pick.name)+' · '+escHtml(pick.set||"")+' · #'+escHtml(pick.number||"")+'. Opening it — add it to your collection in one tap.</p>');
-    pick._fromPhoto=true; pick._photoFields=fields;
-    openDetail(pick);
+function finishScoredResolve(fields, pool){
+  // Hallucinated-number guard: a read number that NO printing of
+  // this name carries is discarded as evidence entirely — it is
+  // removed from the fields before chips render, so it is never
+  // displayed as a read fact, and it scores nothing.
+  if(fields.num && pool.length){
+    var anyNum=pool.some(function(it){ return numEq(it.number, fields.num); });
+    if(!anyNum){ fields.numDiscarded=fields.num+(fields.den?"/"+fields.den:""); fields.num=null; fields.den=null; }
+  }
+  $("idFields").innerHTML=fieldsChipsHTML(fields);
+  if(!pool.length){
+    if(fields.name) photoNoMatch(fields); else photoUnreadable(fields);
     return;
   }
-  var cands=(byNum.length?byNum:items).slice();
-  cands.sort(function(a,b){
-    function sc(it){ return (fields.den&&it.setTotal&&numEq(it.setTotal,fields.den)?2:0) + (fields.name&&it.name.toLowerCase()===String(fields.name).toLowerCase()?1:0); }
-    return sc(b)-sc(a);
-  });
-  setOcrStatus('<p class="note">More than one printing fits what was read — pick the one that matches your card below. Nothing is added until you choose.</p>');
-  showCandidatePicker(cands.slice(0,12), fields);
+  var scored=sortScored(pool.map(function(it){ return scoreCandidate(it, fields); }));
+  var discardNote=fields.numDiscarded?'<p class="note">A number was read ('+escHtml(fields.numDiscarded)+') but no '+escHtml(fields.name||"")+' printing carries it, so it was ignored — the match rests on the other signals combined.</p>':"";
+  var top=scored[0], second=scored[1];
+  if(top.score>=50 && (!second || top.score-second.score>=25)){
+    setOcrStatus(discardNote+'<p class="note"><b>Matched:</b> '+escHtml(top.item.name)+' · '+escHtml(top.item.set||"")+' · #'+escHtml(top.item.number||"")+(top.ev.length?(' — '+escHtml(top.ev.join(" · "))):'')+'. Opening it — add it to your collection in one tap.</p>');
+    top.item._fromPhoto=true; top.item._photoFields=fields;
+    openDetail(top.item);
+    return;
+  }
+  setOcrStatus(discardNote+'<p class="note">No printing wins clearly on the combined evidence, so nothing was auto-picked — the printings are ranked below by how much of what was read they match. Tap the one that matches your card; nothing is added until you choose.</p>');
+  showScoredPicker(scored.slice(0,12), fields);
 }
-function showCandidatePicker(items, fields){
+function showScoredPicker(scored, fields){
   var wrap=document.createElement("div"); wrap.className="picker-overlay";
-  var cards=items.map(function(it,i){
-    return '<button class="cand-card" data-cand="'+i+'"><img alt="" src="'+escAttr(it.image)+'"><span class="cand-nm">'+escHtml(it.name)+(it.number?" · #"+escHtml(it.number):"")+'</span><span class="cand-st">'+escHtml(it.set||"")+(it.setTotal?" · "+it.setTotal+" cards in set":"")+(it.rarity?" · "+escHtml(it.rarity):"")+'</span></button>';
+  var cards=scored.map(function(s,i){
+    var it=s.item;
+    var annParts=s.ev.slice();
+    if(!fields.num) annParts.push(fields.numDiscarded?"number read matches no printing":"number not read");
+    s.gaps.forEach(function(g){ annParts.push(g); });
+    var ann=annParts.length?annParts.join(" · "):"no signal matched";
+    return '<button class="cand-card" data-cand="'+i+'"><img alt="" src="'+escAttr(it.image)+'"><span class="cand-nm">'+escHtml(it.name)+(it.number?" · #"+escHtml(it.number):"")+'</span><span class="cand-st">'+escHtml(it.set||"")+(candSetTotal(it)?" · set of "+candSetTotal(it):"")+(it.rarity?" · "+escHtml(it.rarity):"")+'</span><span class="cand-st" style="color:var(--accent);font-weight:700">'+escHtml(ann)+'</span></button>';
   }).join("");
-  wrap.innerHTML='<div class="picker-box" role="dialog" aria-modal="true" aria-label="Which card is it?" style="width:min(680px,100%)"><h3>Which one is it?</h3><p class="note" style="margin:0">Read from your photo: <b style="color:var(--ink)">'+escHtml(fields.name||"")+'</b>'+(fields.num?' · number '+fields.num+(fields.den?"/"+fields.den:""):"")+(fields.hp?' · '+fields.hp+' HP':"")+'. Tap the printing that matches your card.</p><div class="cand-grid">'+cards+'</div><div class="btnrow"><button class="btn" data-none="1">None of these — search by name</button><button class="btn" data-cancel="1">Cancel</button></div></div>';
+  var readBits=[];
+  if(fields.hp) readBits.push(fields.hp+" HP");
+  if(fields.attacks && fields.attacks.length) readBits.push("attacks "+fields.attacks.map(function(a){ return a.name; }).join(", "));
+  if(fields.num) readBits.push("number "+fields.num+(fields.den?"/"+fields.den:""));
+  if(fields.firstEdition===true) readBits.push("1st Edition stamp seen");
+  if(fields.setSymbol) readBits.push("symbol: "+fields.setSymbol);
+  if(fields.yearLine) readBits.push("© "+fields.yearLine);
+  wrap.innerHTML='<div class="picker-box" role="dialog" aria-modal="true" aria-label="Which card is it?" style="width:min(680px,100%)"><h3>Which one is it?</h3><p class="note" style="margin:0">Read from your photo: <b style="color:var(--ink)">'+escHtml(fields.name||"")+'</b>'+(readBits.length?(" · "+escHtml(readBits.join(" · "))):"")+'. Ranked by combined evidence — tap the printing that matches your card.</p><div class="cand-grid">'+cards+'</div><div class="btnrow"><button class="btn" data-none="1">None of these — search by name</button><button class="btn" data-cancel="1">Cancel</button></div></div>';
   document.body.appendChild(wrap);
   function close(){ if(wrap.parentNode) document.body.removeChild(wrap); }
   wrap.querySelectorAll("[data-cand]").forEach(function(b){
     b.addEventListener("click",function(){
-      var it=items[Number(b.getAttribute("data-cand"))];
+      var it=scored[Number(b.getAttribute("data-cand"))].item;
       close();
       it._fromPhoto=true; it._photoFields=fields;
       openDetail(it);
@@ -2448,6 +2575,9 @@ function renderPhotoAdd(item){
   if(f.name) readBits.push("name “"+escHtml(f.name)+"”");
   if(f.num) readBits.push("number "+f.num+(f.den?"/"+f.den:""));
   if(f.hp) readBits.push(f.hp+" HP");
+  if(f.attacks && f.attacks.length) readBits.push("attacks "+f.attacks.map(function(a){ return escHtml(a.name); }).join(", "));
+  if(f.firstEdition===true) readBits.push("1st Edition stamp seen");
+  if(f.yearLine) readBits.push("© "+escHtml(f.yearLine));
   var es=editionSummary(item);
   var hasEditions=!!(es.hasFirst||es.variantFirst||es.needsSeparateFirstEntry);
   var gradeOpts=""; for(var gv=10; gv>=1; gv-=0.5){ var gvv=Math.round(gv*10)/10; gradeOpts+='<option value="'+gvv+'"'+(Number(pa.grade)===gvv?' selected':'')+'>'+(gvv%1===0?gvv.toFixed(0):gvv)+'</option>'; }
