@@ -319,7 +319,7 @@
         <ol class="steps">
           <li><span class="n">1</span><span><b>Turn on the camera</b> and allow access when your browser asks — on a phone it uses the rear camera automatically. Rather not use the live view? <b>Upload a photo</b> instead: on a phone the picker offers your camera or your library.</span></li>
           <li><span class="n">2</span><span><b>Fill the card-shaped guide</b> with the card, edge to edge — including its <b>bottom edge</b>, where the collector number sits — in good light, and tap <b>Take photo</b>. The preview shows the camera's full field (nothing is cropped away) and the photo is kept at full resolution. A graded card can stay in its case — photograph the whole slab and the label is read too.</span></li>
-          <li><span class="n">3</span><span><b>Let it identify the card.</b> First, AI reads the photo (sent to our card-data proxy) and returns the card's name, HP, attacks, collector number, illustrator, finish (holo, reverse holo or non-holo), 1st Edition stamp, set symbol and © year line — and, when the card sits in a grading slab, the label's company, grade and cert number. The read also reports the card's language and its name exactly as printed: printings in other languages are different cards with their own values, so a non-English read is matched only within that language's printings — a Japanese card is never swapped for the English printing. If that can't read it, the on-device fallback takes over: it finds the card's edges in the photo, squares it up, and reads the <b>name in the top band</b> (HP beside it as a cross-check) and the <b>collector number in the bottom-right</b>. Either way, <b>every printing of that name is then scored on the combination</b> — number, HP, each attack (name first, damage only as a bonus), the illustrator, the finish, the edition stamp, the set symbol and the © years — which is what separates look-alike reprints like Base Set from Base Set 2, since they share name, HP and attacks. Illustrator and finish reads are noisy, so they only ever add points when they agree — a mismatch never counts against a printing. A read number that no printing of that name carries is treated as a misread and ignored, never shown as fact. A printing opens automatically only on a clear win — a strong score with a clear margin, or at least three independent signal types agreeing; name and HP alone never auto-pick. Anything close goes to a picker where each printing lists the signals that matched it, so your tap is an informed one. If nothing reads clearly, it says so and asks for a retake instead of guessing. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings. Identity is cross-checked across multiple card databases and prices come from a separate pricing source, which is why a printing missing from one catalogue can still be identified and valued.</span></li>
+          <li><span class="n">3</span><span><b>Let it identify the card.</b> First, AI reads the photo (sent to our card-data proxy) and returns the card's name, HP, attacks, Pokémon Power / Ability name, collector number, illustrator, finish (holo, reverse holo or non-holo), 1st Edition stamp, set symbol and © year line — and, when the card sits in a grading slab, the label's company, grade and cert number. The read also reports the card's language and its name exactly as printed: printings in other languages are different cards with their own values, so a non-English read is matched only within that language's printings — a Japanese card is never swapped for the English printing. If that can't read it, the on-device fallback takes over: it finds the card's edges in the photo, squares it up, and reads the <b>name in the top band</b> (HP beside it as a cross-check) and the <b>collector number in the bottom-right</b>. Either way, <b>every printing of that name is then scored on the combination</b> — number, HP, each attack (name first, damage only as a bonus), the Pokémon Power name, the illustrator, the finish, the edition stamp, the set symbol and the © years — which is what separates look-alike reprints like Base Set from Base Set 2, since they share name, HP and attacks, and near-twins like the GB-promo Dragonite from the Fossil one, which share species, HP and an attack but differ in power and illustrator. The Pokédex number on a Japanese card's data strip counts only as weak supporting evidence — it's the species number, not a unique card id, so it never decides a match on its own. Illustrator and finish reads are noisy, so they only ever add points when they agree — a mismatch never counts against a printing. A read number that no printing of that name carries is treated as a misread and ignored, never shown as fact. A printing opens automatically only on a clear win — a strong score with a clear margin, or at least three independent signal types agreeing; name and HP alone never auto-pick. Anything close goes to a picker where each printing lists the signals that matched it, so your tap is an informed one. If nothing reads clearly, it says so and asks for a retake instead of guessing. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings. Identity is cross-checked across multiple card databases and prices come from a separate pricing source, which is why a printing missing from one catalogue can still be identified and valued.</span></li>
           <li><span class="n">4</span><span><b>Add it in one tap.</b> From a photo, the card page leads with a one-tap <b>Add to collection</b> — Raw by default, with Damaged and Graded (PSA / CGC / BGS / SGC / TAG) right there on the same sheet. If the photo showed a grading slab, that sheet opens with <b>Graded</b> already selected — company and grade filled in from the label, cert number included — and the copy is valued from that grader's ladder row. A photo can't prove a 1st Edition stamp, so photo adds default to Unlimited unless you switch.</span></li>
         </ol>
         <p class="note" style="margin-top:16px">Live camera not prompting? Use <b>Upload a photo</b> instead — or open this page directly in Safari or Chrome (not inside another app's preview) and set Camera to <b>Allow</b> in site settings, then reload and tap “Turn on camera” again.</p>
@@ -2172,7 +2172,7 @@ function extractCardFields(texts){
     });
   });
   var candidates=candList.map(function(k){ return candMap[k]; }).sort(function(a,b){ return b.score-a.score; }).slice(0,4).map(function(x){ return x.name; });
-  return { name:candidates[0]||"", candidates:candidates, rejectedName:rejected, num:numM?String(parseInt(numM[1],10)):null, den:numM?String(parseInt(numM[2],10)):null, hp:hpM?hpM[1]:null, attacks:[], firstEdition:null, setSymbol:null, yearLine:null, illustrator:null, finish:null, slab:null, numFromLabel:false, language:null, namePrinted:null, dexNo:null };
+  return { name:candidates[0]||"", candidates:candidates, rejectedName:rejected, num:numM?String(parseInt(numM[1],10)):null, den:numM?String(parseInt(numM[2],10)):null, hp:hpM?hpM[1]:null, attacks:[], power:null, firstEdition:null, setSymbol:null, yearLine:null, illustrator:null, finish:null, slab:null, numFromLabel:false, language:null, namePrinted:null, dexNo:null };
 }
 function numEq(a,b){
   if(a==null||b==null||a===""||b==="") return false;
@@ -2306,6 +2306,12 @@ function aiIdentifyFields(src, cb){
               else if(numEq(num, ln)){ numFromLabel=true; if(!den) den=ld; }
             }
           }
+          // Pokémon Power / Ability name (English) from the proxy's
+          // new "power" field — a string, an object with a name, or
+          // null when the card has none / it couldn't be read.
+          var power=null;
+          if(typeof j.power==="string" && j.power.trim()) power=j.power.trim();
+          else if(j.power && typeof j.power==="object" && j.power.name) power=String(j.power.name);
           var fin=(j.finish==="holo"||j.finish==="reverse-holo"||j.finish==="non-holo") ? j.finish : null;
           // Language partition inputs. Effective language: the
           // proxy's read, or — when it came back null but the
@@ -2315,7 +2321,7 @@ function aiIdentifyFields(src, cb){
           var printed=(j.namePrinted==null?null:String(j.namePrinted));
           var lang=(j.language==null?null:String(j.language).toLowerCase());
           if(!lang && printed && /[^\u0000-\u024F]/.test(printed)) lang="ja";
-          cb({ name:nm, candidates:[nm], rejectedName:"", num:num, den:den, hp:j.hp?String(j.hp):null, attacks:atks, firstEdition:(typeof j.firstEdition==="boolean"?j.firstEdition:null), setSymbol:(j.setSymbol==null?null:String(j.setSymbol)), yearLine:(j.yearLine==null?null:String(j.yearLine)), illustrator:(j.illustrator?String(j.illustrator):null), finish:fin, slab:slab, numFromLabel:numFromLabel, language:lang, namePrinted:printed, dexNo:(j.dexNo==null?null:String(j.dexNo)), ai:true });
+          cb({ name:nm, candidates:[nm], rejectedName:"", num:num, den:den, hp:j.hp?String(j.hp):null, attacks:atks, power:power, firstEdition:(typeof j.firstEdition==="boolean"?j.firstEdition:null), setSymbol:(j.setSymbol==null?null:String(j.setSymbol)), yearLine:(j.yearLine==null?null:String(j.yearLine)), illustrator:(j.illustrator?String(j.illustrator):null), finish:fin, slab:slab, numFromLabel:numFromLabel, language:lang, namePrinted:printed, dexNo:(j.dexNo==null?null:String(j.dexNo)), ai:true });
         })
         .catch(function(){ if(to) clearTimeout(to); cb(null); });
     }catch(e){ cb(null); }
@@ -2390,6 +2396,7 @@ function fieldsChipsHTML(f){
   if(f.num) chips.push('<span class="badge ok">Number read: '+f.num+(f.den?"/"+f.den:"")+(f.numFromLabel?" · from slab label":"")+'</span>');
   if(f.hp) chips.push('<span class="badge">HP read: '+f.hp+'</span>');
   if(f.attacks && f.attacks.length) chips.push('<span class="badge">Attacks read: '+f.attacks.map(function(a){ return escHtml(a.name)+(a.damage?" "+escHtml(a.damage):""); }).join(", ")+'</span>');
+  if(f.power) chips.push('<span class="badge">Power read: '+escHtml(f.power)+'</span>');
   if(f.illustrator) chips.push('<span class="badge">Illus. read: '+escHtml(f.illustrator)+'</span>');
   if(f.finish) chips.push('<span class="badge">Finish read: '+escHtml(finishReadLabel(f.finish))+'</span>');
   if(f.language) chips.push('<span class="badge ok">Language read: '+escHtml(langNameOf(f.language))+'</span>');
@@ -2456,6 +2463,29 @@ function candSetTotal(it){
 function candAttacks(it){
   var a=(it && it.raw && it.raw.attacks)||[];
   return a.map(function(x){ return x?{name:String(x.name||""), damage:(x.damage==null?"":String(x.damage))}:null; }).filter(function(x){ return x && x.name; });
+}
+/* The Pokémon Power / Ability names a printing carries, from
+   whichever shape its source uses: the built-in promo catalogue
+   stores a single verified `power` string (on the item and in
+   raw); TCGdex card details carry an `abilities` list whose
+   entries are named powers/abilities. Plain strings are accepted
+   too. Empty when the source states none — which scores nothing. */
+function candPowerNames(it){
+  var out=[];
+  function add(v){
+    if(v==null) return;
+    if(typeof v==="string"){ if(v.trim()) out.push(v.trim()); return; }
+    if(typeof v==="object" && v.name) out.push(String(v.name));
+  }
+  if(it){
+    add(it.power);
+    if(it.raw){
+      add(it.raw.power);
+      if(Array.isArray(it.raw.abilities)) it.raw.abilities.forEach(add);
+      add(it.raw.ability);
+    }
+  }
+  return out;
 }
 function dmgNum(s){ var m=String(s==null?"":s).match(/\d+/); return m?m[0]:null; }
 function attackNameEq(a,b){
@@ -2544,14 +2574,19 @@ function scoreCandidate(it, f){
     if(ch!=null && parseInt(ch,10)===parseInt(f.hp,10)){ score+=25; ev.push("HP ✓"); types.push("hp"); }
     else if(ch!=null) gaps.push("HP differs");
   }
-  // Pokédex number — vintage Japanese promos are unnumbered, so the
-  // "No. 151" on the data strip IS their number evidence. Only
-  // candidates that carry a verified dex number can score it (the
-  // built-in promo catalogue does; a TCGdex candidate without one
-  // simply scores nothing here — never a penalty).
+  // Pokédex number — WEAK, POSITIVE-ONLY evidence (+10). dexNo is
+  // the SPECIES number, not a unique card id: every Mew printing
+  // shares 151 and every Dragonite shares 149, and live reader runs
+  // flip it between species on the same photo (149 vs 151). So it
+  // only ever adds a little when it agrees with an entry's species;
+  // it is NEVER a species gate, a veto, or a hard partition —
+  // species gating stays on the card NAME. Only candidates that
+  // carry a verified dex number can score it (the built-in promo
+  // catalogue does; a TCGdex candidate without one simply scores
+  // nothing here — never a penalty).
   if(f.dexNo){
     var cdx=(it.dexNo!=null?it.dexNo:((it.raw&&it.raw.dexNo!=null)?it.raw.dexNo:null));
-    if(cdx!=null && String(cdx)===String(f.dexNo)){ score+=15; ev.push("Pokédex № "+f.dexNo+" ✓"); types.push("dexNo"); }
+    if(cdx!=null && String(cdx)===String(f.dexNo)){ score+=10; ev.push("Pokédex № "+f.dexNo+" ✓"); types.push("dexNo"); }
   }
   // Attacks: +20 per matched name, +10 more when its damage also
   // matches. Attacks the reader didn't return score nothing and
@@ -2570,6 +2605,19 @@ function scoreCandidate(it, f){
     });
     if(matched){ score+=matched*20+dmgMatched*10; types.push("attack"); if(dmgMatched) ev.push("damage ✓"); }
     else gaps.push("attacks differ");
+  }
+  // Pokémon Power / Ability name — scored like an attack (+20,
+  // normalised name match via the same tolerant comparison).
+  // POSITIVE EVIDENCE ONLY: a power the reader missed, or a
+  // candidate whose source states no power, scores nothing and
+  // counts against nobody. This is a key separator for near-twins
+  // that share species, HP and an attack — the GB-promo Dragonite's
+  // Healing Wind vs the Fossil Dragonite, which carries no such
+  // power.
+  if(f.power){
+    var cps=candPowerNames(it), powerHit=false;
+    for(var pi=0;pi<cps.length;pi++){ if(attackNameEq(cps[pi], f.power)){ powerHit=true; break; } }
+    if(powerHit){ score+=20; ev.push("power ✓"); types.push("power"); }
   }
   // Illustrator — the "Illus." credit line. POSITIVE EVIDENCE ONLY:
   // the vision model's artist reads vary run to run, so agreement
@@ -2690,13 +2738,35 @@ function fetchNamePool(name){
       [CoroCoro]" / "Japanese Promo" / 151 → found.
    5. Ancient Mew — 1999 movie promo (The Power of One), HP30,
       Psyche (サイコキネシス, 40), illustrator unknown (omitted),
-      holo. No proxy pricing — see above. */
+      holo. No proxy pricing — see above.
+   6. Dragonite (Pokémon Card GB promo) — unnumbered promo included
+      with Japanese copies of Pokémon Trading Card Game for Game
+      Boy Color (1998); carries a "GB" symbol instead of an
+      expansion symbol. LV.41, HP100, Colorless, Stage 2, Illus.
+      Ken Sugimori, holo. Pokémon Power: Healing Wind
+      (いやしのかぜ). Attack: Slam (たたきつける, 30×). Pokédex
+      № 149. Cross-verified: Bulbapedia + eBay product data for
+      identity, PriceCharting via the proxy for pricing — proxy:
+      Dragonite / "Japanese Promo" / 149 → found (full ladder,
+      ungraded present). Its near-twin is Fossil Dragonite
+      (PMCG3-043, in TCGdex JA): same species, same HP100, same
+      Slam — the separators are the power name (Healing Wind),
+      the illustrator (Sugimori; the Fossil art is not), the GB
+      symbol and promo status. Live reader runs on Sam's photo
+      wobbled on HP and finish and missed the attacks and power,
+      so this entry is winnable on illustrator + HP + finish +
+      language (+ weak dex №) alone, with the picker as fallback
+      when the illustrator is unread.
+   Powers are stored on supplemental entries only where a source
+   states them (Healing Wind above); entries whose sources state
+   no power carry none, and a missing power scores nothing. */
 var JP_PROMO_CATALOGUE=[
   { id:"supp-ja-si-mew", name:"Mew", namePrinted:"ミュウ", set:"Japanese Southern Islands", promoLabel:"Southern Islands · Japanese promo", promoShort:"Southern Islands · JP promo", rarity:"Promo", number:"151", dexNo:"151", hp:30, attacks:[{name:"Rainbow Wave",damage:""}], illustrator:"Keiko Fukuyama", variants:{reverse:true}, priceName:"Mew", priceSet:"Japanese Southern Islands", priceNumber:"151" },
   { id:"supp-ja-lilypad-mew", name:"Mew", namePrinted:"ミュウ", set:"Japanese Promo", promoLabel:"Lily Pad Mew · CoroCoro Comic Feb 1997 promo (glossy)", promoShort:"Lily Pad Mew · CoroCoro 1997", rarity:"Promo", number:"151", dexNo:"151", hp:40, attacks:[{name:"Neutral Shield",damage:""},{name:"Psyshock",damage:"10"}], illustrator:"Ken Sugimori", variants:{normal:true}, priceName:"Mew [CoroCoro]", priceSet:"Japanese Promo", priceNumber:"151" },
   { id:"supp-ja-cd-mew", name:"Mew", namePrinted:"ミュウ", set:"Japanese CD Promo", promoLabel:"CD Promo Mew · Pokémon Song Best Collection CD (glossy)", promoShort:"CD Promo Mew · glossy", rarity:"Promo", number:"151", dexNo:"151", hp:50, attacks:[{name:"Pound",damage:"10"},{name:"Psydupe",damage:""}], illustrator:"Ken Sugimori", variants:{normal:true}, priceName:"Mew [Glossy]", priceSet:"Japanese CD Promo", priceNumber:"151" },
   { id:"supp-ja-shining-mew", name:"Shining Mew", namePrinted:"ひかるミュウ", set:"Japanese Promo", promoLabel:"Shining Mew · CoroCoro Comic May 2001 promo", promoShort:"Shining Mew · CoroCoro 2001", rarity:"Promo", number:"151", dexNo:"151", hp:50, attacks:[{name:"Flash Search",damage:""},{name:"Mystic Fire",damage:"20"}], illustrator:"Hironobu Yoshida", variants:{holo:true}, priceName:"Shining Mew [CoroCoro]", priceSet:"Japanese Promo", priceNumber:"151" },
-  { id:"supp-ja-ancient-mew", name:"Ancient Mew", namePrinted:"ミュウ", set:"Japanese Promo", promoLabel:"Ancient Mew · 1999 movie promo — The Power of One", promoShort:"Ancient Mew · 1999 movie promo", rarity:"Promo", number:"151", dexNo:"151", hp:30, attacks:[{name:"Psyche",damage:"40"}], illustrator:null, variants:{holo:true}, priceName:null, priceSet:null, priceNumber:null }
+  { id:"supp-ja-ancient-mew", name:"Ancient Mew", namePrinted:"ミュウ", set:"Japanese Promo", promoLabel:"Ancient Mew · 1999 movie promo — The Power of One", promoShort:"Ancient Mew · 1999 movie promo", rarity:"Promo", number:"151", dexNo:"151", hp:30, attacks:[{name:"Psyche",damage:"40"}], illustrator:null, variants:{holo:true}, priceName:null, priceSet:null, priceNumber:null },
+  { id:"supp-ja-gb-dragonite", name:"Dragonite", namePrinted:"カイリュー", set:"Japanese Promo", promoLabel:"Dragonite · Pokémon Card GB promo — Game Boy Color 1998 (GB symbol)", promoShort:"GB promo · 1998", rarity:"Promo", number:"149", dexNo:"149", hp:100, attacks:[{name:"Slam",damage:"30"}], power:"Healing Wind", illustrator:"Ken Sugimori", variants:{holo:true}, priceName:"Dragonite", priceSet:"Japanese Promo", priceNumber:"149" }
 ];
 function xmlEsc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 /* These promos have no TCGdex image — a clean labelled placeholder
@@ -2706,21 +2776,33 @@ function suppPlaceholder(title, sub){
   return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
 }
 function suppItem(e){
-  return { id:e.id, game:"Pokémon", name:e.name, set:e.set, promoLabel:e.promoLabel, number:e.number, rarity:e.rarity, setTotal:null, image:suppPlaceholder(e.name, e.promoShort), price:null, priceLabel:"", lowPrice:null, prices:[], tcgUrl:null, tcgFinishes:[], language:"ja", supplemental:true, dexNo:e.dexNo, priceName:e.priceName||null, priceSet:e.priceSet||null, priceNumber:e.priceNumber||null, rawState:(e.priceName?undefined:"none"), raw:{ hp:e.hp, attacks:e.attacks, illustrator:e.illustrator||null, variants:e.variants } };
+  return { id:e.id, game:"Pokémon", name:e.name, set:e.set, promoLabel:e.promoLabel, number:e.number, rarity:e.rarity, setTotal:null, image:suppPlaceholder(e.name, e.promoShort), price:null, priceLabel:"", lowPrice:null, prices:[], tcgUrl:null, tcgFinishes:[], language:"ja", supplemental:true, dexNo:e.dexNo, power:e.power||null, priceName:e.priceName||null, priceSet:e.priceSet||null, priceNumber:e.priceNumber||null, rawState:(e.priceName?undefined:"none"), raw:{ hp:e.hp, attacks:e.attacks, power:e.power||null, illustrator:e.illustrator||null, variants:e.variants } };
 }
-/* The supplemental catalogue currently covers the Mew promos (Sam's
-   collecting targets), so it is species-gated: its entries are
-   candidates only for a Mew read (by English name, by the printed
-   katakana name, or by Pokédex № 151 alone). Scoring — HP, attacks,
-   illustrator, finish, dex number — then picks the exact promo,
-   exactly as it scores catalogue candidates. */
+/* The supplemental catalogue covers the Mew promos (Sam's
+   collecting targets) and the GB-promo Dragonite, so it is
+   species-gated ON THE CARD NAME ONLY: its entries are candidates
+   only for a read whose English name or printed name matches a
+   covered species. The Pokédex number NEVER opens this pool —
+   dexNo is a species number the reader flips between species
+   (149 vs 151 on the same photo), so gating on it would let a
+   misread pull in the wrong species' promos; species gating
+   stays on the name. Scoring — HP, attacks, power, illustrator,
+   finish, weak dex № — then picks the exact promo, exactly as
+   it scores catalogue candidates. The pool returns only the
+   matching species' entries, so a Dragonite read never drags
+   the Mew promos into its candidate list (or vice versa). */
 function supplementalJaPool(fields){
   if(!fields) return [];
   var nm=normKeyText(fields.name||"");
   var printed=String(fields.namePrinted||"");
-  var isMew = nm==="mew" || nm==="shining mew" || nm==="ancient mew" || printed.indexOf("ミュウ")>=0 || (!nm && String(fields.dexNo||"")==="151");
-  if(!isMew) return [];
-  return JP_PROMO_CATALOGUE.map(suppItem);
+  var species=null;
+  if(nm==="mew" || nm==="shining mew" || nm==="ancient mew" || printed.indexOf("ミュウ")>=0) species="mew";
+  else if(nm==="dragonite" || printed.indexOf("カイリュー")>=0) species="dragonite";
+  if(!species) return [];
+  return JP_PROMO_CATALOGUE.filter(function(e){
+    var en=normKeyText(e.name||"");
+    return species==="mew" ? (en==="mew" || en==="shining mew" || en==="ancient mew") : (en==="dragonite");
+  }).map(suppItem);
 }
 /* Printings in the read's OWN language. LANGUAGE IS A HARD
    PARTITION, not points: non-English printings share art, HP,
@@ -2836,10 +2918,11 @@ function finishScoredResolve(fields, pool){
   // Auto-select on EITHER rule:
   //  A) the main rule — score ≥ 50 with a ≥ 25 margin; or
   //  B) at least THREE independent signal types agreeing (number,
-  //     HP, attack name, illustrator, finish, © year, set symbol —
-  //     agreeing types only; noisy reads that disagree add nothing)
-  //     with a ≥ 15 lead. Name is not a signal type and HP is only
-  //     one, so name + HP alone can never trigger rule B.
+  //     HP, attack name, power, illustrator, finish, © year, set
+  //     symbol, weak dex № — agreeing types only; noisy reads that
+  //     disagree add nothing) with a ≥ 15 lead. Name is not a
+  //     signal type and HP is only one, so name + HP alone can
+  //     never trigger rule B.
   if((top.score>=50 && margin>=25) || (top.types.length>=3 && margin>=15)){
     setOcrStatus(discardNote+'<p class="note"><b>Matched:</b> '+escHtml(top.item.name)+' · '+escHtml(top.item.set||"")+' · #'+escHtml(top.item.number||"")+(top.ev.length?(' — '+escHtml(top.ev.join(" · "))):'')+'. Opening it — add it to your collection in one tap.</p>');
     top.item._fromPhoto=true; top.item._photoFields=fields;
@@ -2871,6 +2954,7 @@ function showScoredPicker(scored, fields, altScored){
   var readBits=[];
   if(fields.hp) readBits.push(fields.hp+" HP");
   if(fields.attacks && fields.attacks.length) readBits.push("attacks "+fields.attacks.map(function(a){ return a.name; }).join(", "));
+  if(fields.power) readBits.push("power "+fields.power);
   if(fields.illustrator) readBits.push("Illus. "+fields.illustrator);
   if(fields.finish) readBits.push(finishReadLabel(fields.finish));
   if(fields.num) readBits.push("number "+fields.num+(fields.den?"/"+fields.den:"")+(fields.numFromLabel?" (from slab label)":""));
@@ -2945,6 +3029,7 @@ function renderPhotoAdd(item){
   if(f.num) readBits.push("number "+f.num+(f.den?"/"+f.den:""));
   if(f.hp) readBits.push(f.hp+" HP");
   if(f.attacks && f.attacks.length) readBits.push("attacks "+f.attacks.map(function(a){ return escHtml(a.name); }).join(", "));
+  if(f.power) readBits.push("power "+escHtml(f.power));
   if(f.firstEdition===true) readBits.push("1st Edition stamp seen");
   if(f.yearLine) readBits.push("© "+escHtml(f.yearLine));
   if(f.slab) readBits.push("slab: "+escHtml(String(f.slab.company||""))+(f.slab.grade?" "+escHtml(String(f.slab.grade)):"")+(f.slab.cert?" · cert "+escHtml(String(f.slab.cert)):""));
