@@ -463,6 +463,10 @@
       <div id="acctSignedIn" hidden>
         <p class="note" style="margin:10px 0 0">Signed in as <b id="acctName" style="color:var(--ink)"></b></p>
         <p class="note" id="acctLinks" style="margin:4px 0 0"></p>
+        <div class="btnrow">
+          <button class="btn small" id="btnLinkGoogle" type="button">Link Google</button>
+          <button class="btn small" id="btnLinkApple" type="button">Link Apple</button>
+        </div>
         <div class="btnrow"><button class="btn small" id="btnSignOut" type="button">Sign out</button></div>
       </div>
       <div id="acctForms">
@@ -4783,6 +4787,10 @@ function renderAccountPanel(){
     $("acctSignedIn").hidden=false; $("acctForms").hidden=true;
     $("acctName").textContent=acct.username||"your account";
     $("acctLinks").textContent="Sign-in methods linked: "+(acct.identities.length?acct.identities.map(function(i){ return providerLabel(i.provider); }).join(" · "):"Username & password")+".";
+    var isLinked=function(p){ return acct.identities.some(function(i){ return i.provider===p; }); };
+    var lg=$("btnLinkGoogle"), la=$("btnLinkApple");
+    if(lg){ var gl=isLinked("google"); lg.disabled=gl; lg.textContent=gl?"Google linked":"Link Google"; }
+    if(la){ var al=isLinked("apple"); la.disabled=al; la.textContent=al?"Apple linked":"Link Apple"; }
   } else {
     badge.textContent=acct.token?"Guest":"Connecting…"; badge.className="badge";
     statusEl.textContent="Browsing as guest — your collection is saved on this device and synced.";
@@ -4848,27 +4856,106 @@ function onSignOut(){
     return runSyncMerge();
   }).then(function(){ renderAccountPanel(); });
 }
+/* ---------- SSO: provider sign-in, account linking, return handling ----------
+   Sign-in is a full top-level navigation to the accounts API's start
+   endpoint, which 302s to Google / Apple and later redirects back to
+   this page with the outcome in the URL fragment (#sso_token=… or
+   #sso_error=…). The fragment is consumed once, at boot, before the
+   normal token bootstrap — see consumeSsoFragment(). */
+var SSO_CONFLICT_MSG="That account is already linked to a different profile.";
+var SSO_FAIL_MSG="Sign-in didn't complete — please try again.";
+function ssoErrorMessage(code){
+  if(code==="account_conflict"||code==="identity_in_use") return SSO_CONFLICT_MSG;
+  return SSO_FAIL_MSG;
+}
+function ssoNotConfiguredMsg(provider){
+  return provider==="apple" ? "Apple sign-in activates once the Apple developer account is connected" : "Google sign-in activates once Google sign-in is connected";
+}
+function currentPageUrlNoHash(){ return window.location.href.split("#")[0]; }
+function ssoStartUrl(provider){
+  return API_BASE+"/auth/"+provider+"/start?return_to="+encodeURIComponent(currentPageUrlNoHash());
+}
 function onSso(provider){
-  api("/auth/"+provider+"/start").then(function(res){
-    if(res.body&&res.body.url){ window.location.href=res.body.url; return; }
+  var url=ssoStartUrl(provider);
+  if(provider==="google"){
+    // Google is configured: go straight there via the backend start URL.
+    window.location.href=url;
+    return;
+  }
+  // Apple: the backend isn't configured yet and would answer with a
+  // 501 JSON page — pre-check so the user is never stranded on it.
+  // A configured provider answers with a redirect instead (opaque to
+  // fetch), and only then do we navigate.
+  fetch(url,{redirect:"manual"}).then(function(res){
+    if(res && res.status===501){
+      setAcctMsg(ssoNotConfiguredMsg("apple"),"note");
+      renderAccountPanel();
+      return;
+    }
+    window.location.href=url;
+  }).catch(function(){
+    setAcctMsg("Couldn't reach the account server — check your connection and try again.","err");
+    renderAccountPanel();
+  });
+}
+function onLink(provider){
+  if(!acct.token){
+    setAcctMsg("Sign in first, then link "+providerLabel(provider)+".","err");
+    renderAccountPanel();
+    return;
+  }
+  // The api() helper sends the current session token as Bearer.
+  api("/auth/link/"+provider,{method:"POST",body:{}}).then(function(res){
+    if(res.status===200&&res.body&&res.body.authorizeUrl){
+      window.location.href=res.body.authorizeUrl;
+      return;
+    }
     if(res.status===501||(res.body&&res.body.error==="sso_not_configured")){
-      setAcctMsg(provider==="apple" ? "Apple sign-in activates once the Apple developer account is connected" : "Google sign-in activates once Google sign-in is connected","note");
+      setAcctMsg(ssoNotConfiguredMsg(provider),"note");
+    } else if(res.status===409||(res.body&&(res.body.error==="account_conflict"||res.body.error==="identity_in_use"))){
+      setAcctMsg(SSO_CONFLICT_MSG,"err");
     } else {
-      setAcctMsg((provider==="apple"?"Apple":"Google")+" sign-in isn't available right now.","err");
+      setAcctMsg("Couldn't start linking "+providerLabel(provider)+" — try again.","err");
     }
   }).catch(function(){ setAcctMsg("Couldn't reach the account server — check your connection and try again.","err"); })
   .then(function(){ renderAccountPanel(); });
+}
+/* Consume an SSO return fragment, if there is one. Runs before the
+   normal bootstrap: a returned token is written to all three token
+   stores (the same stores/keys the guest bootstrap uses) and the
+   fragment is stripped without a reload, so the normal findToken /
+   refreshMe / sync-merge flow below picks the session up signed in.
+   An error code is turned into a plain human message — the raw code
+   is never shown. */
+function consumeSsoFragment(){
+  var hash=window.location.hash||"";
+  if(hash.length<2) return;
+  var params;
+  try{ params=new URLSearchParams(hash.slice(1)); }catch(e){ return; }
+  var tok=params.get("sso_token"), err=params.get("sso_error"), prov=params.get("sso_provider");
+  if(!tok&&!err) return;
+  try{ history.replaceState(null,"",window.location.pathname+window.location.search); }
+  catch(e){ try{ window.location.hash=""; }catch(e2){} }
+  if(tok){
+    storeTokenAll(tok);
+    setAcctMsg("Signed in"+(prov?(" with "+providerLabel(prov)):"")+" — your collection is syncing.","ok");
+  } else {
+    setAcctMsg(ssoErrorMessage(err),"err");
+  }
 }
 $("formRegister").addEventListener("submit",onRegister);
 $("formLogin").addEventListener("submit",onLogin);
 $("btnSignOut").addEventListener("click",onSignOut);
 $("btnApple").addEventListener("click",function(){ onSso("apple"); });
 $("btnGoogle").addEventListener("click",function(){ onSso("google"); });
+$("btnLinkGoogle").addEventListener("click",function(){ onLink("google"); });
+$("btnLinkApple").addEventListener("click",function(){ onLink("apple"); });
 
 /* Boot: paint the local mirror immediately, then resolve identity
    (existing token from any store, else a fresh guest) and merge
    with the server. Nothing here blocks the page. */
 function initAccount(){
+  consumeSsoFragment();
   loadMirror();
   applyMirrorToState();
   refreshStats();
