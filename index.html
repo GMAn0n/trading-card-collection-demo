@@ -379,7 +379,7 @@
           <div class="cam-frame" id="camFrame" hidden></div>
           <div class="cam-placeholder" id="camPlaceholder">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            <div><b style="color:#fff">Camera preview will appear here</b><br><span style="font-size:13.5px">Tap “Turn on camera” below. Your browser will ask for permission — choose Allow. If no prompt appears, use “Upload a photo” instead — on a phone the picker offers your camera or your library.</span></div>
+            <div><b style="color:#fff">Camera preview will appear here</b><br><span style="font-size:13.5px">Tap “Turn on camera” below. Your browser will ask for permission — choose Allow. If no prompt appears, tap <b>“Take a photo”</b> — it opens your camera directly — or use “Upload a photo” for your library.</span></div>
           </div>
           <img id="capturePreview" class="capture-img" alt="Photo you just took of a trading card" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0a0f0d" hidden>
         </div>
@@ -393,6 +393,8 @@
           <button class="btn dark" id="btnCapture" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg>Take photo</button>
           <button class="btn" id="btnFlip" disabled>Flip camera</button>
           <button class="btn" id="btnRetake" hidden>Retake</button>
+          <label class="btn" for="cameraInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Take a photo</label>
+          <input class="sr" type="file" id="cameraInput" accept="image/*" capture="environment">
           <label class="btn" for="fileInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5M12 3v12"/></svg>Upload a photo</label>
           <input class="sr" type="file" id="fileInput" accept="image/*">
         </div>
@@ -416,12 +418,12 @@
       <div class="cardbox">
         <h3 style="margin:0 0 14px;font-size:17px">How scanning works here</h3>
         <ol class="steps">
-          <li><span class="n">1</span><span><b>Turn on the camera</b> and allow access when your browser asks — on a phone it uses the rear camera automatically. Rather not use the live view? <b>Upload a photo</b> instead: on a phone the picker offers your camera or your library.</span></li>
+          <li><span class="n">1</span><span><b>Turn on the camera</b> and allow access when your browser asks — on a phone it uses the rear camera automatically. Live view not working? Tap <b>Take a photo</b> — it opens your camera directly without the live view — or <b>Upload a photo</b> from your library.</span></li>
           <li><span class="n">2</span><span><b>Fill the card-shaped guide</b> with the card, edge to edge — including its <b>bottom edge</b>, where the collector number sits — in good light, and tap <b>Take photo</b>. The preview shows the camera's full field (nothing is cropped away) and the photo is kept at full resolution. A graded card can stay in its case — photograph the whole slab and the label is read too.</span></li>
           <li><span class="n">3</span><span><b>Let it identify the card.</b> First, AI reads the photo (sent to our card-data proxy) and returns the card's name, HP, attacks, Pokémon Power / Ability name, collector number, illustrator, finish (holo, reverse holo or non-holo), 1st Edition stamp, set symbol and © year line — and, when the card sits in a grading slab, the label's company, grade and cert number. The read also reports the card's language and its name exactly as printed: printings in other languages are different cards with their own values, so a non-English read is matched only within that language's printings — a Japanese card is never swapped for the English printing. Reader output wobbles from run to run, so one weak read is never the last word: if a read resolves to no match — or only to a shortlist, with no clear winner — the photo is read a second time and both reads are combined — first read's values kept, its gaps filled, attacks unioned — before anything is declared unmatched or a shortlist is shown. A clear winner is never re-read. If that can't read it, the on-device fallback takes over: it finds the card's edges in the photo, squares it up, and reads the <b>name in the top band</b> (HP beside it as a cross-check) and the <b>collector number in the bottom-right</b>. Either way, <b>every printing of that name is then scored on the combination</b> — number, HP, the name exactly as printed on the card, each attack (name first, damage only as a bonus), the Pokémon Power name, the illustrator, the finish, the edition stamp, the set symbol and the © years — which is what separates look-alike reprints like Base Set from Base Set 2, since they share name, HP and attacks, and near-twins like the GB-promo Dragonite from the Fossil one, which share species, HP and an attack but differ in power and illustrator. The Pokédex number on a Japanese card's data strip counts only as weak supporting evidence — it's the species number, not a unique card id, so it never decides a match on its own. Illustrator and finish reads are noisy, so they only ever add points when they agree — a mismatch never counts against a printing. One exception: the Ancient Mew promo is printed entirely in glyph script, with no readable attacks, illustrator credit, set symbol or collector number, so a read that does carry readable card text rules that one printing out — a card with readable text cannot be it. A read number that no printing of that name carries is treated as a misread and ignored, never shown as fact. A printing opens automatically only on a clear win — a strong score with a clear margin, or at least three independent signal types agreeing; name and HP alone never auto-pick. Anything close goes to a picker where each printing lists the signals that matched it, so your tap is an informed one. If nothing reads clearly, it says so and asks for a retake instead of guessing. The headline value is the raw (ungraded) price for that printing from PriceCharting, with TCGplayer market prices per finish alongside and live eBay listings. Identity is cross-checked across multiple card databases and prices come from a separate pricing source, which is why a printing missing from one catalogue can still be identified and valued.</span></li>
           <li><span class="n">4</span><span><b>Add it in one tap.</b> From a photo, the card page leads with a one-tap <b>Add to collection</b> — Raw by default, with Damaged and Graded (PSA / CGC / BGS / SGC / TAG) right there on the same sheet. If the photo showed a grading slab, that sheet opens with <b>Graded</b> already selected — company and grade filled in from the label, cert number included — and the copy is valued from that grader's ladder row. A photo can't prove a 1st Edition stamp, so photo adds default to Unlimited unless you switch.</span></li>
         </ol>
-        <p class="note" style="margin-top:16px">Live camera not prompting? Use <b>Upload a photo</b> instead — or open this page directly in Safari or Chrome (not inside another app's preview) and set Camera to <b>Allow</b> in site settings, then reload and tap “Turn on camera” again.</p>
+        <p class="note" style="margin-top:16px">Live camera not prompting? Tap <b>Take a photo</b> — it opens the camera directly — or <b>Upload a photo</b>. Or open this page directly in Safari or Chrome (not inside another app's preview) and set Camera to <b>Allow</b> in site settings, then reload and tap “Turn on camera” again.</p>
       </div>
     </div>
   </section>
@@ -582,7 +584,7 @@ function initCamBadges(){
   var sup=$("badgeSupport"), stat=$("statCam");
   if(window.isSecureContext===false){ sup.textContent="Needs a secure (HTTPS) page for camera"; sup.className="badge warn"; stat.textContent="Needs HTTPS"; return; }
   if(camSupported()){ sup.textContent="Camera supported on this device"; sup.className="badge ok"; stat.textContent="Supported ✓"; }
-  else { sup.textContent="No live-camera API here — use “Upload a photo”"; sup.className="badge warn"; stat.textContent="Upload a photo"; }
+  else { sup.textContent="No live-camera API here — use “Take a photo”"; sup.className="badge warn"; stat.textContent="Use Take a photo"; }
   // If camera permission was already denied earlier, say so up front —
   // the browser will never show the prompt again until it's reset.
   if(navigator.permissions && navigator.permissions.query){
@@ -614,7 +616,7 @@ function camHelpHTML(kind){
   var lead = kind==="denied"
     ? "<b>Camera permission is blocked, so no prompt can appear.</b> The browser remembers an earlier “Block / Don't allow” choice and denies the camera instantly. To fix it: "+steps
     : "<b>The camera was blocked before a prompt could appear.</b> That happens when this page runs inside an app's embedded preview, or permission was denied earlier. "+steps;
-  return lead+"<br><br><b>No settings needed:</b> tap <b>“Upload a photo”</b> below — on a phone the picker offers your camera or your photo library, and the photo works exactly the same way.";
+  return lead+"<br><br><b>No settings needed:</b> tap <b>“Take a photo”</b> below — it opens your camera directly — or <b>“Upload a photo”</b> for your library. The photo works exactly the same way.";
 }
 initCamBadges();
 
@@ -653,16 +655,16 @@ function onCamError(err){
       showCamError(camHelpHTML("embedded"));
     }
   } else if(err && (err.name==="NotFoundError"||err.name==="DevicesNotFoundError")){
-    showCamError("<b>No camera found on this device.</b> Use <b>Upload a photo</b> instead.");
+    showCamError("<b>No camera found on this device.</b> Tap <b>Take a photo</b>, or use <b>Upload a photo</b> instead.");
   } else if(err && err.name==="NotReadableError"){
-    showCamError("<b>The camera is busy</b> — another app or tab is using it. Close it and try again, or use <b>Upload a photo</b>.");
+    showCamError("<b>The camera is busy</b> — another app or tab is using it. Close it and try again, or tap <b>Take a photo</b> / <b>Upload a photo</b>.");
   } else {
-    showCamError("<b>The camera couldn't start</b> ("+(err&&err.name?err.name:"unknown error")+"). Use <b>Upload a photo</b> instead — it works the same way.");
+    showCamError("<b>The camera couldn't start</b> ("+(err&&err.name?err.name:"unknown error")+"). Tap <b>Take a photo</b> — it opens the camera directly — or use <b>Upload a photo</b>. Both work the same way.");
   }
 }
 function startCamera(){
   clearCamError();
-  if(!camSupported()){ showCamError("<b>No live camera in this browser view.</b> Use <b>Upload a photo</b> — on a phone the picker offers your camera or library, and it works the same way. Or open this link directly in Safari / Chrome for the live viewfinder."); return; }
+  if(!camSupported()){ showCamError("<b>No live camera in this browser view.</b> Tap <b>Take a photo</b> — it opens the camera directly on a phone — or use <b>Upload a photo</b> for your library. Both work the same way. Or open this link directly in Safari / Chrome for the live viewfinder."); return; }
   setBadge("Requesting permission…","warn");
   var gum=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
   var attempts=[
@@ -674,7 +676,7 @@ function startCamera(){
     gum(attempts[i]).then(onCamStream).catch(function(err){
       // Constraint problems get a simpler retry; a permission denial
       // would fail every retry identically, so stop there and explain.
-      if(i<attempts.length-1 && err && (err.name==="OverconstrainedError"||err.name==="NotFoundError"||err.name==="TypeError")){ tryNext(i+1); }
+      if(i<attempts.length-1 && err && (err.name==="OverconstrainedError"||err.name==="NotFoundError"||err.name==="TypeError"||err.name==="NotReadableError"||err.name==="AbortError")){ tryNext(i+1); }
       else onCamError(err);
     });
   })(0);
@@ -723,6 +725,7 @@ function handlePhotoFile(f){
   reader.readAsDataURL(f);
 }
 $("fileInput").addEventListener("change",function(e){ handlePhotoFile(e.target.files && e.target.files[0]); e.target.value=""; });
+$("cameraInput").addEventListener("change",function(e){ handlePhotoFile(e.target.files && e.target.files[0]); e.target.value=""; });
 document.addEventListener("visibilitychange",function(){ if(document.hidden) stopCamera(); });
 
 /* ---------- Search ---------- */
