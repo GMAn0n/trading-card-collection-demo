@@ -803,7 +803,12 @@ function ebayURL(q, mode){
 function searchURLs(item){
   var q=(item.name+" "+(item.number||"")+" "+item.set).trim();
   return {
-    tcg: item.tcgUrl || ("https://www.tcgplayer.com/search/all/product?productLineName="+(item.game==="Pokémon"?"pokemon":"magic")+"&q="+encodeURIComponent(item.name+" "+(item.number||""))),
+    // item.tcgUrl, when present, is already this printing's exact
+    // TCGplayer product page. Otherwise fall back to a search that is
+    // constrained to this card's set (set name in the query text AND
+    // the setName filter) — never a bare card-name search, which mixed
+    // printings from every set together.
+    tcg: item.tcgUrl || tcgSetSearchUrl(item, null, null),
     ebay: ebayURL(q),
     ebayBin: ebayURL(q,"bin"),
     ebayAuction: ebayURL(q,"auction")
@@ -858,9 +863,32 @@ function isFirstEditionKey(keyOrLabel){ return /1st[\s-]?edition/i.test(String(k
 function isFirstFinish(f){ return isFirstEditionKey(f&&(f.key||f.label)); }
 function editionOfFinish(f){ return isFirstFinish(f)?"first":"unlimited"; }
 function setSlug2(name){ return String(name||"").toLowerCase().trim().replace(/&/g,"and").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
-function tcgPrintingSearchUrl(item, printingLabel){
+/* The exact TCGplayer product page for a finish's productId — that page
+   IS the exact card, set and finish, so it always wins when an ID is
+   known. Returns null when there is no ID to link to. */
+function tcgProductUrl(productId){
+  return (productId!=null && productId!=="") ? ("https://www.tcgplayer.com/product/"+productId) : null;
+}
+/* Set-targeted TCGplayer search, used only when no productId exists for
+   the row: the query text itself carries name + set + collector number,
+   and the URL also carries the product-line path, the setName filter
+   and (when known) the printing / condition filters — so results stay
+   inside this card's own set and printing instead of mixing every
+   printing of the name across all sets. */
+function tcgSetSearchUrl(item, printingLabel, condition){
   var seg=item.game==="Magic"?"magic":"pokemon";
-  return "https://www.tcgplayer.com/search/"+seg+"/product?q="+encodeURIComponent(item.name||"")+"&setName="+encodeURIComponent(setSlug2(item.set||""))+"&printing="+encodeURIComponent(printingLabel||"1st Edition Holofoil");
+  var qParts=[String(item.name||"").trim()];
+  if(item.set) qParts.push(String(item.set).trim());
+  if(item.number) qParts.push(String(item.number).trim());
+  var url="https://www.tcgplayer.com/search/"+seg+"/product?productLineName="+seg+"&q="+encodeURIComponent(qParts.join(" ").trim());
+  var slug=setSlug2(item.set||"");
+  if(slug) url+="&setName="+encodeURIComponent(slug);
+  if(printingLabel) url+="&printing="+encodeURIComponent(printingLabel);
+  if(condition) url+="&condition="+encodeURIComponent(condition);
+  return url;
+}
+function tcgPrintingSearchUrl(item, printingLabel){
+  return tcgSetSearchUrl(item, printingLabel||"1st Edition Holofoil", null);
 }
 function cardVariants(item){ return (item&&item.raw&&(item.raw.variants||item.raw.variants_detailed))||{}; }
 function cardHasFirstEditionVariant(item){
@@ -1329,9 +1357,16 @@ function priceRowsHTML(item){
         // 1st Edition: NO product page exists — link to printing-filtered search, never the unlimited product
         copy.url=tcgPrintingSearchUrl(item, r.label.replace(/^TCGplayer\s*—\s*/,"").replace(/\s+(market|low|direct low)$/i,"")||"1st Edition Holofoil");
       } else if(!copy.url){
+        // Best: the product page of the finish this row prices — the
+        // row's own productId first, then a matching finish's.
+        if(r.productId!=null) copy.url=tcgProductUrl(r.productId);
         var fins=item.tcgFinishes||[];
-        for(var i=0;i<fins.length;i++){ if(!isFirstFinish(fins[i]) && fins[i].productId!=null && r.label.toLowerCase().indexOf(fins[i].label.toLowerCase())>=0){ copy.url="https://www.tcgplayer.com/product/"+fins[i].productId; break; } }
+        for(var i=0;!copy.url && i<fins.length;i++){ if(!isFirstFinish(fins[i]) && fins[i].productId!=null && r.label.toLowerCase().indexOf(fins[i].label.toLowerCase())>=0){ copy.url=tcgProductUrl(fins[i].productId); break; } }
         if(!copy.url && item.tcgUrl) copy.url=item.tcgUrl;
+        // Fallback: no productId anywhere for this finish — link to the
+        // set-targeted search for this finish, never a bare name search
+        // and never an unlinked row.
+        if(!copy.url) copy.url=tcgSetSearchUrl(item, r.label.replace(/^TCGplayer\s*—\s*/,"").replace(/\s+(market|low|direct low)$/i,"")||null, null);
       }
     }
     if(/^Cardmarket/i.test(r.label)||copy.source==="cardmarket"){ if(!copy.url) copy.url=cardmarketUrl(item); cmRows.push(copy); }
@@ -1534,7 +1569,7 @@ function renderMorePrices(item){
       if(pr.mid!=null) bits.push("Mid "+money(pr.mid));
       if(pr.directLow!=null) bits.push("Direct low "+money(pr.directLow));
       if(tc.number) bits.push("TCGplayer #"+tc.number);
-      tcHtml='<a class="prow" href="'+escAttr(tc.url||"#")+'" target="_blank" rel="noopener"><span>TCGplayer — via TCGCSV'+(tc.subType?" · "+escHtml(tc.subType):"")+(tc.category===85?" · Pokémon Japan catalogue":"")+'<small>'+escHtml(bits.join(" · ")||"Daily TCGCSV feed")+' · USD guide figures from TCGCSV\u2019s daily TCGplayer files — tap for the product page</small></span><b>'+(pr.market!=null?("Market "+money(pr.market)):"See product")+' ↗</b></a>';
+      tcHtml='<a class="prow" href="'+escAttr(tc.url||tcgSetSearchUrl(item, tc.subType||null, null))+'" target="_blank" rel="noopener"><span>TCGplayer — via TCGCSV'+(tc.subType?" · "+escHtml(tc.subType):"")+(tc.category===85?" · Pokémon Japan catalogue":"")+'<small>'+escHtml(bits.join(" · ")||"Daily TCGCSV feed")+' · USD guide figures from TCGCSV\u2019s daily TCGplayer files — tap for the product page</small></span><b>'+(pr.market!=null?("Market "+money(pr.market)):"See product")+' ↗</b></a>';
     }
     // found:false — omit silently (e.g. Japanese CD Promo Mew is not in
     // TCGplayer's JP catalogue; that is expected, not an error).
@@ -2252,8 +2287,9 @@ function tcgFiltersHTML(item){
    treat those asks as absent rather than presenting them as fact. */
 function setSlug(name){ return String(name||"").toLowerCase().trim().replace(/&/g,"and").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
 function tcgConditionUrl(item, finish, condition){
-  var seg=item.game==="Magic"?"magic":"pokemon";
-  return "https://www.tcgplayer.com/search/"+seg+"/product?q="+encodeURIComponent(item.name||"")+"&setName="+encodeURIComponent(setSlug(item.set||""))+"&printing="+encodeURIComponent(finish.label||"")+"&condition="+encodeURIComponent(condition||"");
+  // Same set-targeted search as every other TCGplayer fallback: name +
+  // set + number in the query, setName + printing + condition filters.
+  return tcgSetSearchUrl(item, (finish&&finish.label)||null, condition||null);
 }
 var TCG_CONDITIONS=["Near Mint","Lightly Played","Moderately Played","Heavily Played","Damaged"];
 function tcgEffLow(f){ if(f.lowPrice==null) return null; if(f.marketPrice!=null && f.lowPrice>f.marketPrice) return null; return f.lowPrice; }
@@ -2292,11 +2328,15 @@ function renderTcgProducts(item){
       head.innerHTML=(isFirst?'<span class="ed-badge first">1st Edition</span><strong>1st Edition</strong><span class="note2">Separate printing — search-filtered listings, no single product page</span>':'<span class="ed-badge unlimited">Unlimited</span><strong>Unlimited</strong><span class="note2">Product page for this printing</span>');
       box.appendChild(head);
     }
-    var productUrl=isFirst?tcgPrintingSearchUrl(item,f.label):"https://www.tcgplayer.com/product/"+f.productId;
+    // Exact product page whenever this finish carries a productId;
+    // otherwise the set-targeted search for this finish — never a
+    // /product/null URL and never a bare name search.
+    var productUrl=isFirst?tcgPrintingSearchUrl(item,f.label):(tcgProductUrl(f.productId)||tcgPrintingSearchUrl(item,f.label));
     var a=document.createElement("div");
     a.className="tcg-prod";
-    var primary=isFirst?item.image:"https://tcgplayer-cdn.tcgplayer.com/product/"+f.productId+"_in_1000x1000.jpg";
-    var fallback=isFirst?item.image:"https://tcgplayer-cdn.tcgplayer.com/product/"+f.productId+"_200w.jpg";
+    var hasPid=(!isFirst && f.productId!=null);
+    var primary=hasPid?("https://tcgplayer-cdn.tcgplayer.com/product/"+f.productId+"_in_1000x1000.jpg"):item.image;
+    var fallback=hasPid?("https://tcgplayer-cdn.tcgplayer.com/product/"+f.productId+"_200w.jpg"):item.image;
     a.innerHTML='<img loading="lazy" alt=""><div class="p-main"><div class="p-finish"></div><div class="p-from"></div><div class="p-meta"></div><a class="p-cta" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">'+(isFirst?'View 1st Edition listings on TCGplayer ↗':'View all sellers on TCGplayer ↗')+'</a><div class="cond-row"><span class="cond-label">Shop by condition</span><div class="cond-links"></div></div></div>';
     a.querySelector(".p-cta").href=productUrl;
     var condWrap=a.querySelector(".cond-links");
@@ -2308,8 +2348,8 @@ function renderTcgProducts(item){
     img.alt=item.name+" — "+f.label+(isFirst?" — catalog image (1st Edition has no separate product photo)":" — product photo on TCGplayer");
     img.src=primary;
     img.onerror=function(){
-      if(!isFirst && img.src===primary){ img.src=fallback; }
-      else if(!isFirst && img.src===fallback){ img.onerror=null; if(item.image) img.src=item.image; else img.style.display="none"; }
+      if(hasPid && img.src===primary){ img.src=fallback; }
+      else if(hasPid && img.src===fallback){ img.onerror=null; if(item.image) img.src=item.image; else img.style.display="none"; }
       else { img.onerror=null; img.style.display="none"; }
     };
     a.querySelector(".p-finish").textContent=f.label;
