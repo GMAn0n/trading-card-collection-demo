@@ -177,6 +177,16 @@
   .tcg-prod .p-meta b{color:var(--ink)}
   .tcg-prod .p-cta{font-size:12.5px;font-weight:800;color:var(--accent);margin-top:4px}
   .tcg-prod .lbadge{display:inline-flex;font-size:11px;font-weight:800;letter-spacing:.02em;padding:3px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-left:6px;vertical-align:1px}
+  /* For sale on PriceCharting — rendered only when offers exist */
+  .pc-live{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .pc-live-head{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}
+  .pc-live-head h3{margin:0;font-size:18px;letter-spacing:-.01em}
+  .pc-list{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:12px}
+  .pc-list .listing{flex-direction:column;gap:8px;min-width:0}
+  .pc-list .listing img{width:100%;height:140px;object-fit:contain}
+  .pc-list .listing .ltitle{display:block;-webkit-line-clamp:none;overflow:visible}
+  .pc-ship{font-size:12.5px;color:var(--muted);line-height:1.45;margin-top:3px}
+  .pc-allin{font-size:13px;font-weight:800;color:var(--ink);margin-top:2px}
   @media(max-width:520px){.ebay-list .listing img{height:102px}.ebay-filters,.tcg-filters{flex-direction:column}.tcg-prod img{width:62px;height:87px}}
   .spinner{width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin .8s linear infinite;display:inline-block;vertical-align:-5px;margin-right:8px}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -543,7 +553,7 @@
 "use strict";
 var $=function(id){return document.getElementById(id)};
 var money=function(n){ if(n==null||isNaN(n)) return "—"; return "$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); };
-var state={ game:"pokemon", collection:[], wishlist:[], purchases:[], checkoutOpened:{}, _ebayCache:null, current:null, stream:null, facing:"environment", captured:false, ebayType:"all", ebaySort:"best", ebayReq:0, tcgFinish:"all", tcgSort:"low", gradedGrade:"10", gradedReq:0, ocrBusy:false, cardBox:null, captureSource:null };
+var state={ game:"pokemon", collection:[], wishlist:[], purchases:[], checkoutOpened:{}, _ebayCache:null, current:null, stream:null, facing:"environment", captured:false, ebayType:"all", ebaySort:"best", ebayReq:0, tcgFinish:"all", tcgSort:"low", gradedGrade:"10", gradedReq:0, pcReq:0, ocrBusy:false, cardBox:null, captureSource:null };
 var GRADERS=["PSA","CGC","BGS","SGC","TAG"];
 var GRADER_LABEL={PSA:"PSA",CGC:"CGC",BGS:"BGS (Beckett)",SGC:"SGC",TAG:"TAG"};
 var toastTimer=null;
@@ -2119,6 +2129,78 @@ function ebayFiltersHTML(){
     '<div class="filter-group"><label>Type</label><div class="fseg" role="group" aria-label="Listing type">'+btn("type","all","All",state.ebayType)+btn("type","auction","Auction",state.ebayType)+btn("type","bin","Buy It Now",state.ebayType)+'</div></div>'+
     '<div class="filter-group"><label>Sort</label><div class="fseg" role="group" aria-label="Sort listings">'+btn("sort","best","Best match",state.ebaySort)+btn("sort","price","Price · low first",state.ebaySort)+btn("sort","ending","Ending soonest",state.ebaySort)+'</div></div>'+
   '</div>';
+}
+
+/* ---------- For sale on PriceCharting (as-available) ----------
+   PriceCharting's own marketplace, pulled per card through the
+   proxy's /offers endpoint — no paid API access. AS-AVAILABLE RULE:
+   the section renders ONLY when the response carries offers
+   (available > 0). Zero available, product not found, or a failed
+   fetch all render nothing at all — no empty section, no "no
+   listings" placeholder, no error text. Rows are plain link-outs to
+   the offer on PriceCharting's site; purchase happens there, never
+   through the in-app eBay buy flow. Fetched lazily when the detail
+   sheet opens, in parallel with the other marketplace fetches, so a
+   slow or failed response never blocks the rest of the sheet. */
+var PC_OFFERS_EP="https://ebay-search-proxy.369samclarkisfine.workers.dev/offers";
+function loadPcOffers(item){
+  var box=$("pcOffers"); if(!box) return;
+  var req=++state.pcReq;
+  box.innerHTML="";
+  // Same identity the /value call uses (priceName/priceSet/priceNumber
+  // when present); without a verified PriceCharting identity there is
+  // no catalog entry to pull offers for.
+  if(!item || item.game!=="Pokémon") return;
+  if(item.supplemental && !item.priceName) return;
+  var vi=valueIdentity(item);
+  if(!vi.name || !vi.set || !vi.number) return;
+  var url=PC_OFFERS_EP+"?name="+encodeURIComponent(vi.name)+"&set="+encodeURIComponent(vi.set)+"&number="+encodeURIComponent(vi.number);
+  fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(data){
+    if(req!==state.pcReq) return;
+    if(!data || !data.found || !(data.available>0) || !Array.isArray(data.offers) || !data.offers.length){ box.innerHTML=""; return; }
+    renderPcOffers(data, item);
+  }).catch(function(){
+    if(req!==state.pcReq) return;
+    box.innerHTML="";
+  });
+}
+function renderPcOffers(data, item){
+  var box=$("pcOffers"); if(!box) return;
+  var offers=data.offers;
+  var head="For sale on PriceCharting"+(offers.length>1?(" ("+offers.length+")"):"");
+  box.innerHTML="";
+  var sec=document.createElement("div"); sec.className="pc-live sec-pc";
+  var headEl=document.createElement("div"); headEl.className="pc-live-head";
+  var h=document.createElement("h3"); h.textContent=head; headEl.appendChild(h);
+  sec.appendChild(headEl);
+  var list=document.createElement("div"); list.className="pc-list"; list.setAttribute("aria-live","polite");
+  offers.forEach(function(offer){
+    if(!offer || !offer.url) return;
+    var a=document.createElement("a"); a.className="listing"; a.href=offer.url; a.target="_blank"; a.rel="noopener";
+    var imgSrc=offer.image||item.image||"";
+    a.innerHTML=(imgSrc?'<img loading="lazy" alt="">':"")+'<div class="lmain"><div class="ltitle"></div><div class="lmeta"></div><div class="lprice"></div></div>';
+    if(imgSrc){ var img=a.querySelector("img"); img.src=imgSrc; img.alt=offer.title||item.name||"PriceCharting listing photo"; img.onerror=function(){ if(item.image && img.src!==item.image){ img.src=item.image; } else { img.style.display="none"; } }; }
+    a.querySelector(".ltitle").textContent=offer.title||item.name||"PriceCharting listing";
+    var condTxt=offer.condition||offer.grade||"";
+    a.querySelector(".lmeta").textContent=condTxt;
+    var priceEl=a.querySelector(".lprice");
+    priceEl.textContent=(offer.price!=null?money(offer.price):"See listing on PriceCharting");
+    var main=a.querySelector(".lmain");
+    if(offer.shippingText){
+      var ship=document.createElement("div"); ship.className="pc-ship"; ship.textContent=String(offer.shippingText); main.appendChild(ship);
+    }
+    if(offer.shipping!=null && !isNaN(Number(offer.shipping)) && offer.price!=null && !isNaN(Number(offer.price))){
+      var allIn=document.createElement("div"); allIn.className="pc-allin"; allIn.textContent=money(Number(offer.price)+Number(offer.shipping))+" all-in"; main.appendChild(allIn);
+    }
+    var cta=document.createElement("div"); cta.className="pc-ship"; cta.style.cssText="font-weight:800;color:var(--accent)"; cta.textContent="View on PriceCharting ↗"; main.appendChild(cta);
+    list.appendChild(a);
+  });
+  if(!list.children.length){ box.innerHTML=""; return; }
+  sec.appendChild(list);
+  box.appendChild(sec);
 }
 
 /* ---------- For sale on TCGplayer ---------- */
@@ -4421,6 +4503,7 @@ function openDetail(item, keepEbayFilters){
     '<div id="tcgFiltersWrap">'+tcgFiltersHTML(item)+'</div>'+
     '<div class="tcg-list" id="tcgListings" aria-live="polite"></div>'+
     '</div>'+
+    '<div id="pcOffers"></div>'+
     '<p class="note sec-foot" style="margin-top:12px">The headline value is the raw (ungraded) PriceCharting price for this exact printing — what a typical ungraded copy is worth. TCGplayer figures are near-mint market prices and lowest asks per finish (1st Edition and Unlimited are separate printings with separate prices), and eBay prices are the live asks/bids on each listing, plus shipping where shown.</p>'+
     '</div></div>';
   $("modalImg").src=item.image;
@@ -4463,6 +4546,7 @@ function openDetail(item, keepEbayFilters){
   });
   renderTcgProducts(item);
   loadEbayListings(item);
+  loadPcOffers(item);
   loadMorePrices(item);
   loadExtraSources(item);
   loadGradedComparison(item);
