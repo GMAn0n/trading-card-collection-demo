@@ -213,9 +213,11 @@
   @media(max-width:700px){.sheetgrid{grid-template-columns:1fr}.sheetgrid img.big{max-width:250px;margin:0 auto}}
   .sheetgrid img.big{width:100%;border-radius:12px;box-shadow:var(--shadow);display:block}
   /* Card data side by side at EVERY width, phones included: the data
-     sections split into two columns — values & graded data on the
-     left, live marketplace listings (eBay, TCGplayer) on the right,
-     one type of data per side — so the sheet needs far less scrolling.
+     sections split into two columns — values, graded data and the
+     marketplace source stack (extra sources, TCGplayer, PriceCharting
+     offers) on the left, live eBay listings on the right — so the
+     sheet needs far less scrolling and every buying option sits in
+     one integrated flow instead of trailing the eBay list.
      There is deliberately no breakpoint here: the columns never
      dissolve or stack, down to a 320px viewport. Inside each column
      everything goes single-file and wraps/shrinks to fit a
@@ -275,9 +277,9 @@
   .datacols .prow b{font-size:15px}
   .dcol-live .ebay-list{grid-template-columns:minmax(0,1fr)}
   .dcol-live .ebay-list .listing .ltitle{display:block;-webkit-line-clamp:none;overflow:visible}
-  .dcol-live .ebay-filters,.dcol-live .tcg-filters{flex-direction:column}
-  .dcol-live .tcg-prod{flex-direction:column;gap:8px}
-  .dcol-live .btnrow .btn{flex:1 1 100%;justify-content:center;text-align:center}
+  .dcol-live .ebay-filters,.dcol .tcg-filters{flex-direction:column}
+  .dcol .tcg-prod{flex-direction:column;gap:8px}
+  .dcol .btnrow .btn{flex:1 1 100%;justify-content:center;text-align:center}
   .dcol .service-row{flex-wrap:wrap}
   .dcol .more-prices .prow.has-thumb{flex-wrap:wrap}
   .dcol .src-price{text-align:left;white-space:normal}
@@ -1283,7 +1285,7 @@ function pumpValues(){
    while it loads, a pending state; when PriceCharting has no row for the
    printing, the printing's own TCGplayer market — always source-labelled. */
 function headlineOf(item){
-  if(item.rawValue!=null) return { v:item.rawValue, label:"Raw value · PriceCharting", url:item.rawUrl||null, pending:false };
+  if(item.rawValue!=null) return { v:item.rawValue, label:"Raw value · PriceCharting", url:(item.pcOffersUrl||item.rawUrl||null), pending:false };
   if(item.game==="Pokémon" && item.set && item.number && item.rawState!=="none" && item.rawState!=="skip") return { v:null, label:"Raw value · PriceCharting", url:null, pending:true };
   // Non-English printing with no PriceCharting row of its own: say
   // so in its own language's name. The English printing's price —
@@ -1333,14 +1335,14 @@ function priceRowsHTML(item){
   // rows the endpoint actually returned are ever shown.
   if(item.rawValue!=null && ((item.ladder && item.ladder.length) || (item.fullLadder && item.fullLadder.length))){
     var pcUrl=item.fullLadder && item.rawUrl ? item.rawUrl+"#full-prices" : item.rawUrl;
-    var pcRows=[{label:"Ungraded", value:item.rawValue, url:item.rawUrl}];
+    var pcRows=[{label:"Ungraded", value:item.rawValue, url:(item.pcOffersUrl||item.rawUrl)}];
     mergedLadderRows(item).forEach(function(r){
       pcRows.push({label: isGenericGradeLabel(r.label) ? r.label+" (generic)" : r.label, value:r.price, url:pcUrl});
     });
     groups.push({title: item.fullLadder ? "Values · PriceCharting full prices" : "Values · PriceCharting", rows:pcRows, footnote: item.fullLadder ? "“Grade N (generic)” rows are PriceCharting's generic grade values, based on PSA/BGS graded sales. Company-named rows (PSA 10, BGS 10, CGC 10 Pristine…) are per-service." : null});
   } else if(item.rawValue!=null){
     // /value found but no ladder array in the response — keep single rows, no duplication beyond what we have
-    var pcFallback=[{label:"Ungraded", value:item.rawValue, url:item.rawUrl}];
+    var pcFallback=[{label:"Ungraded", value:item.rawValue, url:(item.pcOffersUrl||item.rawUrl)}];
     if(item.grade9!=null) pcFallback.push({label:"Grade 9", value:item.grade9, url:item.rawUrl});
     if(item.psa10!=null) pcFallback.push({label:"PSA 10", value:item.psa10, url:item.rawUrl});
     groups.push({title:"Values · PriceCharting", rows:pcFallback});
@@ -1606,7 +1608,7 @@ function renderMorePrices(item){
   }
   if(!tcHtml && !cmHtml && !buyeeHtml){ box.innerHTML=""; return; }
   var pcRow="";
-  if(item.rawValue!=null) pcRow='<a class="prow" href="'+escAttr(item.rawUrl||"#")+'" target="_blank" rel="noopener"><span>PriceCharting — Ungraded (the headline value)<small>USD · raw, ungraded, for this exact printing</small></span><b>'+money(item.rawValue)+' ↗</b></a>';
+  if(item.rawValue!=null) pcRow='<a class="prow" href="'+escAttr(item.pcOffersUrl||item.rawUrl||"#")+'" target="_blank" rel="noopener"><span>PriceCharting — Ungraded (the headline value)<small>USD · raw, ungraded, for this exact printing'+(item.pcOffersUrl?" · tap for copies for sale on PriceCharting":"")+'</small></span><b>'+money(item.rawValue)+' ↗</b></a>';
   else if(headlineOf(item).pending) pcRow='<div class="prow"><span>PriceCharting — Ungraded (the headline value)</span><b>Fetching…</b></div>';
   box.innerHTML='<div class="more-prices"><div class="mp-title">More prices — compare by source</div><p class="note" style="margin:0">The headline stays PriceCharting. Each source below keeps its own label and currency — figures are never blended or substituted across printings or languages.</p>'+pcRow+tcHtml+cmHtml+buyeeHtml+'</div>';
 }
@@ -2195,6 +2197,16 @@ function loadPcOffers(item){
     return r.json();
   }).then(function(data){
     if(req!==state.pcReq) return;
+    // The response also names this product's PriceCharting SALES page
+    // (their marketplace offers page). Remember it on the item: the
+    // card's PriceCharting price links (headline + More prices row)
+    // point there — where copies are actually listed for sale —
+    // instead of the price-data page, and the detail is refreshed so
+    // the links swap as soon as the sales page is known.
+    if(data && data.offersUrl && item.pcOffersUrl!==data.offersUrl){
+      item.pcOffersUrl=data.offersUrl;
+      if(state.current && state.current.id===item.id) updateDetailValue(item);
+    }
     if(!data || !data.found || !(data.available>0) || !Array.isArray(data.offers) || !data.offers.length){ box.innerHTML=""; return; }
     renderPcOffers(data, item);
   }).catch(function(){
@@ -4523,20 +4535,15 @@ function openDetail(item, keepEbayFilters){
     (item._fromPhoto?"":'<p class="note" style="margin:6px 0 0">Adding asks for the copy you own: <b>Damaged</b>, <b>Raw</b>, or <b>Graded</b> (PSA / CGC / BGS / SGC / TAG, 1–10). Value follows that state — Damaged is labelled “Damaged est. (½ ungraded)”, Graded uses the matching ladder row.</p>')+
     '<div class="kv"><div><span>Set</span><b id="kvSet"></b></div><div><span>Number</span><b id="kvNum"></b></div><div><span>Rarity</span><b id="kvRar"></b></div><div><span id="kvPriceLabel">Market price</span><b id="kvPrice"></b></div></div>'+
     '</div></div>'+
-    // Data sections side by side at every width: values & graded data
-    // in the left column, live marketplace listings in the right.
+    // Data sections side by side at every width: values, graded data
+    // and the marketplace source stack (More prices, extra sources,
+    // then the TCGplayer and PriceCharting "for sale" sections) in the
+    // left column; the live eBay listings in the right.
     '<div class="datacols"><div class="dcol dcol-values">'+
     '<div class="pricegrid sec-values" id="priceGrid">'+priceRowsHTML(item)+'</div>'+
     gradedSectionHTML(item)+
     '<div id="morePrices" class="sec-more" aria-live="polite"></div>'+
     '<div id="extraSources" class="sec-extra"><div id="xsSold"></div><div id="xsMandarake"></div><div id="xsComc"></div><div id="xsSurugaya"></div></div>'+
-    '</div><div class="dcol dcol-live">'+
-    '<div class="ebay-live sec-ebay"><div class="ebay-live-head"><h3 id="ebayHead">Live on eBay</h3><span class="count" id="ebayCount"></span></div>'+
-    '<p class="note" id="ebayNote" style="margin:6px 0 0">Real items for sale for this exact printing, fetched live. Tap <b>Buy</b> on a Buy It Now listing to confirm the all-in total here, then finish checkout on eBay. Auctions link out to bid on eBay.</p>'+
-    ebayFiltersHTML()+
-    '<div class="ebay-list" id="ebayListings" aria-live="polite"></div>'+
-    '<div class="btnrow" style="margin-top:12px"><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayBin+'">All Buy It Now on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayAuction+'">All auctions on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebay+'">Browse all eBay results ↗</a></div>'+
-    '</div>'+
     '<div class="btnrow sec-buy"><a class="btn dark" target="_blank" rel="noopener" href="'+urls.tcg+'">Buy Unlimited on TCGplayer ↗</a><a class="btn" target="_blank" rel="noopener" href="'+tcgPrintingSearchUrl(item,"1st Edition Holofoil")+'">Buy 1st Edition on TCGplayer ↗</a></div>'+
     '<div class="tcg-live sec-tcg"><div class="tcg-live-head"><h3>For sale on TCGplayer</h3><span class="count" id="tcgCount"></span></div>'+
     '<p class="note" style="margin:6px 0 0">Editions are separated below: <b>Unlimited</b> finishes link to their TCGplayer product page with the product photo. <b>1st Edition</b> has no separate TCGplayer product — its entries use the catalog image and link to a TCGplayer search filtered to 1st Edition for this card. Prices are never shared between editions.</p>'+
@@ -4544,6 +4551,13 @@ function openDetail(item, keepEbayFilters){
     '<div class="tcg-list" id="tcgListings" aria-live="polite"></div>'+
     '</div>'+
     '<div id="pcOffers"></div>'+
+    '</div><div class="dcol dcol-live">'+
+    '<div class="ebay-live sec-ebay"><div class="ebay-live-head"><h3 id="ebayHead">Live on eBay</h3><span class="count" id="ebayCount"></span></div>'+
+    '<p class="note" id="ebayNote" style="margin:6px 0 0">Real items for sale for this exact printing, fetched live. Tap <b>Buy</b> on a Buy It Now listing to confirm the all-in total here, then finish checkout on eBay. Auctions link out to bid on eBay.</p>'+
+    ebayFiltersHTML()+
+    '<div class="ebay-list" id="ebayListings" aria-live="polite"></div>'+
+    '<div class="btnrow" style="margin-top:12px"><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayBin+'">All Buy It Now on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebayAuction+'">All auctions on eBay ↗</a><a class="btn small" target="_blank" rel="noopener" href="'+urls.ebay+'">Browse all eBay results ↗</a></div>'+
+    '</div>'+
     '<p class="note sec-foot" style="margin-top:12px">The headline value is the raw (ungraded) PriceCharting price for this exact printing — what a typical ungraded copy is worth. TCGplayer figures are near-mint market prices and lowest asks per finish (1st Edition and Unlimited are separate printings with separate prices), and eBay prices are the live asks/bids on each listing, plus shipping where shown.</p>'+
     '</div></div>';
   $("modalImg").src=item.image;
