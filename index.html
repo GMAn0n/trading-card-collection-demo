@@ -242,14 +242,12 @@
      notes and footnotes span the tile grid's single column. */
   .pricegrid .price-group{grid-template-columns:minmax(0,1fr);gap:8px}
   .pricegrid .price-group-title,.pricegrid .price-group>.note{grid-column:1/-1}
-  .pricegrid .prow,#morePrices .prow,#gradedAnchors .prow{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px}
-  .pricegrid .prow>span,#morePrices .prow>span,#gradedAnchors .prow>span{font-size:12.5px;font-weight:700;color:var(--muted);line-height:1.3;min-width:0}
-  .pricegrid .prow b,#gradedAnchors .prow b{font-size:16px;line-height:1.25;font-variant-numeric:tabular-nums}
+  .pricegrid .prow,#morePrices .prow{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px}
+  .pricegrid .prow>span,#morePrices .prow>span{font-size:12.5px;font-weight:700;color:var(--muted);line-height:1.3;min-width:0}
+  .pricegrid .prow b{font-size:16px;line-height:1.25;font-variant-numeric:tabular-nums}
   #morePrices .prow b{font-size:15px;line-height:1.25;font-variant-numeric:tabular-nums}
   #morePrices .more-prices{grid-template-columns:minmax(0,1fr)}
   #morePrices .mp-title,#morePrices .cm-sub,#morePrices .more-prices>.note{grid-column:1/-1}
-  #gradedAnchors{grid-template-columns:minmax(0,1fr)}
-  #gradedAnchors .ebay-note{grid-column:1/-1}
   a.prow{text-decoration:none;color:inherit}
   a.prow:hover{border-color:var(--accent)}
   a.prow b{color:var(--accent)}
@@ -1329,23 +1327,13 @@ function priceRowsHTML(item){
   var h=headlineOf(item);
   var langNote=(item.language && item.language!=="en" && item.rawValue==null && !h.pending) ? '<p class="note" style="margin:0 0 6px">PriceCharting value is not available for the '+escHtml(langNameOf(item.language))+' printing yet — the English printing\'s price is never substituted for it.</p>' : "";
   var groups=[];
-  // PriceCharting — the FULL merged ladder: Ungraded first, then every
-  // row of the full-prices table (Grade 1 … 9.5, then the per-company
-  // 10s), then any short-ladder rows the full table didn't carry. Only
-  // rows the endpoint actually returned are ever shown.
-  if(item.rawValue!=null && ((item.ladder && item.ladder.length) || (item.fullLadder && item.fullLadder.length))){
-    var pcUrl=item.fullLadder && item.rawUrl ? item.rawUrl+"#full-prices" : item.rawUrl;
-    var pcRows=[{label:"Ungraded", value:item.rawValue, url:(item.pcOffersUrl||item.rawUrl)}];
-    mergedLadderRows(item).forEach(function(r){
-      pcRows.push({label: isGenericGradeLabel(r.label) ? r.label+" (generic)" : r.label, value:r.price, url:pcUrl});
-    });
-    groups.push({title: item.fullLadder ? "Values · PriceCharting full prices" : "Values · PriceCharting", rows:pcRows, footnote: item.fullLadder ? "“Grade N (generic)” rows are PriceCharting's generic grade values, based on PSA/BGS graded sales. Company-named rows (PSA 10, BGS 10, CGC 10 Pristine…) are per-service." : null});
-  } else if(item.rawValue!=null){
-    // /value found but no ladder array in the response — keep single rows, no duplication beyond what we have
-    var pcFallback=[{label:"Ungraded", value:item.rawValue, url:(item.pcOffersUrl||item.rawUrl)}];
-    if(item.grade9!=null) pcFallback.push({label:"Grade 9", value:item.grade9, url:item.rawUrl});
-    if(item.psa10!=null) pcFallback.push({label:"PSA 10", value:item.psa10, url:item.rawUrl});
-    groups.push({title:"Values · PriceCharting", rows:pcFallback});
+  // PriceCharting — Ungraded only in this grid. Graded values are
+  // presented once, in the Compare grade box below (per service, per
+  // grade): listing the ladder here as well — on top of the old
+  // by-service anchors block — put every PSA/BGS/CGC value on the
+  // page three times over.
+  if(item.rawValue!=null){
+    groups.push({title:"Values · PriceCharting", rows:[{label:"Ungraded", value:item.rawValue, url:(item.pcOffersUrl||item.rawUrl)}]});
   } else if(h.pending){
     groups.push({title:"Values · PriceCharting", rows:[{label:"Ungraded", pending:true}]});
   }
@@ -1401,7 +1389,6 @@ function updateDetailValue(item){
   if(kp) kp.innerHTML=kvPriceHTML(h);
   if(kl) kl.textContent=h.label||"Market price";
   if(pg) pg.innerHTML=priceRowsHTML(item);
-  var ga=$("gradedAnchors"); if(ga) ga.innerHTML=gradedAnchorsHTML(item);
   if($("gradedServices")) renderGradedServices(item);
   var edEl=$("modalEditions"); if(edEl && !edEl.innerHTML) edEl.innerHTML=editionBadgesHTML(item);
   if($("morePrices")) renderMorePrices(item);
@@ -2405,35 +2392,17 @@ function renderTcgProducts(item){
 }
 
 /* ---------- Graded comparison (per service, live eBay asks) ---------- */
-function gradedAnchorsHTML(item){
-  var rows=[];
-  // Company 10s from the full-prices table, in the table's own order —
-  // these are per-service values, shown exactly as returned.
-  var merged=mergedLadderRows(item);
-  var company=merged.filter(function(r){ return !isGenericGradeLabel(r.label); });
-  if(company.length){
-    var pcUrl=item.fullLadder && item.rawUrl ? item.rawUrl+"#full-prices" : item.rawUrl;
-    company.forEach(function(r){ rows.push({label:"PriceCharting — "+r.label, value:r.price, url:pcUrl}); });
-  } else if(item.ladder&&item.ladder.length){
-    ["PSA 10","Grade 9.5","Grade 9"].forEach(function(lbl){
-      var hit=item.ladder.filter(function(e){return e.label===lbl;})[0];
-      if(hit) rows.push({label:"PriceCharting — "+lbl,value:hit.price,url:item.rawUrl});
-    });
-  } else {
-    if(item.psa10!=null) rows.push({label:"PriceCharting — PSA 10",value:item.psa10,url:item.rawUrl});
-    if(item.grade9!=null) rows.push({label:"PriceCharting — Grade 9",value:item.grade9,url:item.rawUrl});
-  }
-  if(!rows.length) return '<div class="ebay-note">No PriceCharting ladder row for this printing yet — if one loads it will appear here. Live per-service asks below are fetched independently from eBay.</div>';
-  return rows.map(rowLinkHTML).join("");
-}
 function gradedSectionHTML(item){
   function gbtn(val,label){ return '<button data-ggrade="'+val+'" aria-pressed="'+(state.gradedGrade===val?"true":"false")+'">'+label+'</button>'; }
   var gradeBtns="";
   for(var gv=10; gv>=1; gv-=0.5){ var g2=Math.round(gv*10)/10; gradeBtns+=gbtn(String(g2), "Grade "+(g2%1===0?g2.toFixed(0):g2)); }
-  return '<div class="graded-live sec-graded"><div class="ebay-live-head"><h3>Graded values — by service</h3><span class="count">Same card · same grade · different services</span></div>'+
-  '<p class="note" style="margin:6px 0 0">Where PriceCharting\'s full-prices table carries a row for a service + grade, that row is the value shown — per-company at grade 10, the generic Grade N row (based on PSA/BGS graded sales) below it. The lowest live Buy It Now ask on eBay for that grader + grade rides underneath as a supplement, never instead of a PriceCharting row. No PriceCharting row and no listings = “no live asks” — never an invented number.</p>'+
-  '<div class="price-group" style="margin-top:10px"><div class="price-group-title">Anchors · PriceCharting company 10s</div><div id="gradedAnchors" style="display:grid;gap:6px">'+gradedAnchorsHTML(item)+'</div></div>'+
-  '<div class="filter-group" style="margin-top:12px"><label>Compare grade</label><div class="fseg" role="group" aria-label="Grade to compare">'+gradeBtns+'</div></div>'+
+  // The Compare grade box is the single presenter of graded values —
+  // the old "Graded values — by service" section (heading, explainer
+  // and the Anchors block that re-listed the company 10s) is gone;
+  // it only ever replicated what this box already shows.
+  return '<div class="graded-live sec-graded">'+
+  '<div class="filter-group"><label>Compare grade</label><div class="fseg" role="group" aria-label="Grade to compare">'+gradeBtns+'</div></div>'+
+  '<p class="note" style="margin:6px 0 0">Graded values live here, and only here: PriceCharting\'s row for each service at the grade picked — the company\'s own row at grade 10, the generic Grade N row (based on PSA/BGS graded sales) at or below the grade under it. The lowest live Buy It Now ask on eBay for that service + grade rides underneath as a supplement, never instead of a PriceCharting row. No PriceCharting row and no listings = “no live asks” — never an invented number.</p>'+
   '<div id="gradedServices" style="display:grid;gap:6px;margin-top:10px" aria-live="polite"><p class="sub" style="margin:4px 0"><span class="spinner"></span>Fetching live asks per grading service…</p></div>'+
   '<p class="note" style="margin-top:8px">Tap a service row to open its PriceCharting page or live eBay listings. BGS is Beckett.</p></div>';
 }
@@ -2463,12 +2432,19 @@ function renderGradedServices(item){
   var grade=state.gradedGrade; var gNum=parseFloat(grade);
   var cache=item._gradedCache||{};
   var merged=mergedLadderRows(item);
-  function pcFor(grader){ if(!merged.length) return null; return gNum>=10 ? companyRowFor(merged, grader) : genericRowAtOrBelow(merged, gNum); }
+  function pcFor(grader){
+    if(merged.length) return gNum>=10 ? companyRowFor(merged, grader) : genericRowAtOrBelow(merged, gNum);
+    // No ladder arrays on this item — fall back to the /value
+    // endpoint's own graded fields, so the box still presents the
+    // graded values it actually has (PSA 10, Grade 9).
+    if(gNum>=10 && grader==="PSA" && item.psa10!=null) return {label:"PSA 10", price:item.psa10};
+    if(gNum===9 && item.grade9!=null) return {label:"Grade 9", price:item.grade9};
+    return null;
+  }
   var anyPc=GRADERS.some(function(g){ return !!pcFor(g); });
   var anyCache=GRADERS.some(function(g){return cache[g+" "+grade];});
   if(!anyPc && !anyCache){
     box.innerHTML='<p class="sub" style="margin:4px 0"><span class="spinner"></span>Fetching live asks per grading service…</p>';
-    var anchors0=$("gradedAnchors"); if(anchors0) anchors0.innerHTML=gradedAnchorsHTML(item);
     return;
   }
   var pcUrl=item.fullLadder && item.rawUrl ? item.rawUrl+"#full-prices" : item.rawUrl;
@@ -2479,7 +2455,8 @@ function renderGradedServices(item){
     var a=document.createElement("a"); a.className="service-row"; a.target="_blank"; a.rel="noopener";
     var ebaySmall = !e ? "Checking live eBay asks…" : (e.low!=null ? "Live eBay ask from "+money(e.low)+" right now" : "No live eBay asks right now");
     if(pc){
-      // PriceCharting row is the value; the eBay ask is a supplement line.
+      // The PriceCharting row is the value — this box is the one place
+      // graded values are presented; the eBay ask is a supplement line.
       a.href=pcUrl||ebayURL([item.name,item.set,item.number,grader,grade].filter(Boolean).join(" "),"bin");
       var srcTxt=isGenericGradeLabel(pc.label) ? ("PriceCharting "+pc.label+" (generic)") : ("PriceCharting "+pc.label);
       a.innerHTML='<span>'+escHtml(GRADER_LABEL[grader])+' '+escHtml(grade)+'<small style="display:block;font-weight:600;color:var(--muted);font-size:12px">'+escHtml(srcTxt)+' · '+escHtml(ebaySmall)+'</small></span><b>'+money(pc.price)+' ↗</b>';
@@ -2492,7 +2469,6 @@ function renderGradedServices(item){
     }
     box.appendChild(a);
   });
-  var anchors=$("gradedAnchors"); if(anchors) anchors.innerHTML=gradedAnchorsHTML(item);
 }
 /* ---------- Condition / grading picker ---------- */
 function openConditionPicker(sourceItem, existingCol, onDone){
@@ -2521,7 +2497,7 @@ function openConditionPicker(sourceItem, existingCol, onDone){
     var src=sourceForValue(); var calc=collectionValueFor(src, sel.conditionState, sel.grader, sel.grade);
     var pv=wrap.querySelector("#pkPreview");
     if(src.rawValue==null && src.price==null && !src.ladder){ pv.innerHTML="<b>Value still loading…</b><br>PriceCharting value for this printing has not landed yet. You can still save — the basis will use the catalogue price available."; }
-    else if(calc.value!=null){ pv.innerHTML="<b>Value for this copy: "+money(calc.value)+"</b><br><span style='color:var(--muted)'>"+escHtml(calc.label)+"</span>"+(sel.conditionState==="damaged"?"<br><span style='color:var(--muted)'>PriceCharting has no damaged tier — this is a labelled estimate: ½ × ungraded.</span>":"")+(sel.conditionState==="graded"?"<br><span style='color:var(--muted)'>Graded values use the matching PriceCharting full-prices row — the grader's own company row at grade 10, the generic Grade N row at or below the grade under it. Compare per-service values in “Graded values — by service” on the card page.</span>":""); }
+    else if(calc.value!=null){ pv.innerHTML="<b>Value for this copy: "+money(calc.value)+"</b><br><span style='color:var(--muted)'>"+escHtml(calc.label)+"</span>"+(sel.conditionState==="damaged"?"<br><span style='color:var(--muted)'>PriceCharting has no damaged tier — this is a labelled estimate: ½ × ungraded.</span>":"")+(sel.conditionState==="graded"?"<br><span style='color:var(--muted)'>Graded values use the matching PriceCharting full-prices row — the grader's own company row at grade 10, the generic Grade N row at or below the grade under it. Per-service values at every grade sit in the “Compare grade” box on the card page.</span>":""); }
     else { pv.innerHTML="<b>No value available for this state yet</b><br>Save anyway — it will show as — until a PriceCharting row exists."; }
   }
   wrap.querySelectorAll("[data-state]").forEach(function(b){ b.addEventListener("click",function(){ sel.conditionState=b.dataset.state; sync(); }); });
@@ -4604,7 +4580,7 @@ function openDetail(item, keepEbayFilters){
   loadMorePrices(item);
   loadExtraSources(item);
   loadGradedComparison(item);
-  if(item.game==="Pokémon") ensureValue(item, function(){ updateDetailValue(item); updateTilePrice(item); var ga=$("gradedAnchors"); if(ga) ga.innerHTML=gradedAnchorsHTML(item); });
+  if(item.game==="Pokémon") ensureValue(item, function(){ updateDetailValue(item); updateTilePrice(item); });
 }
 function closeModal(){ $("modal").classList.remove("open"); document.body.style.overflow=""; }
 $("modalClose").addEventListener("click",closeModal);
