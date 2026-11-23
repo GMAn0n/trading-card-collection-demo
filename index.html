@@ -1158,7 +1158,7 @@ function normalizeDex(detail, brief, lang){
   var imgBase=detail.image||(brief&&brief.image)||"";
   var unlimFinish=(p.finishes||[]).filter(function(f){return !isFirstFinish(f) && f.productId!=null;})[0];
   var firstTcgUrl = unlimFinish ? ("https://www.tcgplayer.com/product/"+unlimFinish.productId) : null;
-  return { id:"dex-"+detail.id, game:"Pokémon", name:detail.name, set:detail.set?detail.set.name:"", number:detail.localId||(brief&&brief.localId)||"", rarity:detail.rarity||"", setTotal:setTotal, image:imgBase?imgBase+"/high.webp":"", price:p.price, priceLabel:p.label||"TCGdex", lowPrice:(p.lowPrice!=null?p.lowPrice:null), prices:p.rows, tcgUrl:firstTcgUrl, tcgFinishes:p.finishes||[], language:(lang||"en"), raw:detail };
+  return { id:"dex-"+detail.id, game:"Pokémon", name:detail.name, set:detail.set?detail.set.name:"", number:detail.localId||(brief&&brief.localId)||"", rarity:detail.rarity||"", setTotal:setTotal, image:imgBase?imgBase+"/high.webp":"", price:p.price, priceLabel:p.label||"TCGdex", lowPrice:(p.lowPrice!=null?p.lowPrice:null), prices:p.rows, tcgUrl:firstTcgUrl, tcgFinishes:p.finishes||[], language:(lang||"en"), dexNo:(detail.dexId&&detail.dexId.length?String(detail.dexId[0]):null), raw:detail };
 }
 function dexBriefsToItems(list, preferNameLc, lang){
   if(!Array.isArray(list)) return Promise.resolve([]);
@@ -1171,7 +1171,7 @@ function dexBriefsToItems(list, preferNameLc, lang){
   }
   return Promise.all(list.slice(0,24).map(function(b){
     function briefItem(){
-      return { id:"dex-"+b.id, game:"Pokémon", name:b.name, set:"", number:b.localId||"", rarity:"", image:b.image+"/high.webp", price:null, priceLabel:"TCGdex", prices:[], tcgUrl:null, tcgFinishes:[], language:(lang||"en"), raw:b };
+      return { id:"dex-"+b.id, game:"Pokémon", name:b.name, set:"", number:b.localId||"", rarity:"", image:b.image+"/high.webp", price:null, priceLabel:"TCGdex", prices:[], tcgUrl:null, tcgFinishes:[], language:(lang||"en"), dexNo:(b.dexId&&b.dexId.length?String(b.dexId[0]):null), raw:b };
     }
     function getDetail(){
       return fetch("https://api.tcgdex.net/v2/"+(lang||"en")+"/cards/"+encodeURIComponent(b.id),{headers:{"Accept":"application/json"}}).then(function(r){
@@ -4224,7 +4224,8 @@ function resolvePhotoFields(fields){
       // No name pool at all — resolve from the number alone, scored.
       setOcrStatus('<p class="note"><span class="spinner"></span>Matching by the collector number '+fields.num+(fields.den?"/"+fields.den:"")+'…</p>');
       fetchDexByLocalId(fields.num).then(function(items){
-        if(items && items.length){ finishScoredResolve(fields, items); return; }
+        items=gateNumberPool(items, fields);
+        if(items && items.length){ finishScoredResolve(fields, items, {numberOnly:true}); return; }
         $("idFields").innerHTML=fieldsChipsHTML(fields);
         setOcrStatus('<p class="note">A collector number was read ('+fields.num+(fields.den?"/"+fields.den:"")+') but it didn\'t resolve to any printing — type the name below and include that number to pin the printing.</p>');
         $("identifyInput").value=fields.num;
@@ -4265,7 +4266,8 @@ function resolvePhotoFieldsLang(fields){
     if(pool && pool.length){ finishScoredResolve(fields, pool); return; }
     if(fields.num){
       fetchDexByLocalId(fields.num, fields.language).then(function(items){
-        if(items && items.length){ finishScoredResolve(fields, items); return; }
+        items=gateNumberPool(items, fields);
+        if(items && items.length){ finishScoredResolve(fields, items, {numberOnly:true}); return; }
         var supp=supplementalJaPool({name:fields.name, namePrinted:fields.namePrinted, dexNo:fields.dexNo||fields.num});
         if(supp.length){ finishScoredResolve(fields, supp); return; }
         langNoCatalogue(fields);
@@ -4308,7 +4310,57 @@ function pickerShortlist(scored, fields){
   for(var i=0;i<arr.length && shown.length<3;i++){ if(shown.indexOf(arr[i])<0) shown.push(arr[i]); }
   return shown.slice(0,6);
 }
-function finishScoredResolve(fields, pool){
+/* Species bridges for a NUMBER-ONLY pool. A pool fetched by the
+   collector number alone spans every set that carries that
+   number, so its candidates are other species by default. When
+   the read DID name a species, a candidate from such a pool may
+   only stand if some bridge ties it to that species: its Latin
+   name equalling the read name (or a read candidate name), its
+   printed name — or, for a TCGdex item in another script, its
+   catalogue name, which IS its printed name — matching the
+   read's printed name (kana near-match tolerated, as in the
+   scorer), or its Pokédex № equalling the read's. No bridge, no
+   standing: without this, a hallucinated "27/102" filled in by a
+   second read pooled every Japanese #27 and the HP twin among
+   them (a Feebas) auto-opened for a Cleffa photo — the number
+   validated itself, because the guard below treats a non-Latin
+   catalogue name as unable to disprove it. When the read named
+   nothing, the pool stands as-is (the nameless fallback's whole
+   purpose) but still may not auto-select — see opts.numberOnly. */
+function printedNameHit(readPrinted, candPrinted){
+  var rpS=String(readPrinted||"").trim(), cpS=String(candPrinted||"").trim();
+  if(!rpS || !cpS) return false;
+  if(rpS===cpS) return true;
+  if(/[^\u0000-\u024F]/.test(rpS) && /[^\u0000-\u024F]/.test(cpS)){
+    var rs=rpS.replace(/\s+/g,""), cs=cpS.replace(/\s+/g,"");
+    if(rs.length>=3 && rs.length===cs.length){
+      var nd=0; for(var i=0;i<rs.length;i++){ if(rs.charAt(i)!==cs.charAt(i)) nd++; }
+      if(nd<=1) return true;
+    }
+  }
+  return false;
+}
+function speciesBridgeOk(it, f){
+  if(it.supplemental) return true;
+  var cn=normKeyText(it.name||"");
+  var names=[f.name].concat(f.candidates||[]);
+  for(var i=0;i<names.length;i++){
+    var fn=normKeyText(names[i]||"");
+    if(fn && cn && cn===fn) return true;
+  }
+  if(f.namePrinted){
+    if(it.namePrinted && printedNameHit(f.namePrinted, it.namePrinted)) return true;
+    if(it.name && printedNameHit(f.namePrinted, it.name)) return true;
+  }
+  var cdx=(it.dexNo!=null?it.dexNo:((it.raw&&it.raw.dexNo!=null)?it.raw.dexNo:null));
+  if(f.dexNo && cdx!=null && String(cdx)===String(f.dexNo)) return true;
+  return false;
+}
+function gateNumberPool(items, f){
+  if(!f || !f.name) return items;
+  return (items||[]).filter(function(it){ return speciesBridgeOk(it, f); });
+}
+function finishScoredResolve(fields, pool, opts){
   // Hallucinated-number guard: a read number that NO printing of
   // this name carries is discarded as evidence entirely — it is
   // removed from the fields before chips render, so it is never
@@ -4340,6 +4392,7 @@ function finishScoredResolve(fields, pool){
   }
   var scored=sortScored(pool.map(function(it){ return scoreCandidate(it, fields); }));
   var discardNote=fields.numDiscarded?'<p class="note">A number was read ('+escHtml(fields.numDiscarded)+') but no '+escHtml(fields.name||"")+' printing carries it, so it was ignored — the match rests on the other signals combined.</p>':"";
+  var numOnlyNote=(opts && opts.numberOnly)?'<p class="note">The name read pooled no printings, so these candidates rest on the collector number alone — a number is only unique within its own set, so nothing was auto-picked.</p>':"";
   var top=scored[0], second=scored[1];
   var margin=second ? top.score-second.score : Infinity;
   // Auto-select on EITHER rule:
@@ -4350,7 +4403,7 @@ function finishScoredResolve(fields, pool){
   //     noisy reads that disagree add nothing) with a ≥ 15 lead.
   //     The English name is not a signal type and HP is only one,
   //     so name + HP alone can never trigger rule B.
-  if((top.score>=50 && margin>=25) || (top.types.length>=3 && margin>=15)){
+  if(!(opts && opts.numberOnly) && ((top.score>=50 && margin>=25) || (top.types.length>=3 && margin>=15))){
     noteResolveOutcome("auto");
     setOcrStatus(discardNote+'<p class="note"><b>Matched:</b> '+escHtml(top.item.name)+' · '+escHtml(top.item.set||"")+' · #'+escHtml(top.item.number||"")+(top.ev.length?(' — '+escHtml(top.ev.join(" · "))):'')+'. Opening it — add it to your collection in one tap.</p>');
     top.item._fromPhoto=true; top.item._photoFields=fields;
@@ -4358,7 +4411,7 @@ function finishScoredResolve(fields, pool){
     return;
   }
   if(fields.language && fields.language!=="en"){
-    setOcrStatus(discardNote+'<p class="note">No '+escHtml(langNameOf(fields.language))+' printing wins clearly on the combined evidence, so nothing was auto-picked — the '+escHtml(langNameOf(fields.language))+' printings are ranked below by how much of what was read they match. Other languages appear underneath as manual alternatives only; they are different printings with different values and were not matched to your photo.</p>');
+    setOcrStatus(discardNote+numOnlyNote+'<p class="note">No '+escHtml(langNameOf(fields.language))+' printing wins clearly on the combined evidence, so nothing was auto-picked — the '+escHtml(langNameOf(fields.language))+' printings are ranked below by how much of what was read they match. Other languages appear underneath as manual alternatives only; they are different printings with different values and were not matched to your photo.</p>');
     fetchNamePool(fields.name||"").then(function(altPool){
       enrichEnSupplements(altPool||[]);
       var altScored=pickerShortlist(sortScored((altPool||[]).map(function(it){ return scoreCandidate(it, fields); })), fields);
@@ -4367,7 +4420,7 @@ function finishScoredResolve(fields, pool){
     }).catch(function(){ noteResolveOutcome("picker"); showScoredPicker(pickerShortlist(scored, fields), fields, []); });
     return;
   }
-  setOcrStatus(discardNote+'<p class="note">No printing wins clearly on the combined evidence, so nothing was auto-picked — the printings below are the shortlist the read\'s evidence actually discriminates between, ranked by how much of what was read they match. Tap the one that matches your card; nothing is added until you choose.</p>');
+  setOcrStatus(discardNote+numOnlyNote+'<p class="note">No printing wins clearly on the combined evidence, so nothing was auto-picked — the printings below are the shortlist the read\'s evidence actually discriminates between, ranked by how much of what was read they match. Tap the one that matches your card; nothing is added until you choose.</p>');
   noteResolveOutcome("picker");
   showScoredPicker(pickerShortlist(scored, fields), fields);
 }
