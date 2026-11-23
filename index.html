@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="light dark" />
 <link rel="icon" href="data:," />
-<title>Trading Card Collection — Demo</title>
+<title>CardSleuth — Scan, Value & Track Cards</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;700;800;900&family=Newsreader:opsz,wght@6..72,600;6..72,700&display=swap" rel="stylesheet">
@@ -349,6 +349,11 @@
   .acct-msg.is-err{background:#fdecea;border-color:#f3b8b1;color:#7a271a}
   @media (prefers-color-scheme: dark){.acct-msg.is-err{background:#331714;border-color:#6b2d24;color:#ffb4a6}}
   .acct-msg.is-ok{background:var(--accent-soft);border-color:var(--accent)}
+  /* Contact form (About tab) */
+  .cform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+  #contactForm label{font-size:13.5px;color:var(--muted);display:block}
+  #contactForm .opt{opacity:.7;font-size:12px}
+  #contactForm input,#contactForm select,#contactForm textarea{width:100%;margin-top:5px;padding:9px 11px;border:1px solid #b9bec7;border-radius:10px;background:transparent;color:var(--ink);box-sizing:border-box;font:inherit}
 </style>
 </head>
 <body>
@@ -356,7 +361,7 @@
   <header>
     <div class="topline">
       <div>
-        <h1>Trading Card <em>Collection</em></h1>
+        <h1>Card<em>Sleuth</em></h1>
         <p class="lede">Scan a card with your camera, look up live market prices, and keep a running collection and wishlist — right here in the browser.</p>
       </div>
       <span class="demo-pill"><span class="dot"></span> Shareable demo · camera enabled</span>
@@ -530,10 +535,38 @@
       <div class="cardbox"><h3>Data sources</h3><p>Headline values are the <b>raw (ungraded) price for the exact printing</b> — name, set and collector number — from <a href="https://www.pricecharting.com" target="_blank" rel="noopener">PriceCharting</a>, fetched per card: a Base Set Raichu, a Fossil Raichu and a 1st Edition printing each carry their own value. Pokémon card images, sets and TCGplayer market prices come live from <a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex</a>, with the <a href="https://pokemontcg.io" target="_blank" rel="noopener">Pokémon TCG API</a> as backup; those TCGplayer figures are near-mint market prices, shown as labelled per-finish rows (1st Edition and Unlimited separately), never as the headline. That TCGplayer pricing is the same catalogue <a href="https://tcgcsv.com/" target="_blank" rel="noopener">TCGCSV</a> mirrors as daily price files — each card page also resolves the printing through the TCGCSV feed directly, shown as its own labelled row. Cardmarket figures on the card page come from Cardmarket's official daily catalogue + price-guide exports, staged as compact per-letter index files the page fetches on demand when a card page opens: EUR guide values (not live listings), one row per edition/printing — the export carries no set-name or language field, so editions are never labelled by language. Identity and value stay separate on purpose: catalogues establish which card it is, pricing sources establish what it's worth, and no source silently overrides another. Magic data and prices come from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Prices are fetched fresh each time you search.</p></div>
       <div class="cardbox"><h3>Buying</h3><p>Japanese printings also get a <b>Buyee</b> search link-out (Mercari JP + Yahoo! Auctions JP) — link-out only, because Buyee sits behind bot protection, so no Buyee listings are fetched in-app. Every card page shows two ways to buy that exact printing. <b>For sale on TCGplayer:</b> one product card per finish (Holofoil, Normal, Reverse Holofoil…) with the TCGplayer product photo, “from” lowest current ask, market price and TCGplayer Direct price when available — filter by finish and sort by lowest ask or market price, then tap through to that finish's <a href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer</a> product page with every seller. <b>Live on eBay:</b> thumbnail, price + shipping and all-in total, bids and end time on auctions, seller and condition — fetched live via the eBay search proxy, with filters for Auction / Buy It Now and sorting by best match, price, or ending soonest. Buy It Now listings carry a <b>Buy</b> button: confirm the sticker price, shipping and labelled all-in total in the app, and the item's checkout opens on eBay in a new tab — you sign in and pay on eBay, and the app records it only as “Checkout opened on eBay” (see Purchases started, under Collection). Auctions have no buy flow; their cards link out to bid on eBay. This app never collects or sends card numbers — payment happens entirely in eBay's own checkout.</p></div>
       <div class="cardbox"><h3>For partners</h3><p>Built by Muse Enterprise Solutions as a working product exhibit for marketplace and data partnership conversations — including TCGplayer affiliate (Impact) and partner data access. Photo identification (an AI read of the printed name, HP, attacks, collector number, illustrator, finish, edition stamp, set symbol and © year line — plus grading-slab labels: company, grade and cert — scored across every printing of the name, with an on-device OCR fallback) and graded-card states are live in this demo; the full version adds population data and daily price alerts.</p></div>
+      <div class="cardbox" id="contactBox" style="grid-column:1/-1"><h3>Contact us</h3>
+        <p style="margin-bottom:12px">Suggestions, improvement ideas, or a bug to report — send them here. If you'd like a reply, leave your email.</p>
+        <form id="contactForm" novalidate>
+          <div class="cform-grid">
+            <label>Type
+              <select id="cfType">
+                <option value="suggestion">Suggestion</option>
+                <option value="improvement">Improvement</option>
+                <option value="bug">Bug report</option>
+              </select>
+            </label>
+            <label>Your name <span class="opt">(optional)</span>
+              <input id="cfName" type="text" maxlength="80" autocomplete="name">
+            </label>
+            <label>Email for a reply <span class="opt">(optional)</span>
+              <input id="cfEmail" type="email" maxlength="120" autocomplete="email">
+            </label>
+          </div>
+          <label style="margin-top:10px">Message
+            <textarea id="cfMessage" rows="4" maxlength="4000" placeholder="What should we add, fix, or change?"></textarea>
+          </label>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn" type="submit" id="cfSend">Send message</button>
+            <span class="note" id="cfStatus" role="status"></span>
+          </div>
+        </form>
+      </div>
     </div>
   </section>
 
   <footer>
+    <a href="#" id="footerContact">Contact us</a> — suggestions, improvements and bug reports welcome.<br>
     Demo build — collection, wishlist and purchases are saved on this device and synced to your guest session or signed-in account, so they survive closing the page. Card data © their respective publishers; headline values are raw (ungraded) prices per exact printing via PriceCharting; Pokémon catalogue and TCGplayer market prices via TCGdex (mirrored daily by TCGCSV) with Pokémon TCG API backup; Magic prices via Scryfall. Card pages show a source-labelled More prices comparison (PriceCharting · TCGplayer via TCGCSV daily feed · Cardmarket EUR price guide by edition, from its official daily exports), TCGplayer product cards per finish (photo, lowest ask + market, direct link to the product page) plus live eBay listings in-app (via the eBay search proxy) for the exact card shown, and a Buyee link-out for Japanese printings.
   </footer>
 </div>
@@ -5088,6 +5121,30 @@ function initAccount(){
 }
 
 initAccount();
+})();
+</script>
+<script>
+(function(){
+  var form=document.getElementById("contactForm");
+  if(form){
+    var status=document.getElementById("cfStatus");
+    form.addEventListener("submit",function(ev){
+      ev.preventDefault();
+      var msg=document.getElementById("cfMessage").value.trim();
+      if(!msg){ status.textContent="Write a message first — even one line helps."; return; }
+      var btn=document.getElementById("cfSend"); btn.disabled=true;
+      status.textContent="Sending…";
+      fetch("https://card-app-api.369samclarkisfine.workers.dev/contact",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({type:document.getElementById("cfType").value,name:document.getElementById("cfName").value.trim(),email:document.getElementById("cfEmail").value.trim(),message:msg})
+      }).then(function(r){ if(!r.ok) throw new Error("send failed"); return r.json(); })
+      .then(function(){ status.textContent="Thanks — sent. We read every message."; form.reset(); })
+      .catch(function(){ status.innerHTML="Couldn't send just now — email us at <a href=\"mailto:369samclarkisfine@gmail.com?subject=CardSleuth%20feedback\">369samclarkisfine@gmail.com</a> instead."; })
+      .then(function(){ btn.disabled=false; });
+    });
+  }
+  var fl=document.getElementById("footerContact");
+  if(fl){ fl.addEventListener("click",function(ev){ ev.preventDefault(); var t=document.querySelector('.tab[data-tab="about"]'); if(t) t.click(); var box=document.getElementById("contactBox"); if(box) setTimeout(function(){ box.scrollIntoView({behavior:"smooth",block:"start"}); },60); }); }
 })();
 </script>
 </body>
