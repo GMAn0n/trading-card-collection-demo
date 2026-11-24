@@ -349,6 +349,10 @@
   .acct-msg.is-err{background:#fdecea;border-color:#f3b8b1;color:#7a271a}
   @media (prefers-color-scheme: dark){.acct-msg.is-err{background:#331714;border-color:#6b2d24;color:#ffb4a6}}
   .acct-msg.is-ok{background:var(--accent-soft);border-color:var(--accent)}
+  .btn.danger{color:var(--danger);border-color:var(--danger)}
+  #acctDeleteBox{border:1px solid var(--danger);border-radius:12px;padding:12px 13px;margin-top:10px}
+  #acctDeleteBox label{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:800;margin:10px 0 6px}
+  #acctDeleteBox input{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:16px}
   /* Contact form (About tab) */
   .cform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
   #contactForm label{font-size:13.5px;color:var(--muted);display:block}
@@ -485,6 +489,18 @@
           <button class="btn small" id="btnLinkApple" type="button">Link Apple</button>
         </div>
         <div class="btnrow"><button class="btn small" id="btnSignOut" type="button">Sign out</button></div>
+        <div class="btnrow"><button class="btn small danger" id="btnDeleteAccount" type="button">Delete account</button></div>
+        <div id="acctDeleteBox" hidden>
+          <p class="note" style="margin:0">Deleting your account permanently removes your synced collection, wishlist and purchases from our server. This can't be undone. Cards saved only on this device stay on this device.</p>
+          <div id="delPassWrap">
+            <label for="delPass">Current password</label>
+            <input type="password" id="delPass" autocomplete="current-password">
+          </div>
+          <div class="btnrow">
+            <button class="btn small danger" id="btnConfirmDelete" type="button">Permanently delete my account</button>
+            <button class="btn small" id="btnCancelDelete" type="button">Cancel</button>
+          </div>
+        </div>
       </div>
       <div id="acctForms">
         <div class="acct-grid">
@@ -4991,6 +5007,7 @@ function renderAccountPanel(){
     $("acctName").textContent=acct.username||"your account";
     $("acctLinks").textContent="Sign-in methods linked: "+(acct.identities.length?acct.identities.map(function(i){ return providerLabel(i.provider); }).join(" · "):"Username & password")+".";
     var isLinked=function(p){ return acct.identities.some(function(i){ return i.provider===p; }); };
+    var dpw=$("delPassWrap"); if(dpw) dpw.hidden=!isLinked("password");
     var lg=$("btnLinkGoogle"), la=$("btnLinkApple");
     if(lg){ var gl=isLinked("google"); lg.disabled=gl; lg.textContent=gl?"Google linked":"Link Google"; }
     if(la){ var al=isLinked("apple"); la.disabled=al; la.textContent=al?"Apple linked":"Link Apple"; }
@@ -5142,6 +5159,33 @@ $("btnApple").addEventListener("click",function(){ onSso("apple"); });
 $("btnGoogle").addEventListener("click",function(){ onSso("google"); });
 $("btnLinkGoogle").addEventListener("click",function(){ onLink("google"); });
 $("btnLinkApple").addEventListener("click",function(){ onLink("apple"); });
+$("btnDeleteAccount").addEventListener("click",function(){ $("acctDeleteBox").hidden=false; });
+$("btnCancelDelete").addEventListener("click",function(){ $("acctDeleteBox").hidden=true; var dp=$("delPass"); if(dp) dp.value=""; });
+$("btnConfirmDelete").addEventListener("click",function(){
+  var hasPw=acct.identities.some(function(i){ return i.provider==="password"; });
+  var body={};
+  if(hasPw){
+    var pw=$("delPass").value;
+    if(!pw){ setAcctMsg("Enter your current password to delete this account.","err"); renderAccountPanel(); return; }
+    body={password:pw};
+  } else { body={confirm:true}; }
+  api("/auth/delete-account",{method:"POST",body:body}).then(function(res){
+    if(res.status===200&&res.body&&res.body.deleted){
+      clearTokenAll();
+      acct.userId=null; acct.kind=null; acct.username=null; acct.identities=[];
+      saveProfileCache();
+      $("acctDeleteBox").hidden=true;
+      return mintGuest().then(function(){
+        setAcctMsg("Your account and its synced data have been permanently deleted. You're browsing as a fresh guest.","ok");
+        renderAccountPanel();
+        return runSyncMerge();
+      });
+    }
+    if(res.body&&res.body.error==="password_required"){ setAcctMsg("That password doesn't match — account not deleted.","err"); }
+    else { setAcctMsg("Couldn't delete the account — try again.","err"); }
+  }).catch(function(){ setAcctMsg("Couldn't reach the account server — check your connection and try again.","err"); })
+  .then(function(){ renderAccountPanel(); });
+});
 
 /* Boot: paint the local mirror immediately, then resolve identity
    (existing token from any store, else a fresh guest) and merge
