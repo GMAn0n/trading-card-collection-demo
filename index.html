@@ -5080,26 +5080,15 @@ function ssoStartUrl(provider){
 }
 function onSso(provider){
   var url=ssoStartUrl(provider);
-  if(provider==="google"){
-    // Google is configured: go straight there via the backend start URL.
-    window.location.href=url;
-    return;
-  }
-  // Apple: the backend isn't configured yet and would answer with a
-  // 501 JSON page — pre-check so the user is never stranded on it.
-  // A configured provider answers with a redirect instead (opaque to
-  // fetch), and only then do we navigate.
-  fetch(url,{redirect:"manual"}).then(function(res){
-    if(res && res.status===501){
-      setAcctMsg(ssoNotConfiguredMsg("apple"),"note");
-      renderAccountPanel();
-      return;
-    }
-    window.location.href=url;
-  }).catch(function(){
-    setAcctMsg("Couldn't reach the account server — check your connection and try again.","err");
-    renderAccountPanel();
-  });
+  // Both providers are configured on the backend: navigate straight
+  // there, the same way for Google and Apple. (An earlier version
+  // pre-checked Apple with a fetch() first — but the start endpoint
+  // answers with a cross-origin redirect that carries no CORS
+  // headers, so the fetch itself was rejected and users saw a bogus
+  // "couldn't reach the account server" error even though the server
+  // was up and Apple sign-in was configured. Direct navigation, like
+  // Google has always done, is the fix — verified 2026-11-24.)
+  window.location.href=url;
 }
 function onLink(provider){
   if(!acct.token){
